@@ -12,96 +12,108 @@ namespace Webiik;
 class Middleware
 {
     /**
-     * Into destination we store all informations needed to create route handler.
-     * We will create route handler, after all middlewares are completed.
-     *
-     * In destination we store under the following keys:
-     * 'class' - string, route handler class name
-     * 'method' - string, method to invoke
-     * 'routeInfo' - array, basic route info
-     * 'args' - array, args to be injected into handler class during its construction
-     *
-     * @var array
-     */
-    private $destination = [];
-
-    /**
-     * Here we store all middleware invokables.
-     *
-     * In middlewares we store under the following keys:
-     * 'app' - array, all app middlewares
-     * '{routeId}' - array, all route middlewares
+     * Middleware storage
+     * We can store middlewares under the following keys:
+     * 'app' - all app middlewares
+     * '{routeId}' - all route middlewares
+     * 'dest' - last middleware to be run
      *
      * @var array
      */
     private $middlewares = [];
 
     /**
-     * @param $callable
+     * Middleware can be defined by:
+     * 1. callable - anonymous function
+     * 2. string - class name of invokable class eg.: Webiik\ClassName
+     * 3. string - class name and method to be launched eg.: Webiik\ClassName:launch
+     * @param string|callable $mw
      */
-    public function addAppMiddleware($callable)
+    public function addAppMiddleware($mw, $args = null)
     {
-        $this->middlewares['app'][] = $callable;
+        $this->middlewares['app'][] = ['mw' => $mw, 'args' => $args];
     }
 
     /**
      * @param $routeId
-     * @param $callable
+     * @param string|callable $mw
      */
-    public function addRouteMiddleware($routeId, $callable)
+    public function addRouteMiddleware($routeId, $mw, $args = null)
     {
-        $this->middlewares[$routeId][] = $callable;
+        $this->middlewares[$routeId][] = ['mw' => $mw, 'args' => $args];
     }
 
     /**
-     * @param $routeInfo
-     * @param $handler
-     * @param bool $method
-     * @param bool $args
+     * @param string|callable $mw
      */
-    public function addDestination($routeInfo, $handler, $method = false, $args = false)
+    public function addDestination($mw, $args = null)
     {
-        if (is_callable($handler)) {
-            $this->destination['fn'] = $handler;
-        } else {
-            $this->destination['class'] = $handler;
-            $this->destination['method'] = $method;
-        }
-
-        $this->destination['routeInfo'] = $routeInfo;
-        $this->destination['args'] = $args;
+        $this->middlewares['dest'][0] = ['mw' => $mw, 'args' => $args];
     }
 
     /**
      * Run all middlewares
      * @param $routeId
+     * @throws \Exception
      */
     public function run($routeId)
     {
-        $this->middlewares = array_merge($this->getAppMiddlewares(), $this->getRouteMiddlewares($routeId));
+        $this->middlewares = array_merge($this->getAppMiddlewares(), $this->getRouteMiddlewares($routeId), $this->getDestination());
 
-        if (isset($this->middlewares[0])) {
-            $this->middlewares[0](null, $this->next());
+        // Run first middleware
+        $mw = $this->middlewares[0]['mw'];
+        $args = $this->middlewares[0]['args'];
+        $this->runMiddleware($mw, $args);
+    }
+
+    /**
+     * @param $mw
+     * @param $args
+     * @param null $response
+     * @throws \Exception
+     */
+    private function runMiddleware($mw, $args, $response = null)
+    {
+        // Instantiate middleware when is defined by class name
+        if (is_string($mw)) {
+
+            $mw = explode(':', $mw);
+
+            if (class_exists($mw[0])) {
+                if (isset($mw[1])) {
+                    $method = $mw[1];
+                    $mw = new $mw[0]($response, ...$args);
+                } else {
+                    $mw = new $mw[0]();
+                }
+            }
+        }
+
+        // Check and call middleware
+        if (is_callable($mw)) {
+            is_array($args) ? $mw($response, $this->next(), ...$args) : $mw($response, $this->next(), $args);
+        } elseif (is_object($mw) && !is_callable($mw) && method_exists($mw, $method)) {
+            is_array($args) ? $mw->$method($response, $this->next(), ...$args) : $mw->$method($response, $this->next(), $args);
         } else {
-            $this->getDestination(null);
+            throw new \Exception('Invalid middleware.');
         }
     }
 
     /**
-     * Return invokable which runs next middleware or route handler
+     * Return callable which runs next middleware
      * @return \Closure
+     * @throws \Exception
      */
     private function next()
     {
         $next = function ($response) {
-            $mw = next($this->middlewares);
-            if (is_callable($mw)) {
-                $mw($response, $this->next());
-            } else {
-                $destination = function ($response) {
-                    $this->getDestination($response);
-                };
-                $destination($response);
+
+            $nextMw = next($this->middlewares);
+
+            if ($nextMw) {
+                $mw = $nextMw['mw'];
+                $args = $nextMw['args'];
+                $this->runMiddleware($mw, $args, $response);
             }
         };
 
@@ -132,20 +144,13 @@ class Middleware
     }
 
     /**
-     * Run route handler and inject dependencies during its construction
-     * @param $response
+     * @return array
      */
-    private function getDestination($response)
+    private function getDestination()
     {
-        if (isset($this->destination['fn'])) {
-            $this->destination['fn']();
-        } else {
-            $class = $this->destination['class'];
-            $method = $this->destination['method'];
-            $routeInfo = $this->destination['routeInfo'];
-            $args = $this->destination['args'];
-            $handler = new $class($response, $routeInfo, ...$args);
-            $handler->$method();
+        if (isset($this->middlewares['dest'])) {
+            return $this->middlewares['dest'];
         }
+        return [];
     }
 }

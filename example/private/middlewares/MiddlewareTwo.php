@@ -2,13 +2,13 @@
 namespace MySpace;
 
 /**
- * Example of invokable middleware class
+ * Example of middleware class
  * Class Middleware
  * @package MySpace
  */
-class Middleware
+class MiddlewareTwo
 {
-    function __invoke($response, $next, $args)
+    function launch($response, $next, $args)
     {
         echo 'BEFORE ';
         echo '<br/>ARGS: ' . $args . '<br/>';

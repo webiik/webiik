@@ -36,9 +36,9 @@ class Core
         });
     }
 
-    public function add($callable)
+    public function add($callable, $args = null)
     {
-        $this->middleware()->addAppMiddleware($callable);
+        $this->middleware()->addAppMiddleware($callable, $args);
     }
 
     public function addService($name, $factory)
@@ -93,9 +93,11 @@ class Core
         // Assign route handler to middleware destination
         $handler = explode(':', $routeInfo['handler']);
         $className = $handler[0];
-        $methodName = $handler[1];
-        $args = isset($this->container[$className]) ? $this->container[$className] : [];
-        $this->middleware()->addDestination($routeInfo, $className, $methodName, $args);
+        $args[] = $routeInfo;
+        if(isset($this->container[$className])){
+            $args = array_merge($args, $this->container[$className]);
+        }
+        $this->middleware()->addDestination($routeInfo['handler'], $args);
 
         // Run middlewares
         $this->middleware()->run($routeInfo['id']);

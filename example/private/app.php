@@ -4,6 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 require __DIR__ . '/classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
+require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
 $app = new \Webiik\Core();
 
@@ -19,19 +20,34 @@ $app->base('/skeletons/webiik/example/');
 // Todo: Think how will work the translations of app and posts.
 
 // Add middlewares
-//$app->add(new \MySpace\Middleware());
-// Todo: Add $request
-// $mw1 = function ($request, $response, $next) {
-$mw1 = function ($response, $next) {
+$app->add('\MySpace\Middleware', 'mw1');
+$app->add('\MySpace\MiddlewareTwo:launch', ['mw2']);
+
+// function ($response, $next, ...$args)
+$mw1 = function ($response, $next, $role, $action = null) {
     echo 'BEFORE ';
+    echo '<br/>ROLE: ' . $role;
+    echo '<br/>ACTION: ' . $action . '<br/>';
     $next($response);
     echo ' AFTER';
 };
 
+$arr = [];
+$arr[] = $mw1;
+$arr[] = $mw1;
+
+// Todo: Middlewares - class Middleware should care just about middlewares, it should not recognize app, route, etc
+// Todo: Middlewares - optimize storing of same annonymous functions
+if($arr[0] == $arr[1]){
+    echo 'SAME';
+} else {
+    echo 'DIFFERENT';
+}
+
+
+
 // Add routes with optional middlewares
-$app->map(['GET'], '/', 'Webiik\Controller:launch', 'home')->add($mw1);
-// Todo: Passing arguments to middleware $request
-// $app->map(['GET'], '/', 'Webiik\Controller:launch', 'home')->add($mw1, ['args']);
+$app->map(['GET'], '/', 'Webiik\Controller:launch', 'home')->add($mw1, ['user', 'select']);
 $app->map(['GET'], '/page1', 'Webiik\Controller:launch', 'page1');
 
 // Add error routes

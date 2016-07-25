@@ -37,9 +37,9 @@ class Route
      * @param $callable
      * @return $this
      */
-    public function add($callable)
+    public function add($callable, $args = null)
     {
-        $this->middleware->addRouteMiddleware($this->routeId, $callable);
+        $this->middleware->addRouteMiddleware($this->routeId, $callable, $args);
         return $this;
     }
 
