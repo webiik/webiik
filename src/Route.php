@@ -1,5 +1,6 @@
 <?php
 namespace Webiik;
+use Pimple\Container;
 
 /**
  * Class Route
@@ -20,27 +21,26 @@ class Route
     private $routeId;
 
     /**
-     * @var Middleware
+     * @var Core
      */
-    private $middleware;
+    private $core;
 
     /**
      * @param int $routeId
      */
-    public function __construct($routeId, Middleware $middleware)
+    public function __construct($routeId, Core $core)
     {
         $this->routeId = $routeId;
-        $this->middleware = $middleware;
+        $this->core = $core;
     }
 
     /**
-     * @param $callable
+     * @param $mw
      * @return $this
      */
-    public function add($callable, $args = null)
+    public function add($mw, $args = null)
     {
-        $this->middleware->addRouteMiddleware($this->routeId, $callable, $args);
+        $this->core->add($mw, $args, $this->routeId);
         return $this;
     }
-
 }

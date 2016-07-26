@@ -13,52 +13,24 @@ class Middleware
 {
     /**
      * Middleware storage
-     * We can store middlewares under the following keys:
-     * 'app' - all app middlewares
-     * '{routeId}' - all route middlewares
-     * 'dest' - last middleware to be run
-     *
+     * Every middleware must be array with the following keys:
+     * 'args' - array of arguments, can be whatever
+     * 'mw' - callable or string, must be defined by:
+     * 1. callable: anonymous function | or
+     * 2. string: class name of invokable class eg.: Webiik\ClassName | or
+     * 3. string: class name and method to be launched eg.: Webiik\ClassName:launch
      * @var array
      */
     private $middlewares = [];
 
     /**
-     * Middleware can be defined by:
-     * 1. callable - anonymous function
-     * 2. string - class name of invokable class eg.: Webiik\ClassName
-     * 3. string - class name and method to be launched eg.: Webiik\ClassName:launch
-     * @param string|callable $mw
-     */
-    public function addAppMiddleware($mw, $args = null)
-    {
-        $this->middlewares['app'][] = ['mw' => $mw, 'args' => $args];
-    }
-
-    /**
-     * @param $routeId
-     * @param string|callable $mw
-     */
-    public function addRouteMiddleware($routeId, $mw, $args = null)
-    {
-        $this->middlewares[$routeId][] = ['mw' => $mw, 'args' => $args];
-    }
-
-    /**
-     * @param string|callable $mw
-     */
-    public function addDestination($mw, $args = null)
-    {
-        $this->middlewares['dest'][0] = ['mw' => $mw, 'args' => $args];
-    }
-
-    /**
      * Run all middlewares
-     * @param $routeId
+     * @param $middlewares
      * @throws \Exception
      */
-    public function run($routeId)
+    public function run($middlewares)
     {
-        $this->middlewares = array_merge($this->getAppMiddlewares(), $this->getRouteMiddlewares($routeId), $this->getDestination());
+        $this->middlewares = $middlewares;
 
         // Run first middleware
         $mw = $this->middlewares[0]['mw'];
@@ -118,39 +90,5 @@ class Middleware
         };
 
         return $next;
-    }
-
-    /**
-     * @return array
-     */
-    private function getAppMiddlewares()
-    {
-        if (isset($this->middlewares['app'])) {
-            return array_reverse($this->middlewares['app']);
-        }
-        return [];
-    }
-
-    /**
-     * @param $routeId
-     * @return array
-     */
-    private function getRouteMiddlewares($routeId)
-    {
-        if (isset($this->middlewares[$routeId])) {
-            return array_reverse($this->middlewares[$routeId]);
-        }
-        return [];
-    }
-
-    /**
-     * @return array
-     */
-    private function getDestination()
-    {
-        if (isset($this->middlewares['dest'])) {
-            return $this->middlewares['dest'];
-        }
-        return [];
     }
 }

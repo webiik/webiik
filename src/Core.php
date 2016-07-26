@@ -5,10 +5,17 @@ use Pimple\Container;
 
 class Core
 {
+    // Todo: Write comments
+
     /**
      * @var Container
      */
     private $container;
+
+    /**
+     * @var array
+     */
+    private $middlewares = [];
 
     /**
      * Core constructor.
@@ -21,24 +28,16 @@ class Core
             return new Router();
         };
 
-        $this->container['middleware'] = function ($c) {
-            return new Middleware();
-        };
-
-        $this->container['error404'] = $this->container->protect(function () {
-            header('HTTP/1.1 404 Not Found');
-            echo '<h1>404</h1>';
-        });
-
-        $this->container['error405'] = $this->container->protect(function () {
-            header('HTTP/1.1 405 Method Not Allowed');
-            echo '<h1>405</h1>';
-        });
+        $this->middlewares['functions'] = [];
     }
 
-    public function add($callable, $args = null)
+    public function add($mw, $args = null, $routeId = null)
     {
-        $this->middleware()->addAppMiddleware($callable, $args);
+        if (is_numeric($routeId)) {
+            $this->middlewares[$routeId][] = ['mw' => $mw, 'args' => $args];
+        } else {
+            $this->middlewares['app'][] = ['mw' => $mw, 'args' => $args];
+        }
     }
 
     public function addService($name, $factory)
@@ -79,7 +78,7 @@ class Core
     public function map($methods, $route, $handler, $name = false)
     {
         $routeId = $this->router()->map($methods, $route, $handler, $name);
-        return new Route($routeId, $this->middleware());
+        return new Route($routeId, $this);
     }
 
     public function run()
@@ -90,33 +89,43 @@ class Core
         if ($routeInfo['http_status'] == 404) $this->error(404);
         if ($routeInfo['http_status'] == 405) $this->error(405);
 
-        // Assign route handler to middleware destination
+        // Get handler class name
         $handler = explode(':', $routeInfo['handler']);
         $className = $handler[0];
+
+        // Prepare args for current route handler
         $args[] = $routeInfo;
-        if(isset($this->container[$className])){
+        if (isset($this->container[$className])) {
             $args = array_merge($args, $this->container[$className]);
         }
-        $this->middleware()->addDestination($routeInfo['handler'], $args);
 
         // Run middlewares
-        $this->middleware()->run($routeInfo['id']);
+        $middleware = new Middleware();
+        $middleware->run(array_merge(
+            array_reverse($this->middlewares['app']),
+            array_reverse($this->middlewares[$routeInfo['id']]),
+            [['mw' => $routeInfo['handler'], 'args' => $args]]
+        ));
     }
 
     private function error($error)
     {
-        $handler = $this->container['error' . $error];
+        if (isset($this->container['error' . $error])) {
 
-        if(is_callable($handler)){
-            $handler();
-            exit;
+            $handler = $this->container['error' . $error];
+            $handler = explode(':', $handler);
+            $className = $handler[0];
+            $methodName = $handler[1];
+            $handler = new $className;
+            $handler->$methodName();
+
+        } else {
+
+            if ($error == 404) header('HTTP/1.1 404 Not Found');
+            if ($error == 404) header('HTTP/1.1 405 Method Not Allowed');
+            echo '<h1>' . $error . '</h1>';
         }
 
-        $handler = explode(':', $handler);
-        $className = $handler[0];
-        $methodName = $handler[1];
-        $handler = new $className;
-        $handler->$methodName();
         exit;
     }
 
@@ -126,13 +135,5 @@ class Core
     private function router()
     {
         return $this->container['router'];
-    }
-
-    /**
-     * @return Middleware
-     */
-    private function middleware()
-    {
-        return $this->container['middleware'];
     }
 }
