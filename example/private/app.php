@@ -1,7 +1,4 @@
 <?php
-require __DIR__ . '/../../vendor/autoload.php';
-require __DIR__ . '/../vendor/autoload.php';
-
 require __DIR__ . '/classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
@@ -9,9 +6,9 @@ require __DIR__ . '/middlewares/MiddlewareTwo.php';
 $app = new \Webiik\Core();
 
 // App base path, relative to localhost
-$app->base('/skeletons/webiik/example/');
+$app->base('/skeletons/webiik/example/')
 
-// Todo: Config error reporting, Catching, printing the exceptions and the errors
+// Todo: Config
 //throw new Exception('Uhh oh');
 
 // Todo: Think how to implement Flash messages, Logs... If they should be part of Core or Skeleton. And of
@@ -63,7 +60,8 @@ $app->addService('Webiik\Controller', $factoryController);
 $app->run();
 
 // Uncomment for memory usage testing
-echo '<br/>' . (memory_get_usage() / 1000000) . ' MB<br>';
+echo '<br/><br/>Peak memory usage: ' . (memory_get_peak_usage() / 1000000) . ' MB';
+echo '<br/>End memory usage: ' . (memory_get_usage() / 1000000) . ' MB';
 
 // Uncomment for getting of all defined PHP vars
 //print_r(get_defined_vars());
