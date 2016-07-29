@@ -20,15 +20,16 @@ class Core
     /**
      * Core constructor.
      */
-    public function __construct()
+    public function __construct($config = [])
     {
         $this->container = new Container();
 
         $this->container['router'] = function ($c) {
             return new Router();
         };
+        $this->routerBase();
 
-        $this->middlewares['functions'] = [];
+        $this->addParam('config', $config);
     }
 
     public function add($mw, $args = null, $routeId = null)
@@ -68,11 +69,6 @@ class Core
     public function error405($handler)
     {
         $this->container['error405'] = $handler;
-    }
-
-    public function base($basePath)
-    {
-        $this->router()->base($basePath);
     }
 
     public function map($methods, $route, $handler, $name = false)
@@ -135,5 +131,13 @@ class Core
     private function router()
     {
         return $this->container['router'];
+    }
+
+    /**
+     * Set Router base path
+     */
+    private function routerBase()
+    {
+        $this->router()->base(dirname($_SERVER['SCRIPT_NAME']));
     }
 }

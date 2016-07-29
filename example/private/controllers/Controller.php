@@ -11,6 +11,9 @@ class Controller
     public function __construct($response, $routeInfo, \MyClass $myClass, \MyClass $myClassTwo)
     {
         $this->myClass = $myClass;
+
+        //$this->connection = $connection;
+
         print_r($routeInfo);
         print_r($response);
     }

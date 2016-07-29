@@ -3,16 +3,10 @@ require __DIR__ . '/classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
-$app = new \Webiik\Core();
+$app = new \Webiik\Core($config);
 
-// App base path, relative to localhost
-$app->base('/skeletons/webiik/example/')
-
-// Todo: Config
-//throw new Exception('Uhh oh');
-
-// Todo: Think how to implement Flash messages, Logs... If they should be part of Core or Skeleton. And of
-// course think about how to implement Skeleton itself.
+// Todo:2 Think how to implement Skeleton, CMS and services like Flash messages, Logs...
+// If they should be part of Core or Skeleton.
 
 // Todo: Think how will work the translations of app and posts.
 
@@ -38,7 +32,7 @@ $app->error404('Webiik\Error404:launch');
 $app->error405('Webiik\Error405:launch');
 
 // Factory
-$factoryController = function () {
+$factoryController = function ($c) {
     return [new MyClass(), new MyClass()];
 };
 

@@ -67,7 +67,10 @@ class Middleware
         } elseif (is_object($mw) && !is_callable($mw) && method_exists($mw, $method)) {
             is_array($args) ? $mw->$method($response, $this->next(), ...$args) : $mw->$method($response, $this->next(), $args);
         } else {
-            throw new \Exception('Invalid middleware.');
+            if(is_array($mw)){
+                $mw = $mw[0];
+            }
+            throw new \Exception($mw . ' is invalid middleware.');
         }
     }
 
