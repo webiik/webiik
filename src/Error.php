@@ -158,6 +158,7 @@ class Error
         if ($this->config['silent']) {
             $sh = $this->silentHandler;
             $sh();
+            exit;
         } else {
             echo $this->message($type, $message, $file, $line, $trace);
         }
