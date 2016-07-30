@@ -5,10 +5,9 @@ require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
 $app = new \Webiik\Core($config);
 
-// Todo:2 Think how to implement Skeleton, CMS and services like Flash messages, Logs...
-// If they should be part of Core or Skeleton.
-
-// Todo: Think how will work the translations of app and posts.
+// Add error routes
+$app->error404('Webiik\Error404:launch');
+$app->error405('Webiik\Error405:launch');
 
 // Add middlewares
 $app->add('\MySpace\Middleware', 'app1');
@@ -27,10 +26,6 @@ $mw1 = function ($response, $next, $role, $action = null) {
 $app->map(['GET'], '/', 'Webiik\Controller:launch', 'home')->add($mw1, ['route1']);
 $app->map(['GET'], '/page1', 'Webiik\Controller:launch', 'page1');
 
-// Add error routes
-$app->error404('Webiik\Error404:launch');
-$app->error405('Webiik\Error405:launch');
-
 // Factory
 $factoryController = function ($c) {
     return [new MyClass(), new MyClass()];
@@ -43,12 +38,17 @@ $factoryController = function ($c) {
 $app->addService('Webiik\Controller', $factoryController);
 
 // Add skeleton
-// $skeleton = new \Webiik\Skeleton();
-//$skeleton->install();
-//$skeleton->map($app);
+// Todo: All actions needed for Skeleton:
+// php_internal_ecnoding('utf-8');
+// language detection from URI
+// translations, localization (units, timezone)
+// loading routes with middlewares from files
+// creating/adding params/factories and models and render
+// handling database connections
+// $skeleton = new \Webiik\Skeleton($app);
 
 // Add CMS
-// $cms = new \Webiik\Cms();
+// $cms = new \Webiik\Cms($app);
 
 // Run app
 $app->run();

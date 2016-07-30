@@ -23,6 +23,7 @@ class Core
     public function __construct($config = [])
     {
         $this->container = new Container();
+        $this->container = new Container();
 
         $this->container['router'] = function ($c) {
             return new Router();
@@ -104,7 +105,7 @@ class Core
         ));
     }
 
-    private function error($error)
+    public function error($error)
     {
         if (isset($this->container['error' . $error])) {
 

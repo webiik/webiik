@@ -8,7 +8,7 @@ $config = $config->loadConfig();
 
 // Set up improved displaying of errors
 $err = new \Webiik\Error([
-    'silent' => $config['dev'],
+    'silent' => !$config['dev'],
     'log' => true,
     'logDir' => __DIR__ . '/private/logs',
     'logFileName' => 'errlog',
