@@ -46,7 +46,7 @@ class Error
 
         // Pre-define some silent handler
         $this->silentHandler = function () {
-            echo '<h1>Error occurred:(</h1>';
+            echo '<h1>Unexpected situation:(</h1>';
             echo '<p>We are working on it.</p>';
         };
 
@@ -260,7 +260,7 @@ class Error
         $pos = strrpos($file, '/');
         $msg .= substr($file, 0, $pos + 1) . '<b>' . substr($file, $pos + 1, strlen($file)) . '</b> ';
         $msg .= '(on line: <b>' . $line . '</b>)<br/><br/>';
-        if (isset($trace[0])) {
+        if (count($trace)>0) {
             $msg .= 'Trace:<br/>';
             foreach ($trace as $traceLine) {
                 $msg .= '#' . $traceLine . '<br/>';
