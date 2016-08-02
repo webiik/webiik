@@ -41,7 +41,7 @@ $app->addService('Webiik\Controller', $factoryController);
 // Todo: All actions needed for Skeleton:
 // php_internal_ecnoding('utf-8');
 // language detection from URI
-// translations, localization (units, timezone)
+// how will work translations and localizations (units, timezone) in Skeleton
 // loading routes with middlewares from files
 // creating/adding params/factories and models and render
 // handling database connections
@@ -49,6 +49,34 @@ $app->addService('Webiik\Controller', $factoryController);
 
 // Add CMS
 // $cms = new \Webiik\Cms($app);
+$conv = new \Webiik\Conversion();
+$conv->addConv('km/h__kmh', 1, 'speed');
+$conv->addConv('mp/h__mph', 0.621371192, 'speed');
+$conv->addConv('czk', 24, 'currency');
+$conv->addConv('usd', 1, 'currency');
+
+$lang = 'en';
+$trans = new \Webiik\Translation($lang);
+$trans->addConv($conv);
+$trans->addDateFormat($lang, 'default', 'j. M Y');
+$trans->addTimeFormat($lang, 'default', 'H:i:s');
+$trans->addNumberFormat($lang, 'default', [2, '.', ',']);
+$trans->addCurrencyFormat($lang, 'usd', '$ %i');
+$trans->addCurrencyFormat($lang, 'czk', '%i CZK');
+$trans->addTrans($lang, [
+    't1' => 'Today is {timeStamp, date}, the time is {timeStamp, time}.',
+    't2' => '{numCats, plural, =0 {Any cat have} =1 {One cat has} =2+ {{numCats} cats have}} birthday.',
+    't3' => 'This car costs {price, currency, currency}.',
+    't4' => '{gender, select, =male {He} =female {She}} is {gender}. {gender, select, =male {Males like beer.} =female {Females like wine.}}',
+    't5' => 'Maximal allowed speed is {speed, conv, kmh, mph, su}.',
+
+]);
+echo $trans->_p('t1', ['timeStamp' => time(), 'numCats' => 100000]) . '<br/><br/>';
+echo $trans->_p('t2', ['numCats' => 1]) . '<br/><br/>';
+echo $trans->_p('t3', ['price' => $conv->conv('500000 czk', 'usd', 0), 'currency' => 'usd']) . '<br/><br/>';
+echo $trans->_p('t3', ['price' => 500000, 'currency' => 'czk']) . '<br/><br/>';
+echo $trans->_p('t4', ['gender' => 'male']) . '<br/><br/>';
+echo $trans->_p('t5', ['speed' => 200]) . '<br/><br/>';
 
 // Run app
 $app->run();
