@@ -56,6 +56,7 @@ class Conversion
      * @param $to
      * @param bool $decimals
      * @return bool|float|string
+     * @throws \Exception
      */
     public function conv($from, $to, $decimals = false)
     {
@@ -67,7 +68,7 @@ class Conversion
 
             $fromVal = floatval(str_replace(' ', '', $fromVal));
             if (!is_numeric($fromVal)) {
-                return 'Parameter ' . htmlspecialchars($fromVal) . ' must be a number.';
+                throw new \Exception('Parameter ' . htmlspecialchars($fromVal) . ' must be a number.');
             }
 
             $fromUnit = $matches[2][$i];
@@ -77,13 +78,13 @@ class Conversion
             if ($rates) {
                 $conv += $rates[1] / $rates[0] * $fromVal;
             } else {
-                return 'Units can\'t be converted between each other.';
+                throw new \Exception('Units can\'t be converted between each other.');
             }
 
             $i++;
         }
 
-        return is_numeric($decimals) ? number_format($conv, $decimals) : $conv;
+        return is_numeric($decimals) ? number_format($conv, $decimals, '', '') : $conv;
     }
 
     /**
