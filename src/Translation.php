@@ -11,10 +11,562 @@ namespace Webiik;
  */
 class Translation
 {
-    // Todo: Translations/localization (units)
+    /**
+     * @var Conversion
+     */
+    private $conv;
 
-    private $translation = [
-        't1' => 'Dnes {timeStamp, date, short} mám {numCats, number} {numCats, plural, 0:koček 1: kočku 2-4:kočky 5+:koček}',
-        't2' => 'Auto jede rychlostí {speed, conv, km/h, mph} km/h',
-    ];
+    /**
+     * Language of requested translation
+     * See more in __construct
+     * @var
+     */
+    private $lang;
+
+    /**
+     * Array of user defined translation fallbacks
+     * Look at setFallback() for more info
+     * @var array
+     */
+    private $fallbacks = [];
+
+    /**
+     * Array of user defined translations
+     * Look at addTrans() for more info
+     * @var array
+     */
+    private $translation = [];
+
+    /**
+     * Array of user defined formats
+     * Look at add{*}Format() methods for more info
+     * @var array
+     */
+    private $types = [];
+
+    /**
+     * Set language of requested translation
+     * @param $lang
+     */
+    public function __construct($lang)
+    {
+        $this->lang = $lang;
+    }
+
+    /**
+     * Add date format for given lang
+     * @param string $lang : eg. 'en'
+     * @param string $formatName : eg. 'medium'
+     * @param string $formatPattern : php date() format eg. 'j. M Y'
+     * @throws \Exception
+     * Note: Use $formatName 'default' to format date types without format signature
+     */
+    public function addDateFormat($lang, $formatName, $formatPattern)
+    {
+        $this->isString($formatName);
+        $this->isString($formatPattern);
+        $this->isString($lang);
+        $this->types['date'][$lang][$formatName] = $formatPattern;
+    }
+
+    /**
+     * Add time format for given lang
+     * @param string $formatName : eg. 'medium'
+     * @param string $formatPattern : php date() format eg. 'H:i:s'
+     * @param string $lang : eg. 'en'
+     * @throws \Exception
+     * Note: Use $formatName 'default' to format time types without format signature
+     */
+    public function addTimeFormat($lang, $formatName, $formatPattern)
+    {
+        $this->isString($formatName);
+        $this->isString($formatPattern);
+        $this->isString($lang);
+        $this->types['time'][$lang][$formatName] = $formatPattern;
+    }
+
+    /**
+     * Add number format for given lang
+     * @param string $lang : eg. 'en'
+     * @param string $formatName : eg. 'default'
+     * @param array $formatPattern : php number_format() format eg. [2, ',', ' ']
+     * @throws \Exception
+     * Note: Use $formatName 'default' to format number types without format signature
+     */
+    public function addNumberFormat($lang, $formatName, array $formatPattern)
+    {
+        $this->isString($formatName);
+        $this->isArrSeq($formatPattern);
+        $this->isString($lang);
+        $this->types['number'][$lang][$formatName] = $formatPattern;
+    }
+
+    /**
+     * Add number format for given lang
+     * @param string $lang : eg. 'en'
+     * @param string $currencyName : eg. 'usd'
+     * @param string $formatPattern : must contain %i eg. '$ %i'
+     * @throws \Exception
+     */
+    public function addCurrencyFormat($lang, $currencyName, $formatPattern)
+    {
+        $this->isString($currencyName);
+        $this->isString($formatPattern);
+        if (strpos($formatPattern, '%i') === false) {
+            throw new \Exception('Currency pattern must include the following characters: %i');
+        }
+        $this->types['currency'][$lang][$currencyName] = $formatPattern;
+    }
+
+    /**
+     * Set long month names translation
+     * @param array $keyValArr : eg. ['January' => 'Leden']
+     * @param string $lang : eg. 'en'
+     * @throws \Exception
+     */
+    public function setLongMonthNamesTrans(array $keyValArr, $lang)
+    {
+        $this->isArrAssoc($keyValArr);
+        $this->isString($lang);
+        $this->types['date'][$lang]['monthsLong'] = $keyValArr;
+    }
+
+    /**
+     * Set short month names translation
+     * @param array $keyValArr : eg. ['Jan' => 'Led']
+     * @param string $lang : eg. 'en'
+     * @throws \Exception
+     */
+    public function setShortMonthNamesTrans(array $keyValArr, $lang)
+    {
+        $this->isArrAssoc($keyValArr);
+        $this->isString($lang);
+        $this->types['date'][$lang]['monthsShort'] = $keyValArr;
+    }
+
+    /**
+     * Set fallback languages for given $lang
+     * Priority of fallback is determined by order in array
+     * @param string $lang : eg. 'en'
+     * @param array $fallbacks : eg. ['es', 'de']
+     */
+    public function setFallback($lang, array $fallbacks)
+    {
+        $this->isString($lang);
+        $this->isArrSeq($fallbacks);
+        $this->fallbacks[$lang] = $fallbacks;
+    }
+
+    /**
+     * Add translation record to translation array for given lang
+     * @param string $lang : eg. 'en'
+     * @param array $keyValArr : eg. ['txt1' => 'Hello {name}! I feel {mood}.', 'txt2' => '{greeting} World!']
+     * @throws \Exception
+     */
+    public function addTrans($lang, array $keyValArr)
+    {
+        $this->isArrAssoc($keyValArr);
+        $this->isString($lang);
+        $this->translation[$lang] = [];
+        $this->translation[$lang] = array_merge($this->translation[$lang], $keyValArr);
+    }
+
+    /**
+     * Return parsed string from translation array by given key
+     * @param string $key : 'txt1'
+     * @param array $val : eg. ['name' => 'World', 'mood' => 'good']
+     * @return bool|string
+     * @throws \Exception
+     */
+    public function _p($key, array $val)
+    {
+        $this->isString($key);
+        $this->isArrAssoc($val);
+        $string = $this->getRow($key);
+        return $string ? $this->parse($string, $val) : false;
+    }
+
+    /**
+     * Return string from translation array by given key
+     * @param $key : 'txt1'
+     * @return bool|mixed
+     * @throws \Exception
+     */
+    public function _t($key)
+    {
+        $this->isString($key);
+        $string = $this->getRow($key);
+        return $string ? $string : false;
+    }
+
+    /**
+     * Add Conversion obj and allow to use conv type
+     * @param Conversion $conversion
+     */
+    public function addConv(Conversion $conversion)
+    {
+        $this->conv = $conversion;
+    }
+
+    /**
+     * Return value of key from translation array, if it's needed look for fallbacks
+     * Throw exception if key does not exist in translation and fallbacks for the selected lang
+     * @param $key
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getRow($key)
+    {
+        if (isset($this->translation[$this->lang][$key])) {
+            return $this->translation[$this->lang][$key];
+        }
+
+        if (isset($this->fallbacks[$this->lang]) && is_array($this->fallbacks[$this->lang])) {
+            foreach ($this->fallbacks[$this->lang] as $fallbackLang) {
+                if (isset($this->translation[$fallbackLang][$key])) {
+                    return $this->translation[$fallbackLang][$key];
+                }
+            }
+        }
+
+        throw new \Exception('Key \'' . htmlspecialchars($key) . '\' misses \'' . htmlspecialchars($this->lang) . '\' translation.');
+    }
+
+    /**
+     * Return value of given array key from given array
+     * Throws exception if given array does not contain given array key
+     * @param array $arr
+     * @param string $paramName (array key)
+     * @return string
+     * @throws \Exception
+     */
+    private function getParamVal(array $arr, $paramName)
+    {
+        if (isset($arr[$paramName])) {
+            $paramVal = $arr[$paramName];
+        } else {
+            throw new \Exception('Missing value for param: ' . htmlspecialchars($paramName));
+        }
+
+        return $paramVal;
+    }
+
+    /**
+     * Return parsed string
+     * Some parsers throws exceptions
+     * @param string $string
+     * @param array $val
+     * @return string
+     * @throws \Exception
+     */
+    private function parse($string, array $val)
+    {
+        $brackets = $this->extractBrackets($string);
+
+        $bracketNum = 0;
+        foreach ($brackets as $bracket) {
+
+            // Get bracket's paramName, type and format
+            preg_match_all('/^(\w+),?\s?(\w+)?,?\s?(.*)$/', $bracket, $matches);
+            $paramName = $matches[1][0];
+            $type = $matches[2][0];
+            $format = $matches[3][0];
+
+            // Get value of paramName
+            $value = $this->getParamVal($val, $paramName);
+
+            if (!$type) {
+                $bracketResult = $this->getParamVal($val, $paramName);
+            }
+
+            if ($type == 'conv' && is_object($this->conv) && $this->conv instanceof Conversion) {
+                $bracketResult = $this->parseConv($value, $format);
+            }
+
+            if ($type == 'number') {
+                $bracketResult = $this->parseNumber($value, $format);
+            }
+
+            if ($type == 'currency') {
+                $currency = $this->getParamVal($val, $format);
+                $bracketResult = $this->parseCurrency($value, $currency);
+            }
+
+            if ($type == 'date' || $type == 'time') {
+                $bracketResult = $this->parseDateTime($value, $type, $format);
+            }
+
+            if ($type == 'plural' || $type == 'select') {
+                $bracketResult = $this->parsePluralSelect($value, $format, $val);
+            }
+
+            if (isset($bracketResult)) {
+                $string = str_replace('{' . $bracket . '}', $bracketResult, $string);
+            }
+
+            $bracketNum++;
+        }
+
+        return $string;
+    }
+
+    /**
+     * Return converted value, optionally with value unit
+     * @param string $value
+     * @param string $format : eg.'kmh, mph, su'
+     * @return string
+     * @throws \Exception
+     */
+    private function parseConv($value, $format)
+    {
+        $fromTo = explode(',', $format);
+        $units = '';
+
+        // Add units to $value and format units
+        if (isset($fromTo[2])) {
+
+            $units = trim($fromTo[1]);
+
+            if (strpos($fromTo[2], 'u') !== false) {
+                $units = strtoupper($units);
+            }
+
+            if (strpos($fromTo[2], 'l') !== false) {
+                $units = strtolower($units);
+            }
+
+            if (strpos($fromTo[2], 'f') !== false) {
+                $units = ucfirst($units);
+            }
+
+            if (strpos($fromTo[2], 's') !== false) {
+                $units = ' ' . $units;
+            }
+        }
+
+        $result = $this->conv->conv($value . $fromTo[0], $fromTo[1], 0) . $units;
+
+        return $result;
+    }
+
+    /**
+     * Return formatted number according to $format
+     * Return english formatted number, if $format does not correspond to any of user defined formats
+     * Remove decimals if they are just .00 etc.
+     * Look at $format description to know how to define user formats
+     * @param $num
+     * @param bool $format
+     * @return string
+     */
+    private function parseNumber($num, $format = false)
+    {
+        // Get format
+        if ((!$format || $format == 'percent' || $format == 'percentage')
+            && isset($this->types['number'][$this->lang]['default'])
+        ) {
+            $numFormat = $this->types['number'][$this->lang]['default'];
+        }
+        if ($format && isset($this->types['number'][$this->lang][$format])) {
+            $numFormat = $this->types['number'][$this->lang][$format];
+        }
+        if (!isset($numFormat)) $numFormat = [];
+
+        // Show decimals only if needed
+        if (!is_float($num)) {
+            $numFormat[0] = 0;
+        }
+
+        $result = number_format($num, ...$numFormat);
+
+        // Add percent char if format is percent or percentage
+        if ($format == 'percent') {
+            $result .= ' %';
+        }
+        if ($format == 'percentage') {
+            $result .= '%';
+        }
+
+        return $result;
+    }
+
+    /**
+     * Return formatted currency according to $currency format
+     * Throw exception if $currency format does not exist
+     * @param $amount
+     * @param $currency
+     * @return string
+     * @throws \Exception
+     */
+    private function parseCurrency($amount, $currency)
+    {
+        // Format number value
+        $amount = $this->parseNumber($amount);
+
+        // Check if user defined pattern for this currency format
+        if (!isset($this->types['currency'][$this->lang][$currency])) {
+            throw new \Exception('Missing currency format: \'' . htmlspecialchars($currency) . '\' in arr $types[\'' . $this->lang . '.\'][\'currency\'].');
+        }
+
+        $result = str_replace('%i', $amount, $this->types['currency'][$this->lang][$currency]);
+
+        return $result;
+    }
+
+    /**
+     * Return formatted date or time according to $format
+     * Return Y/m/d  formatted date, if $format does not correspond to any of user defined formats
+     * Translate long and short month names if user defined translations
+     * @param $timestamp
+     * @param $type
+     * @param $format
+     * @return bool|string
+     */
+    private function parseDateTime($timestamp, $type, $format = false)
+    {
+        // Get format
+        $dateFormat = $type == 'time' ? 'H:i:s' : 'Y/m/d';
+        if ($format && isset($this->types[$type][$this->lang][$format])) {
+            $dateFormat = $this->types[$type][$this->lang][$format];
+        }
+        if (!$format && isset($this->types[$type][$this->lang]['default'])) {
+            $dateFormat = $this->types[$type][$this->lang]['default'];
+        }
+
+        $bracketResult = DATE($dateFormat, $timestamp);
+
+        // Translate month names if we have their translations and language is not english
+        if (isset($this->types[$type][$this->lang]['monthsLong'])) {
+            $bracketResult = strtr($bracketResult, $this->types[$type][$this->lang]['monthsLong']);
+        }
+        if (isset($this->types[$type][$this->lang]['monthsShort'])) {
+            $bracketResult = strtr($bracketResult, $this->types[$type][$this->lang]['monthsShort']);
+        }
+
+        return $bracketResult;
+    }
+
+    /**
+     * Return part of $conditionalMessage matching the $value
+     * Replace params with their values in the matching conditional message
+     * Throw exception if there is no match
+     * @param $value
+     * @param $conditionalMessage
+     * @param $messageParams
+     * @throws \Exception
+     * @return mixed
+     */
+    private function parsePluralSelect($value, $conditionalMessage, $messageParams = [])
+    {
+        // Get the conditions
+        preg_match_all('/\=([\d\w]+\-?\+?([\d]+)?)/', $conditionalMessage, $conditions);
+
+        // Get index(key) of the condition which matches the $value
+        $conditionKey = 0;
+        $conditionKeyFound = false;
+        foreach ($conditions[1] as $condition) {
+            if (preg_match('/^\w+$/', $condition) && $value == $condition) {
+                $conditionKeyFound = true;
+                break;
+            }
+            if (preg_match('/^\d+$/', $condition) && $value == $condition) {
+                $conditionKeyFound = true;
+                break;
+            }
+            if (preg_match('/^(\d+)\-(\d+)$/', $condition, $matches)) {
+                if ($value >= $matches[1] && $value <= $matches[2]) {
+                    $conditionKeyFound = true;
+                    break;
+                }
+            }
+            if (preg_match('/^(\d+)\+$/', $condition, $matches)) {
+                if ($value >= $matches[1]) {
+                    $conditionKeyFound = true;
+                    break;
+                }
+            }
+            $conditionKey++;
+        }
+
+        if (!$conditionKeyFound) {
+            throw new \Exception('Condition key for \'' . $value . '\' not found.');
+        }
+
+        // Get all brackets in the conditional message
+        $formatBrackets = $this->extractBrackets($conditionalMessage);
+
+        // Get conditional message relevant to the $value
+        $bracketResult = $formatBrackets[$conditionKey];
+
+        // Replace variable in relevant condition with relevant value
+        foreach ($messageParams as $paramName => $value) {
+            if (is_numeric($value)) $value = $this->parseNumber($value);
+            $bracketResult = str_replace('{' . $paramName . '}', $value, $bracketResult);
+        }
+
+        return $bracketResult;
+    }
+
+    /**
+     * Return array with content of all outer brackets in given string
+     * @param $string
+     * @return array
+     */
+    private function extractBrackets($string)
+    {
+        $extractions = [];
+        $openingBrackets = 0;
+        $closingBrackets = 0;
+        $brackets = [];
+
+        for ($i = 0; $i < strlen($string); $i++) {
+
+            if ($string[$i] == '{') {
+                $brackets[] = $i;
+                $openingBrackets++;
+            }
+            if ($string[$i] == '}') {
+                $brackets[] = $i;
+                $closingBrackets++;
+            }
+
+            if ($openingBrackets == $closingBrackets && $closingBrackets > 0) {
+                $lastKey = count($brackets);
+                $extractions[] = substr($string, $brackets[0] + 1, $brackets[$lastKey - 1] - $brackets[0] - 1);
+                $openingBrackets = 0;
+                $closingBrackets = 0;
+                $brackets = [];
+            }
+        }
+
+        return $extractions;
+    }
+
+    /**
+     * Some helper methods
+     * Don't copy paste these methods, they return
+     * expected results only in environment of this class.
+     */
+    private function isString($val)
+    {
+        if (!is_string($val)) {
+            throw new \Exception('Parameter must be a string.');
+        }
+        return true;
+    }
+
+    private function isArrAssoc($val)
+    {
+        if (!is_array($val) || isset($val[0])) {
+            throw new \Exception('Parameter must be associative array.');
+        }
+        return true;
+    }
+
+    private function isArrSeq($val)
+    {
+        if (!is_array($val) || !isset($val[0])) {
+            throw new \Exception('Parameter must be sequential array.');
+        }
+        return true;
+    }
 }
