@@ -159,6 +159,69 @@ class Translation
 
     /**
      * Add translation record to translation array for given lang
+     * Translation can be written in syntax very similar to ICU messages eg.:
+
+     * 1)
+     * Simple variable signature:
+     * {variableName}
+
+     * Example:
+     * Hello {name}!
+     *
+     * 2)
+     * 'time' and 'date' types signature:
+     * {variableName, type, format(optional)}
+     *
+     * Example:
+     * Today is {timeStamp, date}, the time is {timeStamp, time}.
+     *
+     * Example with formatting:
+     * Today is {timeStamp, date, long}, the time is {timeStamp, time, medium}.
+     *
+     * 3)
+     * 'plural' type signature:
+     * {variableName, type, =num {message}...}
+     *
+     * Example:
+     * {numCats, plural, =0 {Any cat have} =1 {One cat has} =2+ {{numCats} cats have}} birthday.
+     *
+     * Available operators:
+     * =0 : exact count
+     * =1-4 : range
+     * =5+ : greater than
+     *
+     * 4)
+     * 'select' type signature:
+     * {variableName, type, =string {message}...}
+     *
+     * Example:
+     * {gender, select, =male {He} =female {She}} likes vanilla ice cream.
+     *
+     * Available operators:
+     * =string : exact string
+     *
+     * 5)
+     * 'currency' type signature:
+     * {variableName, type, currencyFormatVariableName}
+     *
+     * Example:
+     * The car costs {price, currency, currency}.
+     *
+     * 6)
+     * 'conv' type signature:
+     * {variableName, type, from, to, unitsFormatting(optional)}
+     *
+     * Example:
+     * Maximal allowed speed is {speed, conv, kmh, mph, su}
+     *
+     * Available units formatting:
+     * s - add space between number and unit
+     * u - units in uppercase
+     * l - units in lowercase
+     * f - first case upper
+     *
+     * Note: To work with conv type inject configured Conversion obj with method addConv()
+     *
      * @param string $lang : eg. 'en'
      * @param array $keyValArr : eg. ['txt1' => 'Hello {name}! I feel {mood}.', 'txt2' => '{greeting} World!']
      * @throws \Exception
