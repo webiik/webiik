@@ -84,7 +84,7 @@ class Error
         if (isset($err[$number])) {
             $err = $err[$number];
         } else {
-            $err = $number;
+            $err = $err[1] . ' ' . $number;
         }
 
         return $err;
@@ -161,6 +161,7 @@ class Error
             exit;
         } else {
             echo $this->message($type, $message, $file, $line, $trace);
+            exit;
         }
     }
 
@@ -260,7 +261,7 @@ class Error
         $pos = strrpos($file, '/');
         $msg .= substr($file, 0, $pos + 1) . '<b>' . substr($file, $pos + 1, strlen($file)) . '</b> ';
         $msg .= '(on line: <b>' . $line . '</b>)<br/><br/>';
-        if (count($trace)>0) {
+        if (count($trace) > 0) {
             $msg .= 'Trace:<br/>';
             foreach ($trace as $traceLine) {
                 $msg .= '#' . $traceLine . '<br/>';

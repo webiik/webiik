@@ -1,16 +1,17 @@
 <?php
+//$before = microtime(true);
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/private/vendor/autoload.php';
 
 // Load app config
 $config = new \Webiik\Config();
-$config = $config->loadConfig();
+$config = $config->loadConfig(__DIR__.'/private/app/config/');
 
 // Set up improved displaying of errors
 $err = new \Webiik\Error([
-    'silent' => !$config['dev'],
+    'silent' => $config['hideErrors'],
     'log' => true,
-    'logDir' => __DIR__ . '/private/logs',
+    'logDir' => __DIR__ . '/private/app/logs',
     'logFileName' => 'errlog',
     'logMaxFileSize' => 2, // in MB
     'logMaxTotalSize' => 20, // in MB
@@ -20,4 +21,6 @@ $err = new \Webiik\Error([
 ]);
 
 // Main app
-require __DIR__ . '/private/app.php';
+require __DIR__ . '/private/app/app.php';
+//$after = microtime(true);
+//echo '<br/><br/>Execution time: '. ($after-$before) . ' sec';

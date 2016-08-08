@@ -10,12 +10,12 @@ class Core
     /**
      * @var Container
      */
-    private $container;
+    protected $container;
 
     /**
      * @var array
      */
-    private $middlewares = [];
+    protected $middlewares = [];
 
     /**
      * Core constructor.
@@ -23,12 +23,11 @@ class Core
     public function __construct($config = [])
     {
         $this->container = new Container();
-        $this->container = new Container();
 
         $this->container['router'] = function ($c) {
             return new Router();
         };
-        $this->routerBase();
+        $this->router()->base($this->getScriptDir());
 
         $this->addParam('config', $config);
     }
@@ -98,9 +97,11 @@ class Core
 
         // Run middlewares
         $middleware = new Middleware();
+        $appMiddleawares = isset($this->middlewares['app']) ? $this->middlewares['app'] : [];
+        $routeMiddlewares = isset($this->middlewares[$routeInfo['id']]) ? $this->middlewares[$routeInfo['id']] : [];
         $middleware->run(array_merge(
-            array_reverse($this->middlewares['app']),
-            array_reverse($this->middlewares[$routeInfo['id']]),
+            array_reverse($appMiddleawares),
+            array_reverse($routeMiddlewares),
             [['mw' => $routeInfo['handler'], 'args' => $args]]
         ));
     }
@@ -109,12 +110,14 @@ class Core
     {
         if (isset($this->container['error' . $error])) {
 
-            $handler = $this->container['error' . $error];
-            $handler = explode(':', $handler);
-            $className = $handler[0];
-            $methodName = $handler[1];
-            $handler = new $className;
-            $handler->$methodName();
+            $handlerStr = $this->container['error' . $error];
+            $handlerStr = explode(':', $handlerStr);
+            $className = $handlerStr[0];
+            $handler = new $className();
+            if(isset($handlerStr[1])) {
+                $methodName = $handlerStr[1];
+                $handler->$methodName();
+            }
 
         } else {
 
@@ -129,7 +132,7 @@ class Core
     /**
      * @return Router
      */
-    private function router()
+    protected function router()
     {
         return $this->container['router'];
     }
@@ -137,8 +140,8 @@ class Core
     /**
      * Set Router base path
      */
-    private function routerBase()
+    protected function getScriptDir()
     {
-        $this->router()->base(dirname($_SERVER['SCRIPT_NAME']));
+        return dirname($_SERVER['SCRIPT_NAME']);
     }
 }

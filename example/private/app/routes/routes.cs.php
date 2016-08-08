@@ -1,10 +1,8 @@
 <?php
 return [
     'home' => [
-        'uri' => '/',
+        'methods' => ['GET'],
+        'utk' => '/',
         'controller' => 'Webiik\Controller:launch',
-        'middlewares' => [
-            'hello' => ['world'],
-        ],
     ],
 ];

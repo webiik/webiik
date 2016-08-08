@@ -15,11 +15,12 @@ class Config
      * Read config file and return config array
      * @return array
      */
-    public function loadConfig()
+    public function loadConfig($dir)
     {
         $config = [];
-        $configServer = $this->getWebRootPath() . '/private/config/config.php';
-        $configLocal = $this->getWebRootPath() . '/private/config/config.local.php';
+        $dir = rtrim($dir, '/');
+        $configServer = $dir . '/config.php';
+        $configLocal = $dir . '/config.local.php';
 
         if (file_exists($configLocal)) {
             require $configLocal;
@@ -28,14 +29,5 @@ class Config
         }
 
         return $config;
-    }
-
-    /**
-     * Get path of the executing script
-     * @return string
-     */
-    private function getWebRootPath()
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . dirname($_SERVER['SCRIPT_NAME']);
     }
 }

@@ -1,49 +1,25 @@
 <?php
 $config = [
 
-    // Basic
-    'dev' => true,
+    'hideErrors' => false,
 
-    // Skeleton
-    'db' => [
-        'local' => [],
-        'outer' => [],
+    'database' => [
+        'db1' => [
+            'local' => [],
+            'server' => [],
+        ],
     ],
 
-    'localization' => [
-
-        // Default language
-        'dl' => 'en',
-
-        // Default time zone
-        'dtz' => 'Europe/Prague',
-
-        // Available languages with time zone and fallback.
-        // If you don't specify custom time zone then default time zone will be used instead.
-        // If you don't specify fallback then there will be no callback.
-        'available' => [
-            'en' => [
-                'tz' => 'America/Los_Angeles',
-            ],
-            'cs' => [
-                'fallback' => 'sk',
-            ],
-            'sk' => [
-                'tz' => 'Europe/Bratislava',
-                'fallback' => 'cs',
-            ],
-        ],
-
-        // ??
-        'conversions' => [
-            'en' => ''
-        ],
-
-        // Require or not default language in URI.
-        // If true then home page for default language 'dl' will be: webiik.com/dl/
-        'dlInUri' => false,
+    // First language is default
+    // Signature is: [language in ISO 639-1, timezone, [array of fallbacks in ISO 639-1]]
+    'language' => [
+        'en' => ['America/Los_Angeles', ['cs']],
+        'cs' => ['Europe/Prague', ['sk']],
+        'sk' => ['Europe/Bratislava', ['cs']],
     ],
+
+    // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
+    'dlInUri' => false,
 
     'view' => 'Twig'
-
 ];

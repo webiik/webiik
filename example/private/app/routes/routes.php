@@ -5,21 +5,19 @@
  * translations. Uris will be automatically translated
  * during parsing this array.
  */
+
 return [
     'home' => [
-        'uri' => '/',
-        'controller' => 'Webiik\Controller:launch',
+        'methods' => ['GET'],
+        'utk' => '/',
+        'controller' => 'Webiik\Controller:run',
         'middlewares' => [
-            'hello' => ['world'],
+            'MySpace\Middleware' => ['world'],
         ],
     ],
     'account' => [
-        'uri' => '/about',
-        'controller' => 'Webiik\Controller:launch',
-        'middlewares' => [
-            'auth' => ['user'],
-            'hello' => ['world'],
-        ],
-        'models' => ['Users']
+        'methods' => ['GET'],
+        'utk' => '/account',
+        'controller' => 'Webiik\Controller:run',
     ],
 ];

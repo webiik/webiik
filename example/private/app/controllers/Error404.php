@@ -3,7 +3,7 @@ namespace Webiik;
 
 class Error404
 {
-    public function launch()
+    public function run()
     {
         echo '404';
     }

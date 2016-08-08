@@ -18,7 +18,7 @@ class Translation
 
     /**
      * Language of requested translation
-     * See more in __construct
+     * See more in setLang()
      * @var
      */
     private $lang;
@@ -48,7 +48,7 @@ class Translation
      * Set language of requested translation
      * @param $lang
      */
-    public function __construct($lang)
+    public function setLang($lang)
     {
         $this->lang = $lang;
     }
@@ -150,7 +150,7 @@ class Translation
      * @param string $lang : eg. 'en'
      * @param array $fallbacks : eg. ['es', 'de']
      */
-    public function setFallback($lang, array $fallbacks)
+    public function setFallbacks($lang, array $fallbacks)
     {
         $this->isString($lang);
         $this->isArrSeq($fallbacks);
@@ -158,13 +158,14 @@ class Translation
     }
 
     /**
-     * Add translation record to translation array for given lang
+     * Add translation record to translation array for given lang.
+     * Use key parameter with dot notation to add translation into specific key in multidimensional array.
+     * If you don't use key parameter then $val must be associative array
+     *
      * Translation can be written in syntax very similar to ICU messages eg.:
-
      * 1)
      * Simple variable signature:
      * {variableName}
-
      * Example:
      * Hello {name}!
      *
@@ -223,15 +224,33 @@ class Translation
      * Note: To work with conv type inject configured Conversion obj with method addConv()
      *
      * @param string $lang : eg. 'en'
-     * @param array $keyValArr : eg. ['txt1' => 'Hello {name}! I feel {mood}.', 'txt2' => '{greeting} World!']
+     * @param string|array $val : eg. ['txt1' => 'Hello {name}! I feel {mood}.', 'txt2' => '{greeting} World!']
+     * @param string|bool $key : eg. 'dot.notation.key'
+     * @param $val
      * @throws \Exception
      */
-    public function addTrans($lang, array $keyValArr)
+    public function addTrans($lang, $val, $key = false)
     {
-        $this->isArrAssoc($keyValArr);
         $this->isString($lang);
-        $this->translation[$lang] = [];
-        $this->translation[$lang] = array_merge($this->translation[$lang], $keyValArr);
+        if (!isset($this->translation[$lang])) $this->translation[$lang] = [];
+
+        if ($key) {
+            $this->isString($key);
+
+            // Prepare context according to dot notation
+            $pieces = explode('.', $key);
+            $context = &$this->translation[$lang];
+            foreach ($pieces as $piece) {
+                $context = &$context[$piece];
+            }
+
+            // Add value to prepared context
+            $context = $val;
+
+        } else {
+            $this->isArrAssoc($val);
+            $this->translation[$lang] = array_merge($this->translation[$lang], $val);
+        }
     }
 
     /**
@@ -243,6 +262,7 @@ class Translation
      */
     public function _p($key, array $val)
     {
+        $this->isLangSet();
         $this->isString($key);
         $this->isArrAssoc($val);
         $string = $this->getRow($key);
@@ -257,6 +277,7 @@ class Translation
      */
     public function _t($key)
     {
+        $this->isLangSet();
         $this->isString($key);
         $string = $this->getRow($key);
         return $string ? $string : false;
@@ -272,27 +293,56 @@ class Translation
     }
 
     /**
-     * Return value of key from translation array, if it's needed look for fallbacks
-     * Throw exception if key does not exist in translation and fallbacks for the selected lang
+     * Return key value from $this->translation or false if key does not exist.
+     * Multidimensional arrays can be accessed with key dot notation.
      * @param $key
      * @return mixed
-     * @throws \Exception
      */
     private function getRow($key)
     {
-        if (isset($this->translation[$this->lang][$key])) {
-            return $this->translation[$this->lang][$key];
-        }
+        $val = false;
+        $pieces = explode('.', $key);
 
-        if (isset($this->fallbacks[$this->lang]) && is_array($this->fallbacks[$this->lang])) {
-            foreach ($this->fallbacks[$this->lang] as $fallbackLang) {
-                if (isset($this->translation[$fallbackLang][$key])) {
-                    return $this->translation[$fallbackLang][$key];
+        // At first try to find key in current lang
+        if (isset($this->translation[$this->lang])) {
+
+            $context = $this->translation[$this->lang];
+
+            foreach ($pieces as $piece) {
+                if (isset($context[$piece])) {
+                    $context = $context[$piece];
+                    $val = $context;
+                } else {
+                    $val = false;
                 }
             }
         }
 
-        throw new \Exception('Key \'' . htmlspecialchars($key) . '\' misses \'' . htmlspecialchars($this->lang) . '\' translation.');
+        // If we didn't find key in current lang, we will try to find key in fallback langs
+        if (!$val) {
+            if (isset($this->fallbacks[$this->lang]) && is_array($this->fallbacks[$this->lang])) {
+
+                foreach ($this->fallbacks[$this->lang] as $fallbackLang) {
+
+                    if (isset($this->translation[$fallbackLang])) {
+
+                        $context = $this->translation[$fallbackLang];
+                        foreach ($pieces as $piece) {
+                            if (isset($context[$piece])) {
+                                $context = $context[$piece];
+                                $val = $context;
+                            } else {
+                                $val = false;
+                            }
+                        }
+                        if ($val) break;
+                    }
+                }
+            }
+        }
+
+        // Todo: Log error or fallback translations to know where are the missing translations
+        return $val;
     }
 
     /**
@@ -629,6 +679,14 @@ class Translation
     {
         if (!is_array($val) || !isset($val[0])) {
             throw new \Exception('Parameter must be sequential array.');
+        }
+        return true;
+    }
+
+    private function isLangSet()
+    {
+        if (!is_string($this->lang)) {
+            throw new \Exception('Set first language of translation with method setLang().');
         }
         return true;
     }
