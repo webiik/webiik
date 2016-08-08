@@ -32,10 +32,14 @@ class Connection
     /**
      * Return connection by its name
      * @param $name
+     * @throws \Exception
      * @return \PDO
      */
     public function connect($name)
     {
+        if (!isset($this->conf[$name])) {
+            throw new \Exception('Unknown connection name: ' . htmlspecialchars($name));
+        }
         if (!isset($this->conn[$name])) {
             $this->conn[$name] = new \PDO(
                 $this->conf[$name][0] .
