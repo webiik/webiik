@@ -54,23 +54,20 @@ class Middleware
             if (class_exists($mw[0])) {
                 if (isset($mw[1])) {
                     $method = $mw[1];
-                    $mw = new $mw[0]($response, ...$args);
                 } else {
-                    $mw = new $mw[0]();
+                    $method = false;
                 }
+                $mw = new $mw[0]($response, ...$args);
             }
         }
 
         // Check and call middleware
         if (is_callable($mw)) {
             is_array($args) ? $mw($response, $this->next(), ...$args) : $mw($response, $this->next(), $args);
-        } elseif (is_object($mw) && !is_callable($mw) && method_exists($mw, $method)) {
+        } elseif (is_object($mw) && isset($method) && $method && method_exists($mw, $method)) {
             is_array($args) ? $mw->$method($response, $this->next(), ...$args) : $mw->$method($response, $this->next(), $args);
-        } else {
-            if(is_array($mw)){
-                $mw = $mw[0];
-            }
-            throw new \Exception($mw . ' is invalid middleware.');
+        } elseif (!is_object($mw) || (isset($method) && $method != false)) {
+            throw new \Exception('Middleware \''.$mw[0].'\' must be callable or valid className:methodName(optional).');
         }
     }
 
