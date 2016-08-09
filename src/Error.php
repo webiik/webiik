@@ -2,7 +2,7 @@
 namespace Webiik;
 
 /**
- * Class Route
+ * Class Error
  * @package     Webiik
  * @author      Jiří Mihal <jiri@mihal.me>
  * @copyright   2016 Jiří Mihal
@@ -11,38 +11,25 @@ namespace Webiik;
  */
 class Error
 {
-    // Todo:try if the catching of PDO errors works
+    /** @var array */
+    private $config = [];
 
-    /**
-     * @var array
-     */
-    private $config = [
-        'silent' => false,
-        'log' => false,
-        'logDir' => './',
-        'logFileName' => 'errlog',
-        'logMaxFileSize' => 2, // in MB
-        'logMaxTotalSize' => 20, // in MB
-        'mail' => false,
-        'mailTo' => false,
-        'subject' => 'Error report',
-    ];
-
-    /**
-     * @var callable
-     */
+    /** @var callable */
     private $silentHandler;
 
-    public function __construct($config = [])
-    {
-        // Configure class
-        $this->config = array_merge($this->config, $config);
-        $this->config['logDir'] = rtrim($this->config['logDir'], '/');
+    /** @var callable with required params ($msgShort, $msgHtml, $logger) */
+    private $logHandler;
+    private $logger;
 
+    public function __construct($silent = false, $logErrors = false)
+    {
         // Configure error reporting
         ini_set('log_errors', 0);
         ini_set('display_errors', 0);
         ini_set('error_reporting', E_ALL);
+
+        $this->config['silent'] = $silent;
+        $this->config['log'] = $logErrors;
 
         // Pre-define some silent handler
         $this->silentHandler = function () {
@@ -61,33 +48,20 @@ class Error
      * Use this to define your own silent message.
      * @param callable $handler
      */
-    public function silentHandler(callable $handler)
+    public function addSilentHandler(callable $handler)
     {
         $this->silentHandler = $handler;
     }
 
     /**
-     * Translate PHP error to human readable string
-     * @param $number
-     * @return array
+     * Add log handler and logger
+     * @param $logger
+     * @param callable $handler with required params ($msgShort, $msgHtml, $logger)
      */
-    private function parseErrorType($number)
+    public function addLogger($logger, callable $handler)
     {
-        $err = [
-            1 => 'Error',
-            2 => 'Warning',
-            4 => 'ParseError',
-            8 => 'Notice',
-            64 => 'FatalError',
-        ];
-
-        if (isset($err[$number])) {
-            $err = $err[$number];
-        } else {
-            $err = $err[1] . ' ' . $number;
-        }
-
-        return $err;
+        $this->logger = $logger;
+        $this->logHandler = $handler;
     }
 
     /**
@@ -141,8 +115,8 @@ class Error
     private function outputError($type, $message, $file, $line, $trace = [])
     {
         $this->printError($type, $message, $file, $line, $trace);
-        $this->logError($type, $message, $file, $line);
-        $this->mailError($type, $message, $file, $line, $trace);
+        $this->logError($type, $message, $file, $line, $trace);
+        exit;
     }
 
     /**
@@ -158,95 +132,52 @@ class Error
         if ($this->config['silent']) {
             $sh = $this->silentHandler;
             $sh();
-            exit;
         } else {
-            echo $this->message($type, $message, $file, $line, $trace);
-            exit;
+            echo $this->msgHtml($type, $message, $file, $line, $trace);
         }
     }
 
     /**
-     * Log error to file and rotate logs if needed
+     * If logging is on and log handler is configured
+     * run log handler with params ($msgShort, $msgHtml, $logger)
      * @param $type
      * @param $message
      * @param $file
      * @param $line
      */
-    private function logError($type, $message, $file, $line)
+    private function logError($type, $message, $file, $line, $trace)
     {
-        if ($this->config['log']) {
-
-            $msg = DATE('Y-m-d H:i:s');
-            $msg .= ' - ' . $type;
-            $msg .= ': ' . $message;
-            $msg .= ' in \'' . $file . '\'';
-            $msg .= ' on line ' . $line . "\n";
-            file_put_contents($this->config['logDir'] . '/' . $this->config['logFileName'] . '.log', $msg, FILE_APPEND);
-
-            $this->rotate();
+        if ($this->config['log'] && is_callable($this->logHandler)) {
+            $lh = $this->logHandler;
+            $lh(
+                $this->msgShort($type, $message, $file, $line),
+                $this->msgHtml($type, $message, $file, $line, $trace),
+                $this->logger
+            );
         }
     }
 
     /**
-     * Rotate or delete log if log size limit is exceeded
-     */
-    private function rotate()
-    {
-        $file = $this->config['logDir'] . '/' . $this->config['logFileName'] . '.log';
-        $rotated = false;
-
-        // Rotate
-        if (filesize($file) / 1048576 > $this->config['logMaxFileSize']) {
-            copy($file, $this->config['logDir'] . '/' . $this->config['logFileName'] . '.' . time() . '.log');
-            unlink($file);
-            $rotated = true;
-        }
-
-        // Delete
-        if ($rotated) {
-            $logTotalSize = 0;
-            $handle = opendir($this->config['logDir']);
-            while (false !== ($entry = readdir($handle))) {
-                if (!is_dir($entry) && strrpos($entry, $this->config['logFileName']) !== false) {
-                    if (!isset($oldestLogFile)) $oldestLogFile = $entry;
-                    $logTotalSize += filesize($this->config['logDir'] . '/' . $entry) / 1048576;
-                }
-            }
-
-            if ($logTotalSize > $this->config['logMaxTotalSize'] && isset($oldestLogFile)) {
-                unlink($this->config['logDir'] . '/' . $oldestLogFile);
-            }
-        }
-    }
-
-    /**
-     * Send email notification if error occurs then stop sending emails
+     * Return formatted error message as one liner
      * @param $type
      * @param $message
      * @param $file
      * @param $line
-     * @param $trace
+     * @return string
      */
-    private function mailError($type, $message, $file, $line, $trace)
+    private function msgShort($type, $message, $file, $line)
     {
-        if ($this->config['mail'] && $this->config['mailTo']
-            && !file_exists($this->config['logDir'] . '/!mail_sent.log')
-        ) {
-            mail(
-                $this->config['mailTo'],
-                $this->config['subject'],
-                $this->message($type, $message, $file, $line, $trace)
-            );
+        $msg = DATE('Y-m-d H:i:s');
+        $msg .= ' - ' . $type;
+        $msg .= ': ' . $message;
+        $msg .= ' in \'' . $file . '\'';
+        $msg .= ' on line ' . $line . "\n";
 
-            file_put_contents(
-                $this->config['logDir'] . '/!mail_sent.log',
-                'Delete this file to again active email notifications.'
-            );
-        }
+        return $msg;
     }
 
     /**
-     * Return formatted error message
+     * Return formatted error message as html
      * @param $type
      * @param $message
      * @param $file
@@ -254,7 +185,7 @@ class Error
      * @param $trace
      * @return string
      */
-    private function message($type, $message, $file, $line, $trace)
+    private function msgHtml($type, $message, $file, $line, $trace)
     {
         $msg = '<h1>' . $type . '</h1>';
         $msg .= '<b>' . $message . '</b><br/><br/>';
@@ -268,5 +199,29 @@ class Error
             }
         }
         return $msg;
+    }
+
+    /**
+     * Translate PHP error to human readable string
+     * @param $number
+     * @return array
+     */
+    private function parseErrorType($number)
+    {
+        $err = [
+            1 => 'Error',
+            2 => 'Warning',
+            4 => 'ParseError',
+            8 => 'Notice',
+            64 => 'FatalError',
+        ];
+
+        if (isset($err[$number])) {
+            $err = $err[$number];
+        } else {
+            $err = $err[1] . ' ' . $number;
+        }
+
+        return $err;
     }
 }

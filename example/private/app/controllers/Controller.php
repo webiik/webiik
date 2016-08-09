@@ -10,11 +10,11 @@ class Controller
     /**
      * Controller constructor.
      */
-    public function __construct($response, $routeInfo, Translation $trans, Connection $connection)
+    public function __construct($response, $routeInfo, Translation $trans)
     {
         $this->routeInfo = $routeInfo;
         $this->trans = $trans;
-        $this->connection = $connection;
+//        $this->connection = $connection;
 
         print_r($routeInfo);
         print_r($response);
@@ -22,6 +22,8 @@ class Controller
 
     public function run()
     {
+        // Todo: Get link to route in some lang
+
         // Load translations
         //$pdo = $this->connection->connect('ad');
         //$routeName = $this->routeInfo['name'] ? $this->routeInfo['name'] : $this->routeInfo['id'];

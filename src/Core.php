@@ -20,7 +20,7 @@ class Core
     /**
      * Core constructor.
      */
-    public function __construct($config = [])
+    public function __construct()
     {
         $this->container = new Container();
 
@@ -28,8 +28,6 @@ class Core
             return new Router();
         };
         $this->router()->base($this->getScriptDir());
-
-        $this->addParam('config', $config);
     }
 
     public function add($mw, $args = null, $routeId = null)
@@ -106,7 +104,7 @@ class Core
         ));
     }
 
-    public function error($error)
+    protected function error($error)
     {
         if (isset($this->container['error' . $error])) {
 

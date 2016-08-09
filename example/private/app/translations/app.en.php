@@ -11,6 +11,7 @@ return [
             'desc' => '',
         ],
     ],
+    'conv' => [],
     'other' => [
         'key' => 'asd',
     ],

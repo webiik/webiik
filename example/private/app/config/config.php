@@ -3,11 +3,11 @@ $config = [
 
     'hideErrors' => false,
 
+    'adminEmail' => 'jiri@mihal.me',
+
     'database' => [
-        'db1' => [
-            'local' => [],
-            'server' => [],
-        ],
+        // $name => $dialect, $host, $dbname, $user, $pswd, $encoding
+        'db1' => [],
     ],
 
     // First language is default
@@ -21,5 +21,7 @@ $config = [
     // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
     'dlInUri' => false,
 
-    'view' => 'Twig'
+    'view' => 'Twig',
+
+    'appDir' => __DIR__.'/../',
 ];

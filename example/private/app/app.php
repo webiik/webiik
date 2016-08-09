@@ -3,156 +3,60 @@ require __DIR__ . '/../classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
-$app = new \Webiik\Core($config);
+// Todo: Test param effectiveness: container with instantiated obj X instantiated obj
 
-// Todo: Move most content from here to Skeleton
+// Todo: THINK ABOUT installers (what basic folders and files, installer steps) for Core(API), Skeleton, CMS
 
-// Get URI from web root
-$uri = str_replace(dirname($_SERVER['SCRIPT_NAME']), '', $_SERVER['REQUEST_URI']);
+// Load app config
+$config = new \Webiik\Config();
+$config = $config->loadConfig(__DIR__ . '/config/');
 
-// Get lang from URI
-preg_match('/^\/([\w]{2})\/|^\/([\w]{2})$/', $uri, $matches);
+//$app = new \Webiik\Core();
+$app = new \Webiik\Skeleton($config);
 
-// Did we find some language in URI?
-if (count($matches) > 0) {
-    // Yes we do. So check if the lang is valid lang.
-    foreach ($config['language'] as $lang => $prop) {
-        if ($lang == $matches[1]) break;
-    }
-}
+// Todo: Try to move Config, Loggers and Error into Skeleton and use Pimple container as possible
 
-// If we didn't find any lang, it can be still ok, if default lang doesn't need to be in URI
-// Otherwise page doesn't exist.
-if (!isset($lang) && !$config['dlInUri']) {
-    $lang = key($config['language']);
-} else {
-    // Todo: Error 404
-}
+// Create logger container
+$logger = new \Webiik\Log();
 
-// Check if there are some fallback languages configured and store info about that for further usage
-if (isset($config['language'][$lang][1]) && is_array($config['language'][$lang][1])) {
-    $fallbackLangs = $config['language'][$lang][1];
-} else {
-    $fallbackLangs = false;
-}
+// Add file logger to container
+$logger->add('file', new Webiik\FileLogger(__DIR__ . '/logs', 'errlog'));
 
-// Add services we will use across our app
-$app->addService('translation', function ($c) {
-    return new \Webiik\Translation();
-});
-$app->addService('conversion', function ($c) {
-    return new \Webiik\Conversion();
-});
-$app->addService('connection', function ($c) {
-    return new \Webiik\Connection();
-});
+// Add email notice logger to container
+$logger->add('emailNotice', new \Webiik\EmailNoticeLogger(__DIR__ . '/logs', 'jiri@mihal.me'));
 
-// Add error routes
-$app->error404('Webiik\Error404:run');
-$app->error405('Webiik\Error405:run');
+// Set up improved errors handling
+$err = new \Webiik\Error($config['hideErrors'], true);
+
+// Add error log handler to Error
+$logHandler = function ($msgShort, $msgHtml, \Webiik\Log $logger) {
+    $logger->get('file')->log($msgShort);
+    $logger->get('emailNotice')->log($msgHtml);
+};
+$err->addLogger($logger, $logHandler);
+//unset($logger);
+
+// Add own error routes handlers
+//$app->error404('Webiik\Error404:run');
+//$app->error405('Webiik\Error405:run');
 
 // Add routes with optional middlewares
 //$app->map(['GET'], '/', 'Webiik\Controller:run', 'home');
-$app->map(['GET'], '/page1', 'Webiik\Controller:run', 'page1');
-
-// Load file with app translations. If key is specified and exists add translation for
-// that key to Translation object, otherwise add to Translation object all translations from loaded file.
-// Save memory by using keys.
-function loadTranslation($lang, \Webiik\Translation $trans, $key = false)
-{
-    if (file_exists(__DIR__ . '/translations/app.' . $lang . '.php')) {
-
-        $val = require __DIR__ . '/translations/app.' . $lang . '.php';
-
-        // If key exists, get value from translation array by dot notation signature
-        if ($key) {
-            $pieces = explode('.', $key);
-            foreach ($pieces as $piece) {
-                if (isset($val[$piece])) {
-                    $val = $val[$piece];
-                } else {
-                    $val = false;
-                }
-            }
-        }
-
-        if($val) $trans->addTrans($lang, $val, $key);
-    }
-}
-
-// Return translation for given key in current lang. If key does not exist in current
-// lang, try to load translation of that key from fallback langs. Return false if
-// key does not exist in any lang.
-function _t($key, $fallbackLangs, $fallbackIndex = 0, \Webiik\Translation $trans)
-{
-    $t = $trans->_t($key);
-    if (!$t) {
-        if ($fallbackLangs && isset($fallbackLangs[$fallbackIndex])) {
-            loadTranslation($fallbackLangs[$fallbackIndex], $trans, $key);
-            $fallbackIndex++;
-            $t = _t($key, $fallbackLangs, $fallbackIndex, $trans);
-        }
-    }
-    return $t;
-}
-
-// Map the route that has the translation.
-function mapTranslatedRoute($name, $p, $fallbackLangs, \Webiik\Translation $trans, \Webiik\Core $app)
-{
-    $uri = _t('routes.' . $p['utk'], $fallbackLangs, $addedFallbacksCount = 0, $trans);
-
-    if ($uri) {
-        $route = $app->map($p['methods'], $uri, $p['controller'], $name);
-        if (isset($p['middlewares'])) {
-            foreach ($p['middlewares'] as $mw => $params) {
-                $route->add($mw, $params);
-            }
-        }
-    }
-}
-
-$trans = new \Webiik\Translation();
-
-// Set translation language
-$trans->setLang($lang);
-
-// Set translation fallback languages
-if ($fallbackLangs && is_array($fallbackLangs)) $trans->setFallbacks($lang, $fallbackLangs);
-
-// Load route translations in current lang
-loadTranslation($lang, $trans, 'routes');
-
-// Load route definitions from file
-if (file_exists(__DIR__ . '/routes/routes.' . $lang . '.php')) {
-    $routes = require __DIR__ . '/routes/routes.' . $lang . '.php';
-} elseif (file_exists(__DIR__ . '/routes/routes.php')) {
-    $routes = require __DIR__ . '/routes/routes.php';
-}
-
-// If we have some routes definitions, map routes that can be translated
-if (isset($routes)) {
-    foreach ($routes as $name => $p) {
-        mapTranslatedRoute($name, $p, $fallbackLangs, $trans, $app);
-    }
-}
-
-//echo _t('other.a.b', $fallbackLangs, 0, $trans);
-//echo _t('key', $fallbackLangs, 0, $trans);
+//$app->map(['GET'], $app->_t('routes./'), 'Webiik\Controller:run', 'home');
+//$app->map(['GET'], '/page1', 'Webiik\Controller:run', 'page1');
 
 // DI for route handlers
 $factoryController = function ($c) {
-    return [$c['translation'], $c['connection']];
+    return [$c['translation']];
 };
 $app->addService('Webiik\Controller', $factoryController);
 
 // Run app
 $app->run();
 
-// Todo: Do steps after route is matched
-
 // Uncomment for memory usage testing
-    echo '<br/><br/>Peak memory usage: ' . (memory_get_peak_usage() / 1000000) . ' MB';
-    echo '<br/>End memory usage: ' . (memory_get_usage() / 1000000) . ' MB';
+echo '<br/><br/>Peak memory usage: ' . (memory_get_peak_usage() / 1000000) . ' MB';
+echo '<br/>End memory usage: ' . (memory_get_usage() / 1000000) . ' MB';
 
 // Uncomment for getting of all defined PHP vars
 //print_r(get_defined_vars());
