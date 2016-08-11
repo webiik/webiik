@@ -5,8 +5,6 @@ use Pimple\Container;
 
 class Core
 {
-    // Todo: Write comments
-
     /**
      * @var Container
      */
@@ -22,14 +20,24 @@ class Core
      */
     public function __construct()
     {
+        // Create Pimple container
         $this->container = new Container();
 
+        // Add router to container
         $this->container['router'] = function ($c) {
             return new Router();
         };
+
+        // Set router base path
         $this->router()->base($this->getScriptDir());
     }
 
+    /**
+     * Add app or route (with route id) middleware to middlewares array
+     * @param string|callable $mw : ClassName:method or ClassName or callable
+     * @param mixed $args
+     * @param number $routeId
+     */
     public function add($mw, $args = null, $routeId = null)
     {
         if (is_numeric($routeId)) {
@@ -39,42 +47,83 @@ class Core
         }
     }
 
+    /**
+     * Add Pimple service
+     * @param string $name
+     * @param callable $factory
+     */
     public function addService($name, $factory)
     {
         $this->container[$name] = $factory;
     }
 
+    /**
+     * Add Pimple service factory
+     * @param string $name
+     * @param callable $factory
+     */
     public function addServiceFactory($name, $factory)
     {
         $this->container[$name] = $this->container->factory($factory);
     }
 
+    /**
+     * Add value into Pimple container
+     * @param string $name
+     * @param mixed $val
+     */
     public function addParam($name, $val)
     {
         $this->container[$name] = $val;
     }
 
+    /**
+     * Add function into Pimple container
+     * @param string $name
+     * @param callable $function
+     */
     public function addFunction($name, $function)
     {
         $this->container[$name] = $this->container->protect($function);;
     }
 
+    /**
+     * Add controller to 404 route
+     * @param string $handler : ClassName or ClassName:method
+     */
     public function error404($handler)
     {
         $this->container['error404'] = $handler;
     }
 
+    /**
+     * Add controller to 404 route
+     * @param string $handler : ClassName or ClassName:method
+     */
     public function error405($handler)
     {
         $this->container['error405'] = $handler;
     }
 
+    /**
+     * Map route with router and return Route object that helps to add route middleware(s)
+     * @param array $methods
+     * @param string $route
+     * @param mixed $handler
+     * @param bool|string $name
+     * @return Route
+     * @throws \Exception
+     */
     public function map($methods, $route, $handler, $name = false)
     {
         $routeId = $this->router()->map($methods, $route, $handler, $name);
         return new Route($routeId, $this);
     }
 
+    /**
+     * Run Webiik
+     * @throws \Exception
+     */
     public function run()
     {
         $routeInfo = $this->router()->match();
@@ -104,15 +153,19 @@ class Core
         ));
     }
 
+    /**
+     * Run 404/405 error handler if is defined or just return adequate response. Always exit.
+     * @param number $error
+     */
     protected function error($error)
     {
-        if (isset($this->container['error' . $error])) {
+        if (is_numeric($error) && isset($this->container['error' . $error])) {
 
             $handlerStr = $this->container['error' . $error];
             $handlerStr = explode(':', $handlerStr);
             $className = $handlerStr[0];
             $handler = new $className();
-            if(isset($handlerStr[1])) {
+            if (isset($handlerStr[1])) {
                 $methodName = $handlerStr[1];
                 $handler->$methodName();
             }
@@ -128,6 +181,7 @@ class Core
     }
 
     /**
+     * Return router from Pimple container
      * @return Router
      */
     protected function router()
