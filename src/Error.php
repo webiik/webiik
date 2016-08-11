@@ -167,7 +167,7 @@ class Error
      */
     private function msgShort($type, $message, $file, $line)
     {
-        $msg = ' - ' . $type;
+        $msg = '- ' . $type;
         $msg .= ': ' . $message;
         $msg .= ' in \'' . $file . '\'';
         $msg .= ' on line ' . $line . "\n";
