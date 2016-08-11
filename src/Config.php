@@ -15,7 +15,7 @@ class Config
      * Read config file and return config array
      * @return array
      */
-    public function loadConfig($dir)
+    public static function loadConfig($dir)
     {
         $config = [];
         $dir = rtrim($dir, '/');
