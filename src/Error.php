@@ -17,9 +17,9 @@ class Error
     /** @var callable */
     private $silentHandler;
 
-    /** @var callable with required params ($msgShort, $msgHtml, $logger) */
+    /** @var callable with required params ($msgShort, $msgHtml) */
     private $logHandler;
-    private $logger;
+    private $logHandlerParams = false;
 
     public function __construct($silent = false, $logErrors = false)
     {
@@ -54,14 +54,14 @@ class Error
     }
 
     /**
-     * Add log handler and logger
-     * @param $logger
-     * @param callable $handler with required params ($msgShort, $msgHtml, $logger)
+     * Add log handler
+     * @param callable $handler with required params ($msgShort, $msgHtml)
+     * @param $params
      */
-    public function addLogger($logger, callable $handler)
+    public function addLogHandler(callable $handler, $params)
     {
-        $this->logger = $logger;
         $this->logHandler = $handler;
+        $this->logHandlerParams = $params;
     }
 
     /**
@@ -139,7 +139,7 @@ class Error
 
     /**
      * If logging is on and log handler is configured
-     * run log handler with params ($msgShort, $msgHtml, $logger)
+     * run log handler with params ($msgShort, $msgHtml, $params)
      * @param $type
      * @param $message
      * @param $file
@@ -152,7 +152,7 @@ class Error
             $lh(
                 $this->msgShort($type, $message, $file, $line),
                 $this->msgHtml($type, $message, $file, $line, $trace),
-                $this->logger
+                $this->logHandlerParams
             );
         }
     }
@@ -167,8 +167,7 @@ class Error
      */
     private function msgShort($type, $message, $file, $line)
     {
-        $msg = DATE('Y-m-d H:i:s');
-        $msg .= ' - ' . $type;
+        $msg = ' - ' . $type;
         $msg .= ': ' . $message;
         $msg .= ' in \'' . $file . '\'';
         $msg .= ' on line ' . $line . "\n";
