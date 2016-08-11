@@ -1,9 +1,19 @@
 <?php
 $config = [
+    'name' => 'Webiik',
 
-    'hideErrors' => false,
+    'error' => [
+        'hide' => false,
+        'log' => true,
+        'email' => 'jiri@mihal.me',
+        'timeZone' => 'America/Los_Angeles',
+    ],
 
-    'adminEmail' => 'jiri@mihal.me',
+    'folder' => [
+        'logs' => __DIR__ . '/../logs',
+        'routes' => __DIR__ . '/../routes',
+        'translations' => __DIR__ . '/../translations',
+    ],
 
     'database' => [
         // $name => $dialect, $host, $dbname, $user, $pswd, $encoding
@@ -23,5 +33,5 @@ $config = [
 
     'view' => 'Twig',
 
-    'appDir' => __DIR__.'/../',
+    'appDir' => __DIR__ . '/../',
 ];

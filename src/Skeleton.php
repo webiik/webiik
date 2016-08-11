@@ -18,37 +18,80 @@ class Skeleton extends Core
     /**
      * Skeleton constructor.
      */
-    public function __construct($config = [])
+    public function __construct($config)
     {
         parent::__construct();
 
+        // Add config array to container
         $this->addParam('config', $config);
 
-        // Add basic Skeleton services
+        // Add basic app services
+
+        // Add authentication
         $this->addService('auth', function ($c) {
             return new Auth();
         });
+
+        // Add conversion
         $this->addService('conversion', function ($c) {
             return new Conversion();
         });
+
+        // Add connection
         $this->addService('connection', function ($c) {
             $connection = new Connection();
             if (isset($c['config']['database']) && !isset($c['config']['database'][0])) {
-                foreach($c['config']['database'] as $name => $p){
+                foreach ($c['config']['database'] as $name => $p) {
                     $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5]);
                 }
             }
             return new Connection();
         });
+
+        // Add template engine
         $this->addService('render', function ($c) {
             return new Render();
         });
+
+        // Add translation
         $this->addService('translation', function ($c) {
             return new Translation();
         });
 
-        // Init Skeleton
-        $this->init();
+        // Add error logging capability to Translation class
+        $this->trans()->addLogHandler(
+            function ($meesage, $p) {
+                $fileLoger = new \Webiik\FileLogger($p['logDir'], 'translog', $p['timeZone']);
+                $emailLogger = new \Webiik\EmailNotice(
+                    $p['logDir'],
+                    $p['email'],
+                    $p['timeZone'],
+                    $p['name'] . ' translation notice',
+                    '!trans_notice_sent.log'
+                );
+                $fileLoger->log($meesage);
+                $emailLogger->log($meesage);
+            },
+            [
+                'email' => $config['error']['email'],
+                'logDir' => $config['folder']['logs'],
+                'name' => $config['name'],
+                'timeZone' => $config['error']['timeZone']
+            ]
+        );
+
+        // Set app main lang (can return 404)
+        $this->setLang();
+        $this->trans()->setLang($this->lang);
+
+        // Set fallback languages
+        $this->setFallbackLangs($this->lang);
+        if ($this->fallbackLangs) {
+            $this->trans()->setFallbacks($this->lang, $this->fallbackLangs);
+        }
+
+        // Load route translations in current lang
+        $this->loadTranslation($this->lang, 'routes');
     }
 
     public function run()
@@ -117,25 +160,6 @@ class Skeleton extends Core
             }
         }
         return $t;
-    }
-
-    /**
-     * Do the following during Skeleton instantiation
-     */
-    private function init()
-    {
-        // Set app main lang (can return 404)
-        $this->setLang();
-        $this->trans()->setLang($this->lang);
-
-        // Set fallback languages
-        $this->setFallbackLangs($this->lang);
-        if ($this->fallbackLangs) {
-            $this->trans()->setFallbacks($this->lang, $this->fallbackLangs);
-        }
-
-        // Load route translations in current lang
-        $this->loadTranslation($this->lang, 'routes');
     }
 
     /**
@@ -227,6 +251,7 @@ class Skeleton extends Core
      */
     private function mapTranslatedRoute($name, $p)
     {
+        // Todo: Add lang prefix before URI
         $uri = $this->_t('routes.' . $p['utk']);
 
         if ($uri) {

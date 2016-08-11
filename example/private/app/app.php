@@ -3,53 +3,25 @@ require __DIR__ . '/../classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
-// Todo: Test param effectiveness: container with instantiated obj X instantiated obj
-
 // Todo: THINK ABOUT installers (what basic folders and files, installer steps) for Core(API), Skeleton, CMS
-
-// Load app config
-$config = new \Webiik\Config();
-$config = $config->loadConfig(__DIR__ . '/config/');
 
 //$app = new \Webiik\Core();
 $app = new \Webiik\Skeleton($config);
-
-// Todo: Try to move Config, Loggers and Error into Skeleton and use Pimple container as possible
-
-// Create logger container
-$logger = new \Webiik\Log();
-
-// Add file logger to container
-$logger->add('file', new Webiik\FileLogger(__DIR__ . '/logs', 'errlog'));
-
-// Add email notice logger to container
-$logger->add('emailNotice', new \Webiik\EmailNoticeLogger(__DIR__ . '/logs', 'jiri@mihal.me'));
-
-// Set up improved errors handling
-$err = new \Webiik\Error($config['hideErrors'], true);
-
-// Add error log handler to Error
-$logHandler = function ($msgShort, $msgHtml, \Webiik\Log $logger) {
-    $logger->get('file')->log($msgShort);
-    $logger->get('emailNotice')->log($msgHtml);
-};
-$err->addLogger($logger, $logHandler);
-//unset($logger);
 
 // Add own error routes handlers
 //$app->error404('Webiik\Error404:run');
 //$app->error405('Webiik\Error405:run');
 
 // Add routes with optional middlewares
-//$app->map(['GET'], '/', 'Webiik\Controller:run', 'home');
+$app->map(['GET'], '/', 'Webiik\Controller:run', 'home');
 //$app->map(['GET'], $app->_t('routes./'), 'Webiik\Controller:run', 'home');
 //$app->map(['GET'], '/page1', 'Webiik\Controller:run', 'page1');
 
 // DI for route handlers
-$factoryController = function ($c) {
-    return [$c['translation']];
-};
-$app->addService('Webiik\Controller', $factoryController);
+//$factoryController = function ($c) {
+//    return [$c['translation']];
+//};
+//$app->addService('Webiik\Controller', $factoryController);
 
 // Run app
 $app->run();
