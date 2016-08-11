@@ -9,7 +9,7 @@ namespace Webiik;
  * @link        https://github.com/webiik/webiik
  * @license     MIT
  */
-class FileLogger extends Logger
+class FileLogger
 {
     /**
      * @var array
@@ -19,12 +19,13 @@ class FileLogger extends Logger
     /**
      * FileLogger constructor.
      */
-    public function __construct($dir, $file, $maxFileSize = 2, $maxTotalSize = 20)
+    public function __construct($dir, $file, $timeZone = false, $maxFileSize = 2, $maxTotalSize = 20)
     {
         $this->config['dir'] = rtrim($dir, '/');
         $this->config['file'] = $file;
         $this->config['maxFileSize'] = $maxFileSize;
         $this->config['maxTotalSize'] = $maxTotalSize;
+        $this->config['timeZone'] = $timeZone ? $timeZone : date('e');
     }
 
     /**
@@ -33,6 +34,8 @@ class FileLogger extends Logger
      */
     public function log($message)
     {
+        $date = new \DateTime("now", new \DateTimeZone($this->config['timeZone']));
+        $message = $date->format('Y-m-d H:i:s ') . $message;
         file_put_contents($this->config['dir'] . '/' . $this->config['file'] . '.log', $message, FILE_APPEND);
         $this->rotate();
     }
