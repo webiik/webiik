@@ -44,6 +44,10 @@ class Translation
      */
     private $types = [];
 
+    /** @var callable with required params ($msg) */
+    private $logHandler;
+    private $logHandlerParams = false;
+
     /**
      * Set language of requested translation
      * @param $lang
@@ -293,8 +297,32 @@ class Translation
     }
 
     /**
+     * Add log handler
+     * @param callable $handler with required params ($msgShort, $msgHtml)
+     * @param $params
+     */
+    public function addLogHandler(callable $handler, $params)
+    {
+        $this->logHandler = $handler;
+        $this->logHandlerParams = $params;
+    }
+
+    /**
+     * If log handler is configured run log handler with params ($message, $params)
+     * @param $message
+     */
+    private function logError($message)
+    {
+        if (is_callable($this->logHandler)) {
+            $lh = $this->logHandler;
+            $lh($message, $this->logHandlerParams);
+        }
+    }
+
+    /**
      * Return key value from $this->translation or false if key does not exist.
      * Multidimensional arrays can be accessed with key dot notation.
+     * If logging is set, log error and fallback translations.
      * @param $key
      * @return mixed
      */
@@ -335,13 +363,40 @@ class Translation
                                 $val = false;
                             }
                         }
-                        if ($val) break;
+
+                        if ($val) {
+                            // Log fallback usage
+                            $this->logError('using \'' . $fallbackLang . '\' instead' . "\n");
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        // Todo: Log error or fallback translations to know where are the missing translations
+        // Log error with back trace
+        if (!$val) {
+
+            // Find calling that caused the error
+            $bt = debug_backtrace();
+            $msg = '';
+            foreach ($bt as $step) {
+                if (isset($step['function']) && $step['function'] == '_t') {
+                    $msg = 'call \'' . $step['file'] . '(' . $step['line'] . ')\'';
+                }
+            }
+
+            // Log error
+            $this->logError(
+                // Calling script
+                 $msg .
+                // Affected page
+                ', page \'' . $this->getRequestUrl() .
+                // Key and language
+                '\', key \'' . $key . '\' is missing in \'' . $this->lang . '\'' . "\n"
+            );
+        }
+
         return $val;
     }
 
@@ -652,6 +707,21 @@ class Translation
         }
 
         return $extractions;
+    }
+
+    /**
+     * Return host root with current scheme eg.: http://localhost
+     * @return string
+     */
+    private function getRequestUrl()
+    {
+        $pageURL = 'http';
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+            $pageURL .= 's';
+        }
+        $pageURL .= '://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
+
+        return $pageURL;
     }
 
     /**
