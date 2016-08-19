@@ -23,8 +23,8 @@ class Core
         // Create Pimple container
         $this->container = new Container();
 
-        // Add router to container
-        $this->container['router'] = function ($c) {
+        // Add Router to container
+        $this->container['Router'] = function ($c) {
             return new Router();
         };
 
@@ -35,15 +35,15 @@ class Core
     /**
      * Add app or route (with route id) middleware to middlewares array
      * @param string|callable $mw : ClassName:method or ClassName or callable
-     * @param mixed $args
+     * @param mixed $params
      * @param number $routeId
      */
-    public function add($mw, $args = null, $routeId = null)
+    public function add($mw, $params = null, $routeId = null)
     {
         if (is_numeric($routeId)) {
-            $this->middlewares[$routeId][] = ['mw' => $mw, 'args' => $args];
+            $this->middlewares[$routeId][] = ['mw' => $mw, 'params' => $params];
         } else {
-            $this->middlewares['app'][] = ['mw' => $mw, 'args' => $args];
+            $this->middlewares['app'][] = ['mw' => $mw, 'params' => $params];
         }
     }
 
@@ -132,25 +132,107 @@ class Core
         if ($routeInfo['http_status'] == 404) $this->error(404);
         if ($routeInfo['http_status'] == 405) $this->error(405);
 
-        // Get handler class name
-        $handler = explode(':', $routeInfo['handler']);
-        $className = $handler[0];
+        // Store route info into container to allow its injection in route handlers and middlewares
+        $this->addParam('routeInfo', $routeInfo);
 
-        // Prepare args for current route handler
-        $args[] = $routeInfo;
-        if (isset($this->container[$className])) {
-            $args = array_merge($args, $this->container[$className]);
+        // Instantiate middleware
+        $middleware = new Middleware($this->container);
+
+        // Add route handler to be run after last middleware
+        $middleware->addDestination($routeInfo['handler']);
+
+        // Add app and route middlewares
+        $appMiddleawares = isset($this->middlewares['app']) ? array_reverse($this->middlewares['app']) : [];
+        $routeMiddlewares = isset($this->middlewares[$routeInfo['id']]) ? array_reverse($this->middlewares[$routeInfo['id']]) : [];
+        $middleware->add(array_merge($appMiddleawares, $routeMiddlewares));
+
+        // Run
+        $middleware->run();
+    }
+
+    /**
+     * Inject dependencies from Container using @inject doc comment
+     */
+    public static function commentDI($object, Container $container)
+    {
+        $reflection = new \ReflectionClass(get_class($object));
+        echo $reflection->getNamespaceName();
+        $properties = $reflection->getProperties();
+
+        foreach ($properties as $property) {
+            $pn = $property->name;
+            preg_match('/(\$?(\w*))\s@inject/', $reflection->getProperty($property->name)->getDocComment(), $match);
+            if (isset($match[1])) {
+                if ($match[1][0] == '$') {
+                    // Property is isn't class
+                    $object->$pn = $container[$match[2]];
+                } else {
+                    // Property is class
+                    $object->$pn = $container[$reflection->getNamespaceName() . '\\' . $match[1]];
+                }
+            }
+        }
+    }
+
+    /**
+     * Inject dependencies from Container using object constructor method
+     */
+    public static function constructorDI($className, Container $container)
+    {
+        return self::prepareMethodParameters($className, '__construct', $container);
+    }
+
+    /**
+     * Inject dependencies from Container using object methods with inject prefix
+     */
+    public static function methodDI($object, Container $container)
+    {
+        $methods = get_class_methods($object);
+        foreach ($methods as $method) {
+            preg_match('/^inject([A-Z]\w*)$/', $method, $match);
+            if (isset($match[0]) && isset($match[1])) {
+                $object->$method(...self::prepareMethodParameters($object, $method, $container));
+            }
+        }
+    }
+
+    /**
+     * Return array with prepared parameters for give class and method
+     * @param $className
+     * @param $methodName
+     * @param Container $container
+     * @return array
+     */
+    private static function prepareMethodParameters($className, $methodName, Container $container)
+    {
+        $p = [];
+
+        if (method_exists($className, $methodName)) {
+            $reflection = new \ReflectionMethod($className, $methodName);
+            $params = $reflection->getParameters();
+            foreach ($params as $param) {
+
+                $class = $param->getClass();
+
+                if ($class) {
+                    // parameter is class
+                    $itemName = $param->getClass()->getName();
+                } else {
+                    // parameter isn't class
+                    $itemName = $param->getName();
+                }
+
+                if ($param->isOptional()) {
+                    if (isset($container[$itemName])) {
+                        $p[] = $container[$itemName];
+                    }
+                } else {
+                    $p[] = $container[$itemName];
+                }
+            }
         }
 
-        // Run middlewares
-        $middleware = new Middleware();
-        $appMiddleawares = isset($this->middlewares['app']) ? $this->middlewares['app'] : [];
-        $routeMiddlewares = isset($this->middlewares[$routeInfo['id']]) ? $this->middlewares[$routeInfo['id']] : [];
-        $middleware->run(array_merge(
-            array_reverse($appMiddleawares),
-            array_reverse($routeMiddlewares),
-            [['mw' => $routeInfo['handler'], 'args' => $args]]
-        ));
+        return $p;
     }
 
     /**
@@ -186,7 +268,7 @@ class Core
      */
     protected function router()
     {
-        return $this->container['router'];
+        return $this->container['Router'];
     }
 
     /**
