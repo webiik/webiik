@@ -1,6 +1,8 @@
 <?php
 namespace Webiik;
 
+use Pimple\Container;
+
 /**
  * Class Middleware
  * @package Webiik
@@ -14,7 +16,7 @@ class Middleware
     /**
      * Middleware storage
      * Every middleware must be array with the following keys:
-     * 'args' - array of arguments, can be whatever
+     * 'params' - array of parameters, can be whatever
      * 'mw' - callable or string, must be defined by:
      * 1. callable: anonymous function | or
      * 2. string: class name of invokable class eg.: Webiik\ClassName | or
@@ -24,50 +26,149 @@ class Middleware
     private $middlewares = [];
 
     /**
-     * Run all middlewares
-     * @param $middlewares
-     * @throws \Exception
+     * @var string|callable
      */
-    public function run($middlewares)
-    {
-        $this->middlewares = $middlewares;
+    private $routeHandler;
 
-        // Run first middleware
-        $mw = $this->middlewares[0]['mw'];
-        $args = $this->middlewares[0]['args'];
-        $this->runMiddleware($mw, $args);
+    /**
+     * @var Container
+     */
+    private $container;
+
+    /**
+     * Middleware constructor.
+     * @param Container $container
+     */
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
     }
 
     /**
-     * @param $mw
-     * @param $args
-     * @param null $response
+     * Add handler that will be run after all middlewares
+     * @param $handler
      * @throws \Exception
      */
-    private function runMiddleware($mw, $args, $response = null)
+    public function addDestination($handler)
     {
-        // Instantiate middleware when is defined by class name
+        $this->checkHandler($handler);
+        $this->routeHandler = $handler;
+    }
+
+    /**
+     * Add array of middlewares
+     * @param array $middlewares
+     * @throws \Exception
+     */
+    public function add(array $middlewares)
+    {
+        foreach ($middlewares as $middleware) {
+            if (!isset($middleware['params'])) {
+                throw new \Exception('Middleware \'' . $middleware . '\' is missing the \'params\' key.');
+            }
+            $this->checkHandler($middleware);
+        }
+    }
+
+    /**
+     * Run all middlewares
+     * @throws \Exception
+     */
+    public function run()
+    {
+        if (count($this->middlewares) > 0) {
+            // Run first middleware
+            $mw = $this->middlewares[0]['mw'];
+            $params = $this->middlewares[0]['params'];
+            $this->runMiddleware(null, $mw, $params);
+        } else {
+            $this->runRouteHandler($this->routeHandler);
+        }
+    }
+
+    /**
+     * Check if handler is valid callable or class name with optional method
+     * @param $handler
+     * @throws \Exception
+     */
+    private function checkHandler($handler)
+    {
+        if (is_string($handler)) { // We got class name
+
+            $handler = explode(':', $handler);
+
+            // Does class exist?
+            if (!class_exists($handler[0])) {
+
+                throw new \Exception('Class \'' . $handler[0] . '\' does not exist.');
+
+            } else {
+
+                if (isset($handler[1])) { // We got method name
+
+                    // Does method exist in this class?
+                    if (!method_exists($handler[0], $handler[1])) {
+                        throw new \Exception('Method \'' . $handler[1] . '\' does not exist in class \'' . $handler[0] . '\'.');
+                    }
+                }
+            }
+        } elseif (!is_callable($handler)) {
+            throw new \Exception('Handler must be callable or string.');
+        }
+    }
+
+    /**
+     * Run middleware and inject its dependencies
+     * @param null $request
+     * @param $mw
+     * @param null $params
+     * @throws \Exception
+     */
+    private function runMiddleware($request = null, $mw, $params = null)
+    {
+        // Instantiate middleware when is defined by class name and inject dependencies
         if (is_string($mw)) {
 
             $mw = explode(':', $mw);
 
             if (class_exists($mw[0])) {
-                if (isset($mw[1])) {
-                    $method = $mw[1];
+
+                $method = isset($mw[1]) ? $mw[1] : false;
+
+                if (is_array($params)) {
+                    $mw = new $mw[0]($request, ...$params);
+                } elseif ($params) {
+                    $mw = new $mw[0]($request, $params);
                 } else {
-                    $method = false;
+                    $mw = new $mw[0]($request);
                 }
-                $mw = new $mw[0]($response, ...$args);
+
+                // Inject dependencies
+                Core::commentDI($mw, $this->container);
+                Core::methodDI($mw, $this->container);
             }
         }
 
-        // Check and call middleware
-        if (is_callable($mw)) {
-            is_array($args) ? $mw($response, $this->next(), ...$args) : $mw($response, $this->next(), $args);
+        // Check and call middleware with dependencies
+        if (is_object($mw) && $mw instanceof \Closure) {
+
+            // Closure
+            $mw($request, $this->next(), ...$params);
+
+        } elseif (is_object($mw) && is_callable($mw)) {
+
+            // Invokable class
+            $mw($request, $this->next(), ...$params);
+
         } elseif (is_object($mw) && isset($method) && $method && method_exists($mw, $method)) {
-            is_array($args) ? $mw->$method($response, $this->next(), ...$args) : $mw->$method($response, $this->next(), $args);
-        } elseif (!is_object($mw) || (isset($method) && $method != false)) {
-            throw new \Exception('Middleware \''.$mw[0].'\' must be callable or valid className:methodName(optional).');
+
+            // Class with valid method
+            $mw->$method($request, $this->next(), ...$params);
+
+        } elseif (!is_object($mw)) {
+
+            // No object, closure, invokable or object with valid method
+            throw new \Exception('Middleware \'' . $mw[0] . '\' must be callable or valid className:methodName(optional).');
         }
     }
 
@@ -78,17 +179,72 @@ class Middleware
      */
     private function next()
     {
-        $next = function ($response) {
+        $next = function ($request) {
 
             $nextMw = next($this->middlewares);
 
             if ($nextMw) {
                 $mw = $nextMw['mw'];
-                $args = $nextMw['args'];
-                $this->runMiddleware($mw, $args, $response);
+                $params = $nextMw['params'];
+                $this->runMiddleware($request, $mw, $params);
+            } else {
+                $this->runRouteHandler($this->routeHandler);
             }
         };
 
         return $next;
+    }
+
+    /**
+     * Run route handler and inject its dependencies
+     * @param $handler
+     * @throws \Exception
+     */
+    private function runRouteHandler($handler)
+    {
+        // Instantiate route handler when is defined by class name and inject dependencies
+        if (is_string($handler)) {
+
+            $handler = explode(':', $handler);
+
+            if (class_exists($handler[0])) {
+
+                $class = $handler[0];
+                $method = isset($handler[1]) ? $handler[1] : false;
+
+//                if (isset($this->container[$class])) {
+//                    echo 'A';
+                    $d = Core::constructorDI($class, $this->container);
+                    $handler = new $class(...$d);
+//                } else {
+//                    $handler = new $class;
+//                }
+
+                Core::commentDI($handler, $this->container);
+                Core::methodDI($handler, $this->container);
+            }
+        }
+
+        // Check and call handler with dependencies
+        if (is_object($handler) && $handler instanceof \Closure) {
+
+            // Closure
+            $handler($this->container);
+
+        } elseif (is_object($handler) && is_callable($handler)) {
+
+            // Invokable class
+            isset($this->container[$class . ':__invoke']) ? $handler->$method(...$this->container[$class . ':__invoke']) : $handler->$method();
+
+        } elseif (is_object($handler) && isset($method) && $method && method_exists($handler, $method)) {
+
+            // Class with valid method
+            isset($this->container[$class . ':' . $method]) ? $handler->$method(...$this->container[$class . ':' . $method]) : $handler->$method();
+
+        } elseif (!is_object($handler)) {
+
+            // No object, closure, invokable or object with valid method
+            throw new \Exception('Middleware \'' . $handler[0] . '\' must be callable or valid className:methodName(optional).');
+        }
     }
 }
