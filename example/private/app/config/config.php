@@ -13,18 +13,22 @@ $config = [
         'logs' => __DIR__ . '/../logs',
         'routes' => __DIR__ . '/../routes',
         'translations' => __DIR__ . '/../translations',
+        'conversions' => __DIR__ . '/../translations/conversions',
+        'formats' => __DIR__ . '/../translations/formats',
+        'views' => __DIR__ . '/../views',
     ],
 
+    // First database is main app database
+    // $dialect, $host, $dbname, $user, $pswd, $encoding
     'database' => [
-        // $name => $dialect, $host, $dbname, $user, $pswd, $encoding
-        'db1' => [],
+        'db1' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
     ],
 
     // First language is default
     // Signature is: [language in ISO 639-1, timezone, [array of fallbacks in ISO 639-1]]
     'language' => [
         'en' => ['America/Los_Angeles', ['cs']],
-        'cs' => ['Europe/Prague', ['sk']],
+        'cs' => ['Europe/Prague', ['en']],
         'sk' => ['Europe/Bratislava', ['cs']],
     ],
 
@@ -32,6 +36,4 @@ $config = [
     'dlInUri' => false,
 
     'view' => 'Twig',
-
-    'appDir' => __DIR__ . '/../',
 ];

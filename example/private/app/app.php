@@ -1,27 +1,47 @@
 <?php
-require __DIR__ . '/../classes/MyClass.php';
+//require __DIR__ . '/../classes/MyClass.php';
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
 // Todo: THINK ABOUT installers (what basic folders and files, installer steps) for Core(API), Skeleton, CMS
 
-//$app = new \Webiik\Core();
-$app = new \Webiik\Skeleton($config);
+$app = new \Webiik\Core();
+//$app = new \Webiik\Skeleton($config);
 
 // Add own error routes handlers
 //$app->error404('Webiik\Error404:run');
 //$app->error405('Webiik\Error405:run');
 
+//$mw = new \MySpace\Middleware();
+//$mw = function(){};
+//if(is_object($mw) && is_callable($mw)) echo 'tset';
+
+$app->addService('Webiik\Authentication', function () {
+    return new \Webiik\Authentication();
+});
+$app->addService('Webiik\Flash', function () {
+    return new \Webiik\Flash();
+});
+
+//$app->add('MySpace\Middleware', 'a');
+//$app->add('MySpace\Middleware', 'b');
+
 // Add routes with optional middlewares
 $app->map(['GET'], '/', 'Webiik\Controller:run', 'home');
+$app->map(['GET'], '/login', 'Webiik\Login:run', 'home');
+//$app->map(['GET'], '/login', 'Webiik\Login', 'home');
+//$app->map(['GET'], '/login', function (\Pimple\Container $c) {
+//    echo 'Hello World!';
+//}, 'home');
+
 //$app->map(['GET'], $app->_t('routes./'), 'Webiik\Controller:run', 'home');
 //$app->map(['GET'], '/page1', 'Webiik\Controller:run', 'page1');
 
 // DI for route handlers
-//$factoryController = function ($c) {
-//    return [$c['translation']];
-//};
-//$app->addService('Webiik\Controller', $factoryController);
+$factoryController = function ($c) {
+    return [$c['connection'], $c['translation'], $c['router'], $c['auth']];
+};
+$app->addService('Webiik\Controller', $factoryController);
 
 // Run app
 $app->run();

@@ -11,21 +11,29 @@ namespace Webiik;
  */
 class Router
 {
+    /** @var string Lang of mapped routes */
+    private $lang = 'en';
+
     /** @var array Info about requested route */
     public $routeInfo = [];
 
     /**
      * Router configuration
      *
-     * basePath - Base directory of your web app relative to web root
+     * Options:
+     * basePath - Base directory of your web app relative to host root
      * duplicatesRecognition - Set to true just for development. Turning off saves time and memory
      * slashRedirect - http://googlewebmastercentral.blogspot.cz/2010/04/to-slash-or-not-to-slash.html
+     * defaultLang - default language
+     * defaultLangInUri - Show default lang in URI? If true home page in default language will be eg.: webiik.com/en/
      * @var array
      */
     private $config = [
         'basePath' => '',
         'duplicatesRecognition' => false,
         'slashRedirect' => true,
+        'defaultLang' => 'en',
+        'defaultLangInUri' => false,
     ];
 
     /**
@@ -45,6 +53,24 @@ class Router
 
     /** @var array Just names of routes for fast duplicates recognition */
     private $routeNames = [];
+
+    /**
+     * Set language of mapped routes
+     * @param $lang
+     */
+    public function setLang($lang)
+    {
+        $this->lang = $lang;
+    }
+
+    /**
+     * Set default language
+     * @param $lang
+     */
+    public function setDefaultLang($lang)
+    {
+        $this->config['defaultLang'] = $lang;
+    }
 
     /**
      * Set base directory of your web app relative to web root
@@ -73,18 +99,20 @@ class Router
     public function map($methods = [], $route, $handler, $name = false)
     {
         if ($this->config['duplicatesRecognition'] == true) {
-            if (isset($this->routeUris[$route])) {
+            if (isset($this->routeUris[$this->lang][$route])) {
                 throw new \Exception('Can not redeclare same route again {' . $route . '}');
             }
-            $this->routeUris[$route] = true;
+            $this->routeUris[$this->lang][$route] = true;
 
             if ($name) {
-                if (isset($this->routeNames[$name])) {
+                if (isset($this->routeNames[$this->lang][$name])) {
                     throw new \Exception('Can not redeclare route name {' . $name . '}');
                 }
-                $this->routeNames[$name] = true;
+                $this->routeNames[$this->lang][$name] = true;
             }
         }
+
+        $route = $this->getUriLangPrefix($this->lang) . $route;
 
         $route = [
             'methods' => $methods,
@@ -93,19 +121,19 @@ class Router
             'name' => $name,
         ];
 
-        $this->routes[] = $route;
+        $this->routes[$this->lang][] = $route;
 
-        end($this->routes);
-        return key($this->routes);
+        end($this->routes[$this->lang]);
+        return key($this->routes[$this->lang]);
     }
 
     /**
      * Remove route from $this->routes
      * @param string $route
      */
-    public function unmap($route)
+    public function unmap($route, $lang)
     {
-        unset($this->routes[$route]);
+        unset($this->routes[$lang][$route]);
     }
 
     /**
@@ -148,6 +176,24 @@ class Router
     }
 
     /**
+     * Get URI lang prefix
+     * URIs in other language than default will have lang prefix according
+     * to the following pattern /{lang}/{uri} eg.: /cs/kontakt
+     * @return string
+     */
+    private function getUriLangPrefix($lang)
+    {
+        $defaultLang = $this->config['defaultLang'];
+        if ($lang != $defaultLang || $this->config['defaultLangInUri']) {
+            $langPrefix = '/' . $lang;
+        } else {
+            $langPrefix = '';
+        }
+
+        return $langPrefix;
+    }
+
+    /**
      * Redirect the URL without or with many slashes at the and to the URL with one slash at the end
      * http://googlewebmastercentral.blogspot.cz/2010/04/to-slash-or-not-to-slash.html
      */
@@ -166,81 +212,94 @@ class Router
     /**
      * Return the URI for a named route
      * @param string $routeName
+     * @param bool|string $lang
      * @param array $params
      * @return string|boolean
      * @throws \Exception
      */
-    public function getUriFor($routeName, $params = [])
+    public function getUriFor($routeName, $lang = false, $params = [])
     {
-        foreach ($this->routes as $route) {
+        if (!$lang) $lang = $this->lang;
 
-            if ($route['name'] == $routeName) {
+        if (isset($this->routes[$lang])) {
 
-                $routeParams = false;
-                $uri = '/';
+            foreach ($this->routes[$lang] as $route) {
 
-                if ($route['uri'] != '/') {
+                if ($route['name'] == $routeName) {
 
-                    // Get param names, conditions and its count
-                    $routeUriParts = explode('/', trim($route['uri'], '/'));
-                    $reqParamsCount = $wildParamsCount = $optParamsCount = 0;
+                    $routeParams = false;
+                    $uri = '/';
 
-                    $i = 0;
-                    foreach ($routeUriParts as $routeUriPart) {
+                    if ($route['uri'] != '/') {
 
-                        if ($routeUriPart[0] == ':') {
-                            // Required parameter
-                            $reqParamsCount++;
-                        } else if ($routeUriPart[0] == '*') {
-                            // Wildcard parameter
-                            $wildParamsCount++;
-                        } else if ($routeUriPart[0] == '?') {
-                            // Optional parameter
-                            $optParamsCount++;
-                        } else {
-                            $uri .= $routeUriPart . '/';
-                        }
+                        // Get param names, conditions and its count
+                        $routeUriParts = explode('/', trim($route['uri'], '/'));
+                        $reqParamsCount = $wildParamsCount = $optParamsCount = 0;
 
-                        // Store param and condition name
-                        if ($routeUriPart[0] == ':' || $routeUriPart[0] == '*' || $routeUriPart[0] == '?') {
-                            $paramNameCond = explode('.', $routeUriPart);
-                            $routeParams[$i]['paramName'] = substr($paramNameCond[0], 1);
-                            if (isset($paramNameCond[1])) $routeParams[$i]['condName'] = $paramNameCond[1];
-                            $i++;
-                        }
-                    }
-
-                    // Check if we have got right count of route parameters
-                    $paramsCount = count($params);
-                    if ((($paramsCount >= $reqParamsCount) && ($paramsCount <= $reqParamsCount + $optParamsCount)) || (($paramsCount >= $reqParamsCount) && $wildParamsCount > 0)) {
-
-                        // Check if params match conditions if any
                         $i = 0;
-                        foreach ($params as $givenParam) {
+                        foreach ($routeUriParts as $routeUriPart) {
 
-                            if (!isset($routeParams[$i])) {
-                                $i--;
+                            if ($routeUriPart[0] == ':') {
+                                // Required parameter
+                                $reqParamsCount++;
+                            } else if ($routeUriPart[0] == '*') {
+                                // Wildcard parameter
+                                $wildParamsCount++;
+                            } else if ($routeUriPart[0] == '?') {
+                                // Optional parameter
+                                $optParamsCount++;
+                            } else {
+                                $uri .= $routeUriPart . '/';
                             }
 
-                            if (isset($routeParams[$i]['condName'])) {
-                                $conditionRegex = $this->getConditionRegex($routeParams[$i]['condName']);
-                                if (!preg_match('/' . $conditionRegex . '/', $givenParam)) {
-                                    throw new \Exception('UrlFor() parameter {' . $givenParam . '} must match following regex {/' . $conditionRegex . '/}');
+                            // Store param and condition name
+                            if ($routeUriPart[0] == ':' || $routeUriPart[0] == '*' || $routeUriPart[0] == '?') {
+                                $paramNameCond = explode('.', $routeUriPart);
+                                $routeParams[$i]['paramName'] = substr($paramNameCond[0], 1);
+                                if (isset($paramNameCond[1])) $routeParams[$i]['condName'] = $paramNameCond[1];
+                                $i++;
+                            }
+                        }
+
+                        // Check if we have got right count of route parameters
+                        $paramsCount = count($params);
+                        if ((($paramsCount >= $reqParamsCount) && ($paramsCount <= $reqParamsCount + $optParamsCount)) || (($paramsCount >= $reqParamsCount) && $wildParamsCount > 0)) {
+
+                            // Check if params match conditions if any
+                            $i = 0;
+                            foreach ($params as $givenParam) {
+
+                                if (!isset($routeParams[$i])) {
+                                    $i--;
                                 }
 
-                            }
+                                if (isset($routeParams[$i]['condName'])) {
+                                    $conditionRegex = $this->getConditionRegex($routeParams[$i]['condName']);
+                                    if (!preg_match('/' . $conditionRegex . '/', $givenParam)) {
+                                        $msg = 'UrlFor() - parameter {' . $givenParam . '} must match the following regex {/' . $conditionRegex . '/}.';
+                                        Log::log('router', $msg, true);
+                                        return false;
+                                    }
 
-                            $uri .= $givenParam . '/';
-                            $i++;
+                                }
+
+                                $uri .= $givenParam . '/';
+                                $i++;
+                            }
+                        } else {
+                            $msg = 'UrlFor() - route with name {' . $routeName . '} has {' . $reqParamsCount . '} required, {' . $optParamsCount . '} optional and {' . $wildParamsCount . '} wildcard parameter(s), but {' . $paramsCount . '} parameters was given.';
+                            Log::log('router', $msg, true);
+                            return false;
                         }
-                    } else {
-                        throw new \Exception('UrlFor() route {' . $routeName . '} has {' . $reqParamsCount . '} required, {' . $optParamsCount . '} optional and {' . $wildParamsCount . '} wildcard parameter(s), but {' . $paramsCount . '} given.');
                     }
+                    return $uri;
                 }
-                return $this->config['basePath'] . $uri;
             }
         }
-        throw new \Exception('UrlFor() route {' . $routeName . '} does not exist.');
+
+        $msg = 'UrlFor() - route with name {' . $routeName . '} does not exist in {' . $lang . '} lang.';
+        Log::log('router', $msg, true);
+        return false;
     }
 
     /**
@@ -265,7 +324,7 @@ class Router
         // Strip base path from request url
         $request_uri = substr($request_uri, strlen($this->config['basePath']));
 
-        foreach ($this->routes as $routeId => $route) {
+        foreach ($this->routes[$this->lang] as $routeId => $route) {
 
             $routeRegexMask = '';
             $routeNoRegexPart = '';
@@ -373,7 +432,8 @@ class Router
                             $conditionRegex = $this->getConditionRegex($routeParams[$i - 1]['condName']);
                             if ($conditionRegex) {
                                 if (!preg_match('/' . $conditionRegex . '/', $paramValue)) {
-                                    throw new \Exception('URL exists but parameter {' . $paramValue . '} do not match following regex {/' . $conditionRegex . '/}');
+                                    // URL exists but parameter {' . $paramValue . '} do not match the regex {/' . $conditionRegex . '/}
+                                    $this->routeInfo['http_status'] = 404;
                                 }
                             }
                         }

@@ -44,10 +44,6 @@ class Translation
      */
     private $types = [];
 
-    /** @var callable with required params ($msg) */
-    private $logHandler;
-    private $logHandlerParams = false;
-
     /**
      * Set language of requested translation
      * @param $lang
@@ -146,6 +142,32 @@ class Translation
         $this->isArrAssoc($keyValArr);
         $this->isString($lang);
         $this->types['date'][$lang]['monthsShort'] = $keyValArr;
+    }
+
+    /**
+     * Set long month names translation
+     * @param array $keyValArr : eg. ['Mon' => 'Pon']
+     * @param string $lang : eg. 'en'
+     * @throws \Exception
+     */
+    public function setShortDayNamesTrans(array $keyValArr, $lang)
+    {
+        $this->isArrAssoc($keyValArr);
+        $this->isString($lang);
+        $this->types['date'][$lang]['daysShort'] = $keyValArr;
+    }
+
+    /**
+     * Set long month names translation
+     * @param array $keyValArr : eg. ['Monday' => 'Pondělí']
+     * @param string $lang : eg. 'en'
+     * @throws \Exception
+     */
+    public function setLongDayNamesTrans(array $keyValArr, $lang)
+    {
+        $this->isArrAssoc($keyValArr);
+        $this->isString($lang);
+        $this->types['date'][$lang]['daysLong'] = $keyValArr;
     }
 
     /**
@@ -297,29 +319,6 @@ class Translation
     }
 
     /**
-     * Add log handler
-     * @param callable $handler with required params ($msgShort, $msgHtml)
-     * @param $params
-     */
-    public function addLogHandler(callable $handler, $params)
-    {
-        $this->logHandler = $handler;
-        $this->logHandlerParams = $params;
-    }
-
-    /**
-     * If log handler is configured run log handler with params ($message, $params)
-     * @param $message
-     */
-    private function logError($message)
-    {
-        if (is_callable($this->logHandler)) {
-            $lh = $this->logHandler;
-            $lh($message, $this->logHandlerParams);
-        }
-    }
-
-    /**
      * Return key value from $this->translation or false if key does not exist.
      * Multidimensional arrays can be accessed with key dot notation.
      * If logging is set, log error and fallback translations.
@@ -348,6 +347,7 @@ class Translation
 
         // If we didn't find key in current lang, we will try to find key in fallback langs
         if (!$val) {
+
             if (isset($this->fallbacks[$this->lang]) && is_array($this->fallbacks[$this->lang])) {
 
                 foreach ($this->fallbacks[$this->lang] as $fallbackLang) {
@@ -366,7 +366,9 @@ class Translation
 
                         if ($val) {
                             // Log fallback usage
-                            $this->logError('using \'' . $fallbackLang . '\' instead' . "\n");
+                            $msg = 'key {' . $key . '} is missing in lang {' . $this->lang . '}';
+                            $msg .= ' using {' . $fallbackLang . '} lang instead';
+                            Log::log('translation', $msg, true);
                             break;
                         }
                     }
@@ -378,23 +380,10 @@ class Translation
         if (!$val) {
 
             // Find calling that caused the error
-            $bt = debug_backtrace();
-            $msg = '';
-            foreach ($bt as $step) {
-                if (isset($step['function']) && $step['function'] == '_t') {
-                    $msg = 'call \'' . $step['file'] . '(' . $step['line'] . ')\'';
-                }
-            }
+            $msg = 'key {' . $key . '} is missing in lang {' . $this->lang . '}';
 
             // Log error
-            $this->logError(
-                // Calling script
-                 $msg .
-                // Affected page
-                ', page \'' . $this->getRequestUrl() .
-                // Key and language
-                '\', key \'' . $key . '\' is missing in \'' . $this->lang . '\'' . "\n"
-            );
+            Log::log('translation', $msg, true);
         }
 
         return $val;
@@ -602,12 +591,11 @@ class Translation
 
         $bracketResult = DATE($dateFormat, $timestamp);
 
-        // Translate month names if we have their translations and language is not english
-        if (isset($this->types[$type][$this->lang]['monthsLong'])) {
-            $bracketResult = strtr($bracketResult, $this->types[$type][$this->lang]['monthsLong']);
-        }
-        if (isset($this->types[$type][$this->lang]['monthsShort'])) {
-            $bracketResult = strtr($bracketResult, $this->types[$type][$this->lang]['monthsShort']);
+        // Translate month and day names if we have their translations
+        foreach (['monthsLong', 'monthsShort', 'daysLong', 'daysShort'] as $key) {
+            if (isset($this->types[$type][$this->lang][$key])) {
+                $bracketResult = strtr($bracketResult, $this->types[$type][$this->lang][$key]);
+            }
         }
 
         return $bracketResult;
@@ -707,21 +695,6 @@ class Translation
         }
 
         return $extractions;
-    }
-
-    /**
-     * Return host root with current scheme eg.: http://localhost
-     * @return string
-     */
-    private function getRequestUrl()
-    {
-        $pageURL = 'http';
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-            $pageURL .= 's';
-        }
-        $pageURL .= '://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
-
-        return $pageURL;
     }
 
     /**

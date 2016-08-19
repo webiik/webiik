@@ -24,7 +24,7 @@ class Connection
      * @param $pswd
      * @param $encoding
      */
-    public function add($name, $dialect, $host, $dbname, $user, $pswd, $encoding)
+    public function add($name, $dialect, $host, $dbname, $user, $pswd, $encoding = 'utf8')
     {
         $this->conf[$name] = [$dialect, $host, $dbname, $user, $pswd, $encoding];
     }

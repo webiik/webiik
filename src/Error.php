@@ -17,10 +17,6 @@ class Error
     /** @var callable */
     private $silentHandler;
 
-    /** @var callable with required params ($msgShort, $msgHtml) */
-    private $logHandler;
-    private $logHandlerParams = false;
-
     public function __construct($silent = false, $logErrors = false)
     {
         // Configure error reporting
@@ -51,17 +47,6 @@ class Error
     public function addSilentHandler(callable $handler)
     {
         $this->silentHandler = $handler;
-    }
-
-    /**
-     * Add log handler
-     * @param callable $handler with required params ($msgShort, $msgHtml)
-     * @param $params
-     */
-    public function addLogHandler(callable $handler, $params)
-    {
-        $this->logHandler = $handler;
-        $this->logHandlerParams = $params;
     }
 
     /**
@@ -114,6 +99,23 @@ class Error
      */
     private function outputError($type, $message, $file, $line, $trace = [])
     {
+        // If trace is empty, generate trace from debug_backtrace()
+        if (empty($trace)) {
+            $dt = debug_backtrace();
+            $i = count($dt);
+            foreach ($dt as $caller) {
+                $msg =  'called by \'' . $caller['function'] . '\'';
+                if (isset($caller['class'])) {
+                    $msg .= ', class \'' . $caller['class'] . '\'';
+                }
+                if (isset($caller['file'])) {
+                    $msg .= ' in file \'' . $caller['file'] . ' (on line: ' . $caller['line'] . ')\'';
+                }
+                $trace[] = $i . ' ' . $msg;
+                $i--;
+            }
+        }
+
         $this->printError($type, $message, $file, $line, $trace);
         $this->logError($type, $message, $file, $line, $trace);
         exit;
@@ -147,14 +149,7 @@ class Error
      */
     private function logError($type, $message, $file, $line, $trace)
     {
-        if ($this->config['log'] && is_callable($this->logHandler)) {
-            $lh = $this->logHandler;
-            $lh(
-                $this->msgShort($type, $message, $file, $line),
-                $this->msgHtml($type, $message, $file, $line, $trace),
-                $this->logHandlerParams
-            );
-        }
+        Log::log('app', $this->msgShort($type, $message, $file, $line), true);
     }
 
     /**
@@ -167,10 +162,10 @@ class Error
      */
     private function msgShort($type, $message, $file, $line)
     {
-        $msg = '- ' . $type;
+        $msg = $type;
         $msg .= ': ' . $message;
         $msg .= ' in \'' . $file . '\'';
-        $msg .= ' on line ' . $line . "\n";
+        $msg .= ' on line ' . $line;
 
         return $msg;
     }
@@ -213,6 +208,7 @@ class Error
             4 => 'ParseError',
             8 => 'Notice',
             64 => 'FatalError',
+            4096 => 'CatchableFatalError',
         ];
 
         if (isset($err[$number])) {

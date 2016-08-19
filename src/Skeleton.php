@@ -11,9 +11,11 @@ namespace Webiik;
  */
 class Skeleton extends Core
 {
+    /**
+     * Current language determined from URI
+     * @var
+     */
     private $lang;
-
-    private $fallbackLangs;
 
     /**
      * Skeleton constructor.
@@ -28,8 +30,18 @@ class Skeleton extends Core
         // Add basic app services
 
         // Add authentication
+        $this->addService('Authentication', function ($c) {
+            return new Authentication();
+        });
+
+        // Add flash messages
+        $this->addService('Flash', function ($c) {
+            return new Flash();
+        });
+
+        // Todo: It's here necessary?
         $this->addService('auth', function ($c) {
-            return new Auth();
+            return new AuthMiddleware();
         });
 
         // Add conversion
@@ -40,16 +52,17 @@ class Skeleton extends Core
         // Add connection
         $this->addService('connection', function ($c) {
             $connection = new Connection();
-            if (isset($c['config']['database']) && !isset($c['config']['database'][0])) {
+            if (isset($c['config']['database'])) {
                 foreach ($c['config']['database'] as $name => $p) {
-                    $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4], $p[5]);
+                    $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4]);
                 }
             }
-            return new Connection();
+            return $connection;
         });
 
         // Add template engine
         $this->addService('render', function ($c) {
+            // Todo: Configure render engine
             return new Render();
         });
 
@@ -58,115 +71,92 @@ class Skeleton extends Core
             return new Translation();
         });
 
-        // Add error logging capability to Translation class
-        $this->trans()->addLogHandler(
-            function ($meesage, $p) {
-                $fileLoger = new \Webiik\FileLogger($p['logDir'], 'translog', $p['timeZone']);
-                $emailLogger = new \Webiik\EmailNotice(
-                    $p['logDir'],
-                    $p['email'],
-                    $p['timeZone'],
-                    $p['name'] . ' translation notice',
-                    '!trans_notice_sent.log'
-                );
-                $fileLoger->log($meesage);
-                $emailLogger->log($meesage);
-            },
-            [
-                'email' => $config['error']['email'],
-                'logDir' => $config['folder']['logs'],
-                'name' => $config['name'],
-                'timeZone' => $config['error']['timeZone']
-            ]
-        );
-
         // Set app main lang (can return 404)
         $this->setLang();
         $this->trans()->setLang($this->lang);
 
         // Set fallback languages
-        $this->setFallbackLangs($this->lang);
-        if ($this->fallbackLangs) {
-            $this->trans()->setFallbacks($this->lang, $this->fallbackLangs);
-        }
-
-        // Load route translations in current lang
-        $this->loadTranslation($this->lang, 'routes');
+        $this->setFallbackLangs();
     }
 
     public function run()
     {
-        // Load route definitions from file and if we have some routes definitions,
-        // map routes that can be translated
-        $routes = $this->loadRoutes($this->lang);
-        if ($routes) {
-            foreach ($routes as $name => $p) {
-                $this->mapTranslatedRoute($name, $p);
-            }
-        }
+        // Load route definitions for current lang from file.
+        // If routes definitions exist, map routes that has translation(incl. fallbacks).
+        // Load route translations in current lang
+        $this->mapTranslatedRoutes();
 
-        // Match URI against defined routes
+        // Match URI against mapped routes
         $routeInfo = $this->router()->match();
 
-        // If there is no match, show error page
+        // If there is no match, show error page and exit
         if ($routeInfo['http_status'] == 404) $this->error(404);
         if ($routeInfo['http_status'] == 405) $this->error(405);
 
-        // Todo: Load app and page conversions if there are some
-        // Todo: Load app and page translations to Translation if there are some
+        // Store route info into container to allow its injection in route handlers and middlewares
+        $this->addParam('routeInfo', $routeInfo);
 
-        // Get handler class name
-        $handler = explode(':', $routeInfo['handler']);
-        $className = $handler[0];
+        // Load app and current page translations in to Translation
+        $this->loadTranslation($this->lang, '_app');
+        $this->loadTranslation($this->lang, $routeInfo['name']);
 
-        // Prepare args for current route handler
-        $args[] = array_merge(
-            $routeInfo,
-            [
-                'base' => $this->getWebRoot(),
-                'lang' => $this->lang,
-                'langs' => $this->container['config']['language'],
-            ]
-        );
-        if (isset($this->container[$className])) {
-            $args = array_merge($args, $this->container[$className]);
-        }
+        // Load translation formats in to Translation
+        $this->loadFormats($this->lang);
 
-        // Run middlewares
-        $middleware = new Middleware();
-        $appMiddleawares = isset($this->middlewares['app']) ? $this->middlewares['app'] : [];
-        $routeMiddlewares = isset($this->middlewares[$routeInfo['id']]) ? $this->middlewares[$routeInfo['id']] : [];
-        $middleware->run(array_merge(
-            array_reverse($appMiddleawares),
-            array_reverse($routeMiddlewares),
-            [['mw' => $routeInfo['handler'], 'args' => $args]]
-        ));
+        // Load app and page conversions in to Conversion
+        $this->loadConversions('_app');
+        $this->loadConversions($routeInfo['name']);
+
+        // Map rest of routes with empty controllers.
+        // Webiik needs this step to provide getUriFor() for every route in every lang.
+        $this->mapEmptyTranslatedRoutes();
+
+        // Instantiate middleware
+        $middleware = new Middleware($this->container);
+
+        // Add route handler to be run after last middleware
+        $middleware->addDestination($routeInfo['handler']);
+
+        // Add app and route middlewares
+        $appMiddleawares = isset($this->middlewares['app']) ? array_reverse($this->middlewares['app']) : [];
+        $routeMiddlewares = isset($this->middlewares[$routeInfo['id']]) ? array_reverse($this->middlewares[$routeInfo['id']]) : [];
+        $middleware->add(array_merge($appMiddleawares, $routeMiddlewares));
+
+        // Run
+        $middleware->run();
     }
 
     /**
-     * Return translation for given key in current lang. If key does not exist in current
-     * lang, try to load translation of that key from fallback langs. Return false if
-     * key does not exist in any lang.
+     * Return translation for given key and lang.
+     * If translation does not exist, try to load fallback translation from given file.
+     * Return false if translation does not exist in any lang.
+     * @param string $file
+     * @param string $key
+     * @param int $fallbackIndex
+     * @return bool|mixed
      */
-    public function _t($key, $fallbackIndex = 0)
+    public function _t($file, $key, $lang, $fallbackIndex = 0)
     {
         $trans = $this->trans();
+        $trans->setLang($lang);
         $t = $trans->_t($key);
         if (!$t) {
-            if ($this->fallbackLangs && isset($this->fallbackLangs[$fallbackIndex])) {
-                $this->loadTranslation($this->fallbackLangs[$fallbackIndex], $key);
+            $fl = $this->getFallbackLangs($lang);
+            if ($fl && isset($fl[$fallbackIndex])) {
+                $this->loadTranslation($fl[$fallbackIndex], $file, $key);
                 $fallbackIndex++;
-                $t = $this->_t($key, $fallbackIndex);
+                $t = $this->_t($file, $key, $lang, $fallbackIndex);
             }
         }
+        $trans->setLang($this->lang);
         return $t;
     }
 
     /**
      * Try to find lang in URI and compare that lang with available languages.
-     * If language in URI is valid lang, set that lang.
-     * If there is no language in URI and dlInUri is false, set default lang.
-     * If there is no language in URI and dlInUri is true return 404 error page
+     * If language in URI is valid lang, set that lang as current lang.
+     * If there is no language in URI and dlInUri is false, use default lang as current lang.
+     * If there is no language in URI and dlInUri is true return 404 error page.
      */
     private function setLang()
     {
@@ -175,10 +165,10 @@ class Skeleton extends Core
         // Get web root URI
         $uri = str_replace($this->getScriptDir(), '', $_SERVER['REQUEST_URI']);
 
-        // Get lang from URI
+        // Get lang from web root URI
         preg_match('/^\/([\w]{2})\/|^\/([\w]{2})$/', $uri, $matches);
 
-        // Did we find some language in URI?
+        // Did we find some language in web root URI?
         if (count($matches) > 0) {
             // Yes we do. So check if the lang is valid lang.
             foreach ($langs as $lang => $prop) {
@@ -186,11 +176,11 @@ class Skeleton extends Core
             }
         }
 
-        // If we didn't find any lang, it can be still ok, if default lang doesn't need to be in URI
-        // Otherwise page doesn't exist.
+        // If we didn't find any language, it can be still ok, if default language
+        // doesn't need to be in URI, otherwise page doesn't exist.
         if (!isset($lang) && !$this->container['config']['dlInUri']) {
             $lang = key($langs);
-        } else {
+        } elseif (!isset($lang) && !$this->container['config']['dlInUri']) {
             $this->error(404);
         }
 
@@ -198,37 +188,53 @@ class Skeleton extends Core
     }
 
     /**
-     * Check if there are configured some fallback languages and store info about that for further usage
-     * @param $lang
+     * Set fallback language(s) for all available languages
      */
-    private function setFallbackLangs($lang)
+    private function setFallbackLangs()
+    {
+        $langs = $this->container['config']['language'];
+        foreach ($langs as $lang => $p) {
+            if (isset($p[1]) && is_array($p[1])) {
+                $this->trans()->setFallbacks($lang, $p[1]);
+            }
+        }
+    }
+
+    /**
+     * Get array of fallback languages for given lang
+     * @param string $lang
+     * @return bool|array
+     */
+    private function getFallbackLangs($lang)
     {
         $langs = $this->container['config']['language'];
 
-        if (isset($langs[$lang][1])
-            && is_array($langs[$lang][1])
-        ) {
+        if (isset($langs[$lang][1]) && is_array($langs[$lang][1])) {
             $fallbackLangs = $langs[$lang][1];
         } else {
             $fallbackLangs = false;
         }
 
-        $this->fallbackLangs = $fallbackLangs;
+        return $fallbackLangs;
     }
 
     /**
-     * Load file with app translations. If key is specified and exists add translation for
-     * that key to Translation object, otherwise add to Translation object all translations from loaded file.
+     * If translation file exists, add all translations from that file to Translation.
+     * If key is set, add to Translation only translation for that key.
+     * If key is set and does not exist, don't add any translation.
      * Save memory by using keys.
+     * @param string $lang
+     * @param bool|string $key
+     * @param string $file
      */
-    private function loadTranslation($lang, $key = false)
+    private function loadTranslation($lang, $file, $key = false)
     {
-        $dir = $this->container['config']['appDir'];
+        $file = $this->container['config']['folder']['translations'] . '/' . $file . '.' . $lang . '.php';
 
-        if (file_exists($dir . '/translations/app.' . $lang . '.php')) {
+        if (file_exists($file)) {
 
             $trans = $this->trans();
-            $val = require $dir . '/translations/app.' . $lang . '.php';
+            $val = require $file;
 
             // If key exists, get value from translation array by dot notation signature
             if ($key) {
@@ -242,52 +248,148 @@ class Skeleton extends Core
                 }
             }
 
-            if ($val) $trans->addTrans($lang, $val, $key);
-        }
-    }
-
-    /**
-     * Map the route that has the translation.
-     */
-    private function mapTranslatedRoute($name, $p)
-    {
-        // Todo: Add lang prefix before URI
-        $uri = $this->_t('routes.' . $p['utk']);
-
-        if ($uri) {
-            $route = $this->map($p['methods'], $uri, $p['controller'], $name);
-            if (isset($p['middlewares'])) {
-                foreach ($p['middlewares'] as $mw => $params) {
-                    $route->add($mw, $params);
-                }
+            if ($val) {
+                $trans->addTrans($lang, $val, $key);
             }
         }
     }
 
     /**
-     * Return route definitions from file if file exists otherwise return false
+     * If conversion file exists, add all conversions from that file to Conversion
+     * @param string $file
+     */
+    private function loadConversions($file)
+    {
+        $dir = $this->container['config']['folder']['conversions'];
+
+        if (file_exists($dir . '/' . $file . '.php')) {
+
+            $conversions = require $dir . '/' . $file . '.php';
+            $this->conv()->addConvArr($conversions);
+
+            // Add conversion capability to Translation
+            $this->trans()->addConv($this->conv());
+        }
+    }
+
+    /**
+     * If formats file exists, add all formats from that file to Translation
+     * @param string $lang
+     * @throws \Exception
+     */
+    private function loadFormats($lang)
+    {
+        $dir = $this->container['config']['folder']['formats'];
+
+        if (file_exists($dir . '/' . $lang . '.php')) {
+
+            $arr = require $dir . '/' . $lang . '.php';
+
+            foreach ($arr as $type => $formats) {
+
+                if ($type == 'date' || $type == 'time' || $type == 'number' || $type == 'currency') {
+                    foreach ($formats as $name => $pattern) {
+                        if ($type == 'date') $this->trans()->addDateFormat($lang, $name, $pattern);
+                        if ($type == 'time') $this->trans()->addTimeFormat($lang, $name, $pattern);
+                        if ($type == 'number') $this->trans()->addNumberFormat($lang, $name, $pattern);
+                        if ($type == 'currency') $this->trans()->addCurrencyFormat($lang, $name, $pattern);
+                    }
+                }
+
+                if ($type == 'monthsLong') $this->trans()->setLongMonthNamesTrans($formats, $lang);
+                if ($type == 'monthsShort') $this->trans()->setShortMonthNamesTrans($formats, $lang);
+                if ($type == 'daysLong') $this->trans()->setLongDayNamesTrans($formats, $lang);
+                if ($type == 'daysShort') $this->trans()->setShortDayNamesTrans($formats, $lang);
+            }
+        }
+    }
+
+    /**
+     * If route definition file exists, return route definitions, otherwise return false
      * @param $lang
      * @return bool|mixed
      */
     private function loadRoutes($lang)
     {
-        $dir = $this->container['config']['appDir'];
+        $dir = $this->container['config']['folder']['routes'];
 
-        if (file_exists($dir . '/routes/routes.' . $lang . '.php')) {
-            $routes = require $dir . '/routes/routes.' . $lang . '.php';
-        } elseif (file_exists($dir . '/routes/routes.php')) {
-            $routes = require $dir . '/routes/routes.php';
+        if (file_exists($dir . '/routes.' . $lang . '.php')) {
+            $routes = require $dir . '/routes.' . $lang . '.php';
+        } elseif (file_exists($dir . '/routes.php')) {
+            $routes = require $dir . '/routes.php';
         }
 
         return isset($routes) ? $routes : false;
     }
 
     /**
-     * @return Connection
+     * Map all routes in current lang, that has the translation or fallback translation.
      */
-    private function connection()
+    private function mapTranslatedRoutes()
     {
-        return $this->container['connection'];
+        // Load route definitions in current language
+        $routes = $this->loadRoutes($this->lang);
+        if ($routes) {
+
+            // Load translation of route definitions in current language
+            $this->loadTranslation($this->lang, '_app', 'routes');
+
+            // Set router to current lang, so route will be mapped in this lang
+            $this->router()->setLang($this->lang);
+
+            // Iterate all loaded route definitions
+            // If route definition has translation or fallback translation, map it
+            foreach ($routes as $name => $p) {
+                $uri = $this->_t('_app', 'routes.' . $name, $this->lang);
+                if ($uri) {
+                    $uri = '/' . trim($uri, '/');
+                    $route = $this->map($p['methods'], $uri, $p['controller'], $name);
+                    if (isset($p['middlewares'])) {
+                        foreach ($p['middlewares'] as $mw => $params) {
+                            $route->add($mw, $params);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Map all routes, except routes in current lang, that has the translation or fallback translation.
+     * Map them with an empty controller, we don't need more for translation.
+     * @throws \Exception
+     */
+    private function mapEmptyTranslatedRoutes()
+    {
+        foreach ($this->container['config']['language'] as $lang => $prop) {
+
+            // Iterate all langs except current lang, because routes for current lang are already loaded
+            if ($lang != $this->lang) {
+
+                // Load route definitions in iterated language
+                $routes = $this->loadRoutes($lang);
+                if ($routes) {
+
+                    // Load translation of route definitions in iterated language
+                    $this->loadTranslation($lang, '_app', 'routes');
+
+                    // Set router to iterated lang, so route will be mapped in that lang
+                    $this->router()->setLang($lang);
+
+                    // Iterate all loaded route definitions
+                    // If route definition has translation or fallback translation, map it
+                    foreach ($routes as $name => $p) {
+                        $uri = $this->_t('_app', 'routes.' . $name, $lang);
+                        if ($uri) {
+                            $uri = '/' . trim($uri, '/');
+                            $this->router()->map(['GET'], $uri, '', $name);
+                        }
+                    }
+                }
+            }
+        }
+        // Set router back to current lang
+        $this->router()->setLang($this->lang);
     }
 
     /**

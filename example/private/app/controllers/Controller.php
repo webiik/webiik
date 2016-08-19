@@ -3,18 +3,28 @@ namespace Webiik;
 
 class Controller
 {
-    private $trans;
+    private $translation;
     private $connection;
     private $routeInfo;
+    private $router;
 
     /**
      * Controller constructor.
      */
-    public function __construct($response, $routeInfo)
+    public function __construct(
+        $response,
+        $routeInfo,
+        Connection $connection,
+        Translation $translation,
+        Router $router,
+        AuthMiddleware $auth
+    )
     {
         $this->routeInfo = $routeInfo;
-//        $this->trans = $trans;
-//        $this->connection = $connection;
+        $this->translation = $translation;
+        $this->connection = $connection;
+        $this->router = $router;
+        $this->auth = $auth;
 
         print_r($routeInfo);
         print_r($response);
@@ -22,23 +32,41 @@ class Controller
 
     public function run()
     {
-        // Todo: Connect to DB
-        //$pdo = $this->connection->connect('db1');
+        // Connect to DB
+        $pdo = $this->connection->connect('db1');
 
-        // Todo: Authenticate user (Think about how authentication will work - actions, roles, MW)
+        // Todo: Authenticate user (Think about how authentication will work - actions, MW)
 
-        // Todo: Get page translation
+        // Get page translation
+        echo $this->translation->_p('t10', ['speed' => '100']);
 
-        // Todo: Get link to route in some lang
+        // Get route URI in some lang
+        //if ($this->auth->user()->can('use-uri-for')) {
+        echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
+        echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
+        echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
+//        }
 
-        // Load translations
+        echo '<form action="" method="post">';
+        echo '<input type="text" name="email" value="">';
+        echo '<input type="text" name="pswd" value="">';
+        echo '<input type="submit" value="login">';
+        echo '</form>';
 
-        // Render page using some template engine (Twig)
+        $a = 5;
 
-        //$routeName = $this->routeInfo['name'] ? $this->routeInfo['name'] : $this->routeInfo['id'];
-        //$this->trans->addTrans($this->routeInfo['lang'], $this->routeInfo['tsFile']);
+        if($a == true){
+            echo $a;
+        }
 
+        if ($_POST) {
+            $this->user->login($_POST['email'], $_POST['pswd']);
+        }
+
+        // Todo: Render page using some template engine (Twig)
         echo '<br/>';
         echo 'Controller';
+
+        // Todo: PLUG-INS, COMPONENTS design
     }
 }

@@ -1,15 +1,8 @@
 <?php
 return [
     'routes' => [
-        '/' => '/',
-        '/account' => '/ucet',
-    ],
-    'seo' => [
-        '/' => [
-            'title' => '',
-            'kw' => '',
-            'desc' => '',
-        ],
+        'home' => '/',
+        'account' => '/ucet',
     ],
     'other' => [
         'a' => ['b' => 'c'],

@@ -8,11 +8,11 @@ namespace MySpace;
  */
 class Middleware
 {
-    function __invoke($response, $next, $param1)
+    function __invoke($request, $next, $param1)
     {
         echo 'BEFORE ';
         echo '<br/>ARGS: ' . $param1 . '<br/>';
-        $next($response);
+        $next($request);
         echo ' AFTER';
     }
 }

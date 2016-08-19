@@ -5,19 +5,20 @@
  * translations. Uris will be automatically translated
  * during parsing this array.
  */
-
 return [
     'home' => [
         'methods' => ['GET'],
-        'utk' => '/',
         'controller' => 'Webiik\Controller:run',
         'middlewares' => [
-            'MySpace\Middleware' => ['world'],
+            'Webiik\AuthMiddleware' => [$this->container['connection']],
         ],
+    ],
+    'login' => [
+        'methods' => ['GET'],
+        'controller' => 'Webiik\Login:run',
     ],
     'account' => [
         'methods' => ['GET'],
-        'utk' => '/account',
         'controller' => 'Webiik\Controller:run',
     ],
 ];

@@ -8,11 +8,11 @@ namespace MySpace;
  */
 class MiddlewareTwo
 {
-    function run($response, $next, $param1)
+    function run($request, $next, $param1)
     {
         echo 'BEFORE ';
         echo '<br/>ARGS: ' . $param1 . '<br/>';
-        $next($response);
+        $next($request);
         echo ' AFTER';
     }
 }
