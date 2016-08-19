@@ -211,14 +211,7 @@ class Middleware
 
                 $class = $handler[0];
                 $method = isset($handler[1]) ? $handler[1] : false;
-
-//                if (isset($this->container[$class])) {
-//                    echo 'A';
-                    $d = Core::constructorDI($class, $this->container);
-                    $handler = new $class(...$d);
-//                } else {
-//                    $handler = new $class;
-//                }
+                $handler = new $class(...Core::constructorDI($class, $this->container));
 
                 Core::commentDI($handler, $this->container);
                 Core::methodDI($handler, $this->container);

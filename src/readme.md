@@ -50,7 +50,7 @@ class Mw
 ```
 
 ##Dependency injection
-Webiik uses Pimple as dependency injection container. So all services, functions etc. can inject dependencies the Pimple way. Webiik also provides automatic dependency injection into middlewares and route handlers. So you don't need to write dependencies manually. You can also use static methods `methodDI($object, Container $container)`, `commentDI($object, Container $container)` and `constructorDI($className, Container $container)` to inject dependencies from container to services.
+Webiik uses Pimple as dependency injection container. So all services, functions etc. inside container can inject dependencies the Pimple way. Webiik also provides automatic dependency injection into middlewares and route handlers. So you don't need to write dependencies manually. You can also use static methods `methodDI($object, Container $container)`, `commentDI($object, Container $container)` and `constructorDI($className, Container $container)` to inject dependencies from container to services.
 
 #### How to inject?
 At first add service(s) and value(s) you want to inject: 
@@ -61,7 +61,7 @@ $app->addParam('appName', 'MyApp');
 
 Then follow one of examples below.
 
-#### Injection into route handlers and middlewares
+#### Injection into route handlers
 __Constructor injection:__
 ```php 
 namespace MyNameSpace;
@@ -73,6 +73,7 @@ class ClassName
 }
 ```
 
+#### Injection into route handlers and middlewares
 __Injection using 'inject' method prefix__:
 ```php 
 namespace MyNameSpace;
