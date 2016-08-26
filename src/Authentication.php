@@ -3,46 +3,49 @@ namespace Webiik;
 
 class Authentication
 {
-    /** @var \PDO @inject */
-    private $pdo;
+    /** @var Connection */
+    private $connetion;
 
-    /** @var Validate @inject */
+    /** @var Validate */
     private $validate;
 
-    /** @var Token @inject */
+    /** @var Token */
     private $token;
 
-    /** @var Sessions @inject */
+    /** @var Sessions */
     private $sessions;
 
-    /** @var Request @inject */
+    /** @var Mail */
+    private $mail;
+
+    /** @var Request */
     private $req;
 
-    // Is login permanent or not?
-    private $permanentLogin = false;
-    private $permanentLoginDuration = '2 weeks';
-
-    // Where will be user redirected after login nad logout
-    // These params can be overridden fn param
-    private $urlAfterLogin;
-    private $urlAfterLogout;
+    // Config
+    private $config = [
+        'permanentLogin' => false,
+        'permanentLoginDuration' => '2 weeks',
+        'urlAfterLogin' => false,
+        'urlAfterLogout' => false,
+    ];
 
     public function setPermanentLogin($bool, $strtotime = null)
     {
-        $this->permanentLogin = $bool;
-        if($strtotime) $this->permanentLoginDuration = $strtotime;
+        $this->config['permanentLogin'] = $bool;
+        if($strtotime) $this->config['permanentLoginDuration'] = $strtotime;
     }
 
     public function setUrlAfterLogin($urlAfterLogin)
     {
-        $this->urlAfterLogin = $urlAfterLogin;
+        $this->config['urlAfterLogin'] = $urlAfterLogin;
     }
 
     public function setUrlAfterLogout($urlAfterLogout)
     {
-        $this->urlAfterLogout = $urlAfterLogout;
+        $this->config['urlAfterLogout'] = $urlAfterLogin;
     }
 
+    // Todo: Probably move this to separate controller
     /**
      * Return
      * true - successful login
@@ -54,11 +57,8 @@ class Authentication
      * @return bool
      * @throws \Exception
      */
-    public function loginEmailPswd($email, $pswd, $permanent = null, $strtotime = null)
+    public function loginEmailPswd($email, $pswd)
     {
-        if(!$permanent) $permanent = $this->permanentLogin;
-        if(!$strtotime) $strtotime = $this->permanentLoginDuration;
-
         // Log login attempt
         // Are there many login attempts? Deny user login and flash it.
         if ($this->attempt($email, 30, '5 minutes', '30 minutes')) return 1;
@@ -88,38 +88,25 @@ class Authentication
 
         // Was checked permanent login? Login user permanently
         // Login user
-        $this->login($uid, $permanent, $strtotime);
+        $this->login($uid);
 
         return true;
     }
 
-    public function login($uid, $permanent = null, $strtotime = null)
+    public function login($uid)
     {
+//        if($this->attempt($uid)){}
         session_regenerate_id();
         $_SESSION['logged'] = $uid;
-
-        if(!$permanent) $permanent = $this->permanentLogin;
-
-        if ($permanent) {
-
-            if(!$strtotime) $strtotime = $this->permanentLoginDuration;
-
-            $timestamp = strtotime($strtotime);
-
-            $token = $this->token->generateToken();
-
-            $hashSelector = sha1($uid . $token);
-            $hashToken = sha1($token);
-
-            $this->sessions->setCookie('permanent', $hashSelector . ':' . $hashToken, $strtotime);
-
-            $q = $this->pdo->prepare('INSERT INTO users_logged (user_id, selector, token, expires) VALUES (?, ?, ?, ?)');
-            $q->execute([$uid, $hashSelector, $hashToken, $timestamp]);
-        }
+        $this->permanent($uid);
     }
 
     public function logout()
     {
+        if(isset($_SESSION['logged'])) {
+            $_SESSION['logged'] = false;
+            unset($_SESSION['logged']);
+        }
     }
 
     public function redirect($url = false)
@@ -133,6 +120,24 @@ class Authentication
 
     public function sendActivationEmail()
     {
+    }
+
+    private function permanent($uid)
+    {
+        if ($this->config['permanentLogin']) {
+
+            $timestamp = strtotime($this->config['permanentLoginDuration']);
+
+            $token = $this->token->generateToken();
+
+            $hashSelector = sha1($uid . $token);
+            $hashToken = sha1($token);
+
+            $this->sessions->setCookie('permanent', $hashSelector . ':' . $hashToken, $strtotime);
+
+            $q = $this->pdo->prepare('INSERT INTO users_logged (user_id, selector, token, expires) VALUES (?, ?, ?, ?)');
+            $q->execute([$uid, $hashSelector, $hashToken, $timestamp]);
+        }
     }
 
     /**

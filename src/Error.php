@@ -147,7 +147,7 @@ class Error
      * @param $file
      * @param $line
      */
-    private function logError($type, $message, $file, $line, $trace)
+    private function logError($type, $message, $file, $line)
     {
         Log::log('app', $this->msgShort($type, $message, $file, $line), true);
     }

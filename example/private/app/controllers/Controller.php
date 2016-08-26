@@ -35,35 +35,58 @@ class Controller
         // Connect to DB
         $pdo = $this->connection->connect('db1');
 
-        // Todo: Authenticate user (Think about how authentication will work - actions, MW)
-
         // Get page translation
         echo $this->translation->_p('t10', ['speed' => '100']);
 
         // Get route URI in some lang
-        //if ($this->auth->user()->can('use-uri-for')) {
+        // Todo: Authenticate user (Think about how authentication will work - actions, MW)
+        //if ($this->auth->can('use-uri-for')) {
         echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
         echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
         echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
 //        }
 
-        echo '<form action="" method="post">';
-        echo '<input type="text" name="email" value="">';
-        echo '<input type="text" name="pswd" value="">';
-        echo '<input type="submit" value="login">';
-        echo '</form>';
+        // This should be inside controller
+        $this->view->addComponentData($paramName, $paramVal, $namespace, $componentClassName);
 
-        $a = 5;
+        // This should be inside render method
+        $this->components->incorporate();
 
-        if($a == true){
-            echo $a;
-        }
+        // This should be inside Components class
+        $components = $this->getTemplateComponents($template);
 
-        if ($_POST) {
-            $this->user->login($_POST['email'], $_POST['pswd']);
+        foreach ($components as $component) {
+
+            // Check if component exists
+
+            $namespace = $component['namespace'];
+            $className = $component['className'];
+            $methodName = $component['methodName'];
+            $params = $component['params']; // jsFolder, imgFolder, cssFolder
+
+            // If parameter has no data, try to add data from external source
+            foreach($params as $paramName => $paramVal) {
+                if(!$paramVal && isset($compData[$namespace][$className][$paramName])){
+                    $params[$paramName] = $compData[$namespace][$className][$paramName];
+                }
+            }
+
+            // Prepare Translation
+
+            // Instantiate model
+
+            // Instantiate component and inject dependencies and get final data
+            // $params = $className->$methodName(...$params);
+
+            // Render component with data from component instance
+            // $componentHtml = $this->view->parse($componentTemplate, $params);
+
+            // Replace component tags in template with component view
+            // $template = $this->view->component->draw($template, $componentHtml, $matchingRegex);
         }
 
         // Todo: Render page using some template engine (Twig)
+//        $this->view->render($template, $data);
         echo '<br/>';
         echo 'Controller';
 

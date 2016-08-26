@@ -1,3 +1,39 @@
 <h1>{{ seo.title }}</h1>
 <p>{{ seo.desc }}</p>
 {{ uri('home', lang) }}
+
+[[poll]]
+$question What is you favorite color?
+$answers [white,blue,red,black,orange]
+[[/poll]]
+
+[[hello/]]
+
+{#Smart or dummy pagination component#}
+[[pagination/]]
+
+{# Hello component #}
+<h1>Hello {{ nameFromDb }}</h1>
+
+
+{# Poll component #}
+<div id="myPoll">
+    <img src="{{ imgFolder }}/logo.png">
+    <h2>{{ question }}</h2>
+    <form action="{{ proccesFormUrl }}" method="post">
+        {% for question in questions %}
+            <label>{{ question }}
+                <input type="text" name="question{{ loop.index }}" value=""/>
+            </label>
+        {% endfor %}
+        <input type="submit" value="Odeslat"/>
+    </form>
+</div>
+<script language="JavaScript" type="text/javascript" src="{{ jsFolder }}/poll.js"></script>
+<script type="text/javascript">
+    $('#myPoll form').submit(function (e) {
+        e.preventDefault();
+        $(this).hide();
+        $(this).parent().append('<p>Thank you!</p>');
+    });
+</script>

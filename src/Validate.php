@@ -5,9 +5,9 @@ class Validate
 {
     public function email($email)
     {
-        $email = mb_strtolower(strtolower(str_replace('..', '.', trim($email, " .\t\n\r\0\x0B"))), 'utf-8');
+        $email = mb_strtolower(strtolower(str_replace('..', '.', trim($email, " .\t\n\r\0\x0B"))));
 
-        if (strlen($email) > 60) {
+        if (mb_strlen($email) > 60) {
             return false;
         }
 

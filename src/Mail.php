@@ -1,13 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mihi
- * Date: 27/06/16
- * Time: 11:54
- */
-
 namespace Webiik;
-
 
 class Mail
 {
@@ -29,5 +21,4 @@ class Mail
         // Send email
         mail($toMail, $subject, $message, implode("\r\n", $headers));
     }
-
 }
