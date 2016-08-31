@@ -3,7 +3,7 @@ namespace Webiik;
 
 /**
  * Class Filesystem
- * Handle basic file operations with no pain
+ * Manipulate with local files with ease
  *
  * @package     Webiik
  * @author      Jiří Mihal <jiri@mihal.me>
@@ -16,49 +16,162 @@ class Filesystem
     // Todo: Atomic operations
 
     /**
-     * Check if file, dir or url exist
-     * On success return true
-     * On error return false
+     * Return final name for $fileOne
+     * Check if $fileOne exists and if exists check if is same like $fileTwo.
+     * If $fileOne does not exist return [1, fileOne.ext]
+     * If $fileOne exists and is same like $fileTwo return [1, fileOne.ext]
+     * If $fileOne exists and is not same like $fileTwo return [1, fileOne-count.ext]
+     * @param $fileOne
+     * @param $fileTwo
+     * @return array
+     */
+    public function getComparedName($fileOne, $fileTwo)
+    {
+        $fileTwoHash = sha1_file($fileTwo);
+        $fileOneDir = $this->getPath($fileOne);
+        $fileOneName = $this->getFileName($fileOne);
+        $fileOneExt = $this->getFileExt($fileOne);
+
+        $i = 0;
+        while (file_exists($fileOne)) {
+
+            $fileOneHash = sha1_file($fileOne);
+
+            if ($fileOneHash == $fileTwoHash) {
+                return [false, $fileOne];
+            }
+
+            $i++;
+            $fileOne = $fileOneDir . '/' . $fileOneName . '-' . $i . '.' . $fileOneExt;
+        }
+
+        return [true, $fileOne];
+    }
+
+    /**
+     * Return ascii string on success, otherwise false
+     * @param $string
+     * @return bool|mixed
+     */
+    public function convToAscii($string)
+    {
+        $string = @iconv('utf-8', 'US-ASCII//TRANSLIT', $string);
+        return $string ? preg_replace('~[^a-zA-Z0-9\-\_\.\/]+~', '', $string) : false;
+    }
+
+    /**
+     * Return path without filename and trailing slash on success, otherwise false.
+     * @param $path
+     * @return string|bool
+     */
+    public function getPath($path)
+    {
+        // Process path
+        $path = pathinfo($path);
+
+        if (isset($path['extension'])) {
+            $path = $path['dirname'];
+        } else if (isset($path['basename'])) {
+            $path = $path['basename'] ? $path['dirname'] . '/' . $path['basename'] : $path['dirname'];
+        }
+
+        return isset($path) ? rtrim($path, '/') : false;
+    }
+
+    /**
+     * Return file name with extension on success, otherwise false
+     * @param $path
+     * @return string|bool
+     */
+    public function getFile($path)
+    {
+        // Get file from path
+        $path = pathinfo($path);
+        return isset($path['extension']) ? $path['filename'] . '.' . $path['extension'] : false;
+    }
+
+    /**
+     * Return file name without extension on success, otherwise false
+     * @param $path
+     * @return string|bool
+     */
+    public function getFileName($path)
+    {
+        $path = pathinfo($path);
+        return isset($path['filename']) ? $path['filename'] : false;
+    }
+
+    /**
+     * Return file's extension on success, otherwise false
+     * @param $path
+     * @return string|bool
+     */
+    public function getFileExt($path)
+    {
+        $path = pathinfo($path);
+        return isset($path['extension']) ? $path['extension'] : false;
+    }
+
+    /**
+     * Return file mime on success, otherwise false
+     * @param $path
+     * @return bool|string
+     */
+    public function getFileMime($path)
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $path);
+        finfo_close($finfo);
+        return $mime;
+    }
+
+    /**
+     * Return second part of mime without dash specs
+     * @param $mime
+     * @return bool|string
+     */
+    public function getExtFromMime($mime)
+    {
+        preg_match('/(.*\-|\/)(\w+)/', $mime, $match);
+        return isset($match[2]) ? $match[2] : false;
+    }
+
+    /**
+     * Return true if file is image, otherwise false
      * @param $path
      * @return bool
      */
-    public function exists($path)
+    public function isImage($path)
     {
-        if (file_exists($path)) {
-            return true;
-        }
-
-        if ($this->isUrl($path) && $this->urlExists($path)) {
-            return true;
-        }
-
-        return false;
+        $size = @getimagesize($path);
+        return is_array($size) ? true : false;
     }
 
     /**
      * Move uploaded file
-     * On success return 'upfile_path' => [bool, 'final_file_path']
+     * On success return array [bool(0-uploaded file already exists, 1-new file), 'final_file_path']
      * On error return message
      * @param $upfile
-     * @param $dest
+     * @param $destination
      * @param array $allowedMimeTypes
      * @param bool $isImage
-     * @param int $maxSize
+     * @param bool $maxSize
      * @return array|string
      */
-    public function upload($upfile, $dest, $allowedMimeTypes = [], $isImage = false, $maxSize = 5242880)
+    public function upload($upfile, $destination, $allowedMimeTypes = [], $isImage = false, $maxSize = false)
     {
+        // Check if file exists
         if (!isset($_FILES[$upfile])) {
             return 'File does not exist.';
         }
 
-        $destDir = $this->getPath($dest);
-
+        // Check if destination dir exists
+        $destDir = $this->getPath($destination);
         if (!file_exists($destDir)) {
             return 'Destination directory does not exits.';
         }
 
-        // Check $_FILES[$upfile]['error'] value
+        // Check $_FILES[$upfile]['error']
         switch ($_FILES[$upfile]['error']) {
 
             case UPLOAD_ERR_OK:
@@ -80,78 +193,68 @@ class Filesystem
             return 'Source file name is too long.';
         }
 
-        // You should also check filesize here.
-        if ($_FILES[$upfile]['size'] > $maxSize) {
+        // Check filesize here
+        if ($maxSize && $_FILES[$upfile]['size'] > $maxSize) {
             return 'Exceeded filesize limit.';
         }
 
         // Check mime type and get file extension
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $_FILES[$upfile]['tmp_name']);
-        finfo_close($finfo);
+        $mime = $this->getFileMime($_FILES[$upfile]['tmp_name']);
         foreach ($allowedMimeTypes as $allowedMime => $extension) {
             if ($mime == $allowedMime) {
                 $ext = $extension;
                 break;
             }
         }
-
         if (!isset($ext)) {
             return 'Unsupported file type.';
         }
 
         // Check if it is really image
-        if ($isImage) {
-            $size = @getimagesize($_FILES[$upfile]['tmp_name']);
-            if (!is_array($size)) {
-                return 'Unsupported file type.';
-            }
+        if ($isImage && !$this->isImage($_FILES[$upfile]['tmp_name'])) {
+            return 'Unsupported file type.';
         }
 
-        // Calculate hash of uploaded file
-        $uploadedFileHash = sha1_file($_FILES[$upfile]['tmp_name']);
-
         // Get destination filename
-        if (!$destFile = $this->getFile($dest)) {
+        if (!$destFile = $this->getFile($destination)) {
             $destFile = $_FILES[$upfile]['name'];
         }
 
-        // Get destination filename withou extension
-        preg_match('/(.*)\./', $destFile, $match);
-        if (!isset($match[1])) {
+        // Get destination filename without extension
+        if (!$destFile = $this->getFileExt($destFile)) {
             return 'Wrong file name.';
         }
-        $destFile = $match[1];
 
         // Try to convert file name to ASCII
         // If conversion fails use hash as file name
-        if (!$destFile = $this->encodeToAscii($destFile)) {
-            $destFile = $uploadedFileHash;
+        if (!$destFile = $this->convToAscii($destFile)) {
+            $destFile = sha1_file($_FILES[$upfile]['tmp_name']);
         }
 
         // Check if file already exists
         // Detect duplicates (only for same destination dir and name)
         // Prepare destination file incl. path
-        $destFile = $this->finalFile($destDir, $destFile, $ext, $uploadedFileHash);
+        $destFile = $this->getComparedName($destDir . '/' . $destFile . '.' . $ext, $_FILES[$upfile]['tmp_name']);
 
         // Files are same do not upload anything
         if (!$destFile[0]) {
-            return [$_FILES[$upfile]['tmp_name'] => $destFile];
+            $this->delete($_FILES[$upfile]['tmp_name']);
+            return [0, $destFile];
         }
 
         // Upload file
         if (!@move_uploaded_file($_FILES[$upfile]['tmp_name'], $destFile[1])) {
-            return $this->err();
+            return 'Error during move_uploaded_file fn.';
         }
 
-        return [$_FILES[$upfile]['tmp_name'] => $destFile];
+        return [1, $destFile];
     }
 
-    // Todo: Zip source can be array|string with file(s) and dir(s)
     /**
+     * Todo: Zip source can be array|string with file(s) and dir(s)
      * Zip given file(s) to destination zip file
-     * On success return array destination => [file1, file2, ...]
-     * On error return string with error message
+     * On success return array of zipped files
+     * On error return false
      * @param string|array $source
      * @param string $destination
      * @param int $permissions
@@ -162,35 +265,43 @@ class Filesystem
         $zip = new \ZipArchive();
         $zipped = [];
 
-        if (is_string($newDirs = $this->mkdir($this->getPath($destination), $permissions))) {
-            // Err
-            return $newDirs;
+        // File must be the zip file
+        if (!$this->getFileExt($destination) != 'zip') {
+            $zip->close();
+            return false;
         }
 
+        // Prepare dirs
+        if (!$newDirs = $this->mkdir($this->getPath($destination), $permissions)) {
+            $zip->close();
+            return false;
+        }
+
+        // Try to create archive
         if ($zip->open($destination, \ZipArchive::CREATE) !== TRUE) {
             if (isset($newDirs[0])) $this->delete($newDirs[0]);
-            return 'Cannot open zip file.';
+            $zip->close();
+            return false;
         }
 
+        // Add files to zip
         if (is_string($source)) $source = [$source];
-
         foreach ($source as $file) {
-            if (file_exists($file)) {
-                $zip->addFile($file, $this->getFile($file));
-                $zipped[$destination][] = $file;
+            if ($zip->addFile($file, $this->getFile($file))) {
+                $zipped[] = $file;
             } else {
                 isset($newDirs[0]) ? $this->delete($newDirs[0]) : $this->delete($destination);
-                return 'Source file does not exist.';
+                $zip->close();
+                return false;
             }
         }
 
         $zip->close();
-
         return $zipped;
     }
 
-    // Todo: Unzip source can be array|string with file(s) and dir(s)
     /**
+     * Todo: Unzip source can be array|string with file(s) and dir(s)
      * Extract file to destination directory
      * On success return array $file => $destDir
      * On error return string with error message
@@ -199,114 +310,119 @@ class Filesystem
      * @param int $permissions
      * @return array|string
      */
-    public function unzip($source, $destination, $deleteSource = false, $permissions = 0777)
+    public function unzip($source, $destination, $permissions = 0777)
     {
         $zip = new \ZipArchive();
 
+        // Open archive
         if ($zip->open($source) !== TRUE) {
-            return 'Cannot open zip file.';
+            return false;
         }
 
-        if (is_string($newDirs = $this->mkdir($destination, $permissions))) {
-            // Err
-            return $newDirs;
+        // Prepare dirs
+        if (!$newDirs = $this->mkdir($destination, $permissions)) {
+            $zip->close();
+            return false;
         }
 
-        $zip->extractTo($destination);
+        // Extract zip
+        if (!$zip->extractTo($destination)) {
+            if (isset($newDirs[0])) $this->delete($newDirs[0]);
+            $zip->close();
+            return false;
+        }
+
         $zip->close();
-
-        if($deleteSource){
-            $this->delete($source);
-        }
-
-        return [$source => $destination];
+        return true;
     }
 
     /**
      * Move/Rename file or directory
      * On success return renamed file/dir 'src' => 'dest'
      * On error return message
-     * @param $src
-     * @param $dest
-     * @return array|string
+     * @param $source
+     * @param $destination
+     * @return bool
      */
-    public function move($src, $dest)
+    public function move($source, $destination)
     {
-        if (is_file($src)) {
-            if (!$this->getFile($dest)) {
-                // Destination is dir
-                $dest = $dest . '/' . $this->getFile($src);
-            }
+        // If source is file and destination is dir add src file to destination path
+        if (is_file($source) && !$this->getFile($destination)) {
+            $destination = $destination . '/' . $this->getFile($source);
         }
 
-        if (is_dir($src)) {
-            if ($this->getFile($dest)) {
-                return 'Destination must be a directory.';
-            }
+        // If source is dir and destination is file return error
+        if (is_dir($source) && $this->getFile($destination)) {
+            return false;
         }
 
-        if (!@rename($src, $dest)) {
-            return $this->err();
+        if (!@rename($source, $destination)) {
+            return false;
         }
 
-        return [$src => $dest];
+        return true;
     }
 
     /**
-     * Make given dir structure
-     * On success return array of created dirs
-     * On error return error message. All created dirs will be deleted.
+     * Make given dir structure on success
+     * Return array of created dirs on success, otherwise false.
      * @param $dir
      * @param int $permissions
      * @param null $context
-     * @return array|string
+     * @return array|bool
      */
     public function mkdir($dir, $permissions = 0777, $context = null)
     {
         $newDirs = [];
 
+        // If dir already exists return empty array
         if (file_exists($dir)) {
             return $newDirs;
         }
 
-        $dirs = explode('/', trim($dir, '/'));
+        // Explode dir path and try create dir one by one
         $dirPath = '';
-
+        $dirs = explode('/', trim($dir, '/'));
         foreach ($dirs as $dir) {
 
             $dirPath .= '/' . $dir;
 
+            // Dir already exists so skip it
             if (file_exists($dirPath)) {
                 continue;
             }
 
+            // Try to create new dir
             if ($context) {
                 $res = @mkdir($dirPath, $permissions, false, $context);
             } else {
                 $res = @mkdir($dirPath, $permissions, false);
             }
 
+            // If creation of new dir fails, delete created dirs and return false
             if (!$res) {
                 if (isset($newDirs[0])) {
                     $this->delete($newDirs[0]);
                 }
-                return $this->err();
+                return false;
             }
 
+            // Add newly created dir
             $newDirs[] = $dirPath;
         }
 
+        // If some dirs were created return array with all created dirs
         if (count($newDirs) > 0) {
             return $newDirs;
         }
 
-        return 'Got no dir structure.';
+        // Got no dir structure
+        return false;
     }
 
     /**
-     * Delete file or dir incl. sub dirs and files
-     * On success return array of deleted dirs and files
-     * On error return error message
+     * Delete single file or complete dir with sub dirs and files
+     * Return array of deleted dirs and files on success, otherwise false
      * @param $path
      * @param bool $keepDir Empty or delete given dir.
      * @param array $deleted
@@ -314,12 +430,9 @@ class Filesystem
      */
     public function delete($path, $keepDir = false, $deleted = [])
     {
-        if ($path == '') {
-            return 'Got no file or dir.';
-        }
-
+        // Directory or file does not exist
         if (!file_exists($path)) {
-            return 'Directory or file does not exist.';
+            return false;
         }
 
         if ($keepDir && is_bool($keepDir)) {
@@ -327,16 +440,17 @@ class Filesystem
         }
         $keepDir++;
 
+        // Try to delete file
         if (is_file($path)) {
 
             if (!@unlink($path)) {
-                return $this->err();
+                return false;
             }
 
             $deleted[] = $path;
-            return $deleted;
         }
 
+        // Try to delete dir and its content
         if (is_dir($path)) {
 
             $dirContent = glob(rtrim($path, '/') . '/*');
@@ -345,110 +459,81 @@ class Filesystem
 
                 $deleted = $this->delete($entry, $keepDir, $deleted);
 
-                if (is_string($deleted)) {
+                if (!$deleted) {
                     return $deleted;
                 }
             }
 
+            // Try to delete dir
             if ($keepDir !== 1) {
                 if (!@rmdir($path)) {
-                    return $this->err();
+                    return false;
                 }
                 $deleted[] = $path;
             }
-
-            return $deleted;
         }
 
         return $deleted;
     }
 
     /**
-     * Copy file, dir(incl. sub dirs and files) or remote file(page) to destination file or folder
-     * On success return array of copied dirs and files
-     * On error return string with error message. All copied dirs and files will be deleted.
+     * Copy file or dir(incl. sub dirs and files) to destination file or dir on success
+     * Return array of copied dirs and files on success, otherwise false
      *
      * You can copy:
-     * file -> file
-     * file -> dir
-     * dir -> dir
-     * remote file -> file
-     * remote page -> file
+     * file -> file, file -> dir, dir -> dir
      *
-     * @param $src
-     * @param $dest
+     * @param $source
+     * @param $destination
+     * @param int $permissions
      * @param null $context
-     * @return bool
+     * @return bool|array
      */
-    public function copy($src, $dest, $permissions = 0777, $context = null)
+    public function copy($source, $destination, $permissions = 0777, $context = null)
     {
-        $src = rtrim($src, '/');
-        $dest = rtrim($dest, '/');
-
-        if ($this->isUrl($dest)) {
-            return 'Destination must be local.';
-        }
-
         // Copy local file
-        if (is_file($src)) {
+        if (is_file($source)) {
 
-            if (is_string($newDirs = $this->mkdir($this->getPath($dest), $permissions))) {
-                // Err
+            // Prepare dirs
+            if (!$newDirs = $this->mkdir($this->getPath($destination), $permissions)) {
                 return $newDirs;
             }
 
-            if (is_dir($dest)) {
-                $dest = $dest . '/' . $this->getFile($src);
+            // If source is file and destination is dir add src file to destination path
+            if (is_dir($destination)) {
+                $destination = $destination . '/' . $this->getFile($source);
             }
 
-            if (!@copy($src, $dest, $context)) {
+            // Try to copy source file to destination
+            if ($context) {
+                $cr = @copy($source, $destination, $context);
+            } else {
+                $cr = @copy($source, $destination);
+            }
+
+            // If copy fails delete all newly created dirs
+            if (!$cr) {
                 if (isset($newDirs[0])) {
                     $this->delete($newDirs[0]);
                 }
-                return $this->err();
+                return false;
             }
 
-            return [$src => $dest];
+            return [$source => $destination];
         }
 
         // Copy local dir
-        if (is_dir($src)) {
+        if (is_dir($source)) {
 
-            if ($this->getFile($dest)) {
-                return 'Destination must be a directory.';
+            // If source is dir and destination is file return error
+            if ($this->getFile($destination)) {
+                return false;
             }
 
-            $cr = $this->copyDir($src, $dest, $permissions, $context);
-
-            if (is_string($cr)) {
-                $this->delete($dest);
-            }
+            // Recursive copy dir
+            $cr = $this->copyDir($source, $destination, $permissions, $context);
 
             return $cr;
-        }
-
-        // Copy remote url or file
-        if ($this->isUrl($src) && $mime = $this->urlExists($src)) {
-
-            if (is_string($newDirs = $this->mkdir($dest, $permissions))) {
-                return $newDirs;
-            }
-
-            if (is_dir($dest)) {
-                $srcFileName = $this->getFile($src);
-                if ($srcFileName) {
-                    $dest = $dest . '/' . $srcFileName;
-                } else {
-                    $dest = $dest . '/tmpfile.' . $this->extFromMime($mime);
-                }
-            }
-
-            if (!$this->urlSaveToFile($src, $dest)) {
-                if (isset($newDirs[0])) $this->delete($newDirs[0]);
-                return 'Error during copying remote file.';
-            }
-
-            return [$src => $dest];
         }
 
         return false;
@@ -457,37 +542,58 @@ class Filesystem
     /**
      * Recursive dir copy
      * On success return array of copied dirs 'src' => 'dest'
-     * On error return error message
+     * On error return false
      * @param $src
      * @param $dest
      * @param int $permissions
      * @param null $context
      * @param array $copied
-     * @return array|string
+     * @param array $addedDirs
+     * @return array|bool
      */
-    private function copyDir($src, $dest, $permissions = 0777, $context = null, $copied = [])
+    private function copyDir($src, $dest, $permissions = 0777, $context = null, $copied = [], $addedDirs = [])
     {
-        // Name of copied dir
+        // Get name of copied dir
         preg_match('/.*\/([\w\-]*)/', $src, $match);
         $dirName = $match[1];
 
-        // Create dest dir
+        // Try to create dest dir
         $dest = $dest . '/' . $dirName;
-        if (is_string($newDirs = $this->mkdir($dest))) {
-            // Err
-            return $newDirs;
+        if (!$newDirs = $this->mkdir($dest)) {
+
+            // On error delete all copied files and dirs and return false
+            foreach ($copied as $record) {
+                if (is_file($record)) {
+                    $this->delete($record);
+                }
+            }
+
+            if (isset($addedDirs[0])) {
+                $this->delete($addedDirs[0]);
+            }
+
+            return false;
         }
 
+        // Store only newly created dir, we will use it in case of error for deleting copied dirs
+        // It prevents delete dir that was already created before copying inside that dir
+        $addedDirs = array_merge($addedDirs, $newDirs);
+
+        // Store copied dir to array, just for return value
         $copied[$src] = $dest;
 
         // Get content of source dir
         $dirContent = glob($src . '/*');
         foreach ($dirContent as $entry) {
 
+            // Try to copy dir
             if (is_dir($entry)) {
-                $this->copyDir($entry, $dest, $permissions, $context, $copied);
+                if (!$this->copyDir($entry, $dest, $permissions, $context, $copied, $addedDirs)) {
+                    return false;
+                }
             }
 
+            // Try to copy file
             if (is_file($entry)) {
 
                 $dest = $dest . '/' . $this->getFile($entry);
@@ -499,229 +605,26 @@ class Filesystem
                 }
 
                 if (!$cr) {
-                    return $this->err();
+
+                    // On error delete all copied files and dirs and return false
+                    foreach ($copied as $record) {
+                        if (is_file($record)) {
+                            $this->delete($record);
+                        }
+                    }
+
+                    if (isset($addedDirs[0])) {
+                        $this->delete($addedDirs[0]);
+                    }
+
+                    return false;
                 }
 
+                // Store copied dir to array, just for return value
                 $copied[$entry] = $dest;
             }
         }
 
         return $copied;
-    }
-
-    /**
-     * On success return path without trailing slash
-     * On error return false
-     * @param $path
-     * @return string|bool
-     */
-    private function getPath($path)
-    {
-        if (!is_string($path) || $path == '') {
-            return false;
-        }
-
-        // Get path and root from stream path
-        if ($this->isUrl($path)) {
-
-            $urlParts = parse_url($path);
-
-
-            if (isset($urlParts['path'])) {
-                $path = $urlParts['path'];
-            } else {
-                $path = false;
-            }
-
-            $uri = $urlParts['scheme'] . '://' . $urlParts['host'];
-
-        }
-
-        // Process path
-        if ($path) {
-            $path = pathinfo($path);
-
-            if (isset($path['extension'])) {
-                $path = $path['dirname'];
-            } else {
-                $path = $path['basename'] ? $path['dirname'] . '/' . $path['basename'] : $path['dirname'];
-            }
-        }
-
-        // Complete stream path
-        if (isset($uri)) {
-            $path = $uri . $path;
-        }
-
-        $path = rtrim($path, '/');
-
-        return $path;
-    }
-
-    /**
-     * On sucesss return file name with extension
-     * On error return false
-     * @param $path
-     * @return string|bool
-     */
-    private function getFile($path)
-    {
-        if (!is_string($path) || $path == '') {
-            return false;
-        }
-
-        // Get file from stream path
-        if ($this->isUrl($path)) {
-
-            // Stream
-            $urlParts = parse_url($path);
-
-            if (isset($urlParts['path'])) {
-                preg_match('/\/([^\/]*\.\w{1,}$)/', $urlParts['path'], $match);
-            }
-
-            return isset($match[1]) ? $match[1] : false;
-
-        }
-
-        // Get file from path
-        $path = pathinfo($path);
-        return isset($path['extension']) ? $path['filename'] . '.' . $path['extension'] : false;
-    }
-
-    /**
-     * Check if given string is valid URL
-     * On success return true
-     * On error return false
-     * @param $str
-     * @return bool
-     */
-    private function isUrl($str)
-    {
-        return filter_var($str, FILTER_VALIDATE_URL) ? true : false;
-    }
-
-    /**
-     * Check if remote file exists
-     * On success return mime type of copied file
-     * On error return false
-     * Notice: Don't trust mime type. It's taken from http header so it can be easily spoofed.
-     * @param $url
-     * @return mixed
-     */
-    private function urlExists($url)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_NOBODY, 1);
-        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-
-        curl_exec($ch);
-
-        $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-
-        curl_close($ch);
-
-        return $mime;
-    }
-
-    /**
-     * Copy remote file to local file
-     * On success return mime type of copied file
-     * On error return false
-     * Notice: Don't trust mime type. It's taken from http header so it can be easily spoofed.
-     * @param $url
-     * @param $dest
-     * @return bool|mixed
-     */
-    private function urlSaveToFile($url, $dest)
-    {
-        $fp = @fopen($dest, 'w');
-        if (!$fp) {
-            return false;
-        }
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-
-        curl_exec($ch);
-
-        $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-
-        curl_close($ch);
-        fclose($fp);
-
-        return $mime;
-    }
-
-    /**
-     * Return second part of mime without dash specs
-     * @param $mime
-     * @return bool
-     */
-    private function extFromMime($mime)
-    {
-        preg_match('/(.*\-|\/)(\w+)/', $mime, $match);
-        return isset($match[2]) ? $match[2] : false;
-    }
-
-    /**
-     * Get and return last php error message
-     * @return string
-     */
-    private function err()
-    {
-        $err = error_get_last();
-        return $err['message'] . ' in <b>' . $err['file'] . '</b> on line <b>' . $err['line'] . '</b>';
-    }
-
-    /**
-     * On successful encoding return ascii string
-     * On error return false
-     * @param $string
-     * @return bool|mixed
-     */
-    private function encodeToAscii($string)
-    {
-        $string = @iconv('utf-8', 'US-ASCII//TRANSLIT', $string);
-        return $string ? preg_replace('~[^a-zA-Z0-9\-\_\.\/]+~', '', $string) : false;
-    }
-
-    /**
-     * Compare uploaded file with stored file
-     * If stored file exists and is different from uploaded file,
-     * add count to uploaded file name.
-     * Retrun path of file to store array [bool(0 = same, 1 = different), $filePath]
-     * @param $dir
-     * @param $file
-     * @param $ext
-     * @param $uploadedFileHash
-     * @return array
-     */
-    private function finalFile($dir, $file, $ext, $uploadedFileHash)
-    {
-        $storedFile = $dir . '/' . $file . '.' . $ext;
-
-        $i = 0;
-        while (file_exists($storedFile)) {
-
-            $destFileHash = sha1_file($storedFile);
-
-            if ($destFileHash == $uploadedFileHash) {
-                return [false, $storedFile];
-            }
-
-            $i++;
-            $storedFile = $dir . '/' . $file . '-' . $i . '.' . $ext;
-        }
-
-        return [true, $storedFile];
     }
 }
