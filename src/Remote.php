@@ -191,8 +191,8 @@ class Remote
             return $headers[strtolower($headerName)];
         }
 
-        if (isset($headers[ucwords(strtolower($headerName), '-')])) {
-            return $headers[ucwords(strtolower($headerName), '-')];
+        if (isset($headers[ucwords(strtolower($headerName), '-_')])) {
+            return $headers[ucwords(strtolower($headerName), '-_')];
         }
 
         if (isset($headers[strtoupper($headerName)])) {

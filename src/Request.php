@@ -3,6 +3,8 @@ namespace Webiik;
 
 class Request
 {
+    private $values = [];
+
     /**
      * Special-case HTTP headers that are otherwise unidentifiable as HTTP headers.
      * Typically, HTTP headers in the $_SERVER array will be prefixed with
@@ -10,7 +12,7 @@ class Request
      *
      * @var array
      */
-    protected $special = array(
+    private $special = array(
         'CONTENT_TYPE',
         'CONTENT_LENGTH',
         'PHP_AUTH_USER',
@@ -20,10 +22,29 @@ class Request
     );
 
     /**
+     * Store value inside Request
+     * @param $value
+     */
+    public function set($key, $value)
+    {
+        $this->values[$key] = $value;
+    }
+
+    /**
+     * Get value from Request
+     * @param $key
+     * @return bool
+     */
+    public function get($key)
+    {
+        return isset($this->values[$key]) ? $this->values[$key] : false;
+    }
+
+    /**
      * Return array of all HTTP headers from $_SERVER
      * @return array
      */
-    public function getReqHttpHeaders()
+    public function getHttpHeaders()
     {
         $results = array();
         foreach ($_SERVER as $key => $value) {
@@ -44,16 +65,32 @@ class Request
      * @param $headerName
      * @return bool|string
      */
-    public function getReqHeader($headerName)
+    public function getHeader($headerName)
     {
-        return isset($_SERVER[$headerName]) ? $_SERVER[$headerName] : false;
+        if (isset($_SERVER[$headerName])) {
+            return $_SERVER[$headerName];
+        }
+
+        if (isset($_SERVER[strtolower($headerName)])) {
+            return $_SERVER[strtolower($headerName)];
+        }
+
+        if (isset($_SERVER[ucwords(strtolower($headerName), '-_')])) {
+            return $_SERVER[ucwords(strtolower($headerName), '-_')];
+        }
+
+        if (isset($_SERVER[strtoupper($headerName)])) {
+            return $_SERVER[strtoupper($headerName)];
+        }
+
+        return false;
     }
 
     /**
      * Return request method: GET, POST, ...
      * @return string
      */
-    public function getReqMethod()
+    public function getMethod()
     {
         return $_SERVER['REQUEST_METHOD'];
     }
@@ -62,7 +99,7 @@ class Request
      * Return current URI eg. /page1/
      * @return mixed
      */
-    public function getReqUri()
+    public function getUri()
     {
         return $_SERVER['REQUEST_URI'];
     }
@@ -71,31 +108,36 @@ class Request
      * Return current URL eg. http://localhost/page1/
      * @return string
      */
-    public function getReqUrl()
+    public function getUrl()
     {
-        return $this->getRootUrl().$this->getReqUri();
+        return $this->getRootUrl() . $this->getUri();
+    }
+
+    /**
+     * Return root URL eg. http://localhost
+     * @return string
+     */
+    public function getRootUrl()
+    {
+        return $this->getScheme() . '://' . $this->getHostName();
+    }
+
+    /**
+     * Return domain with subdomains eg. localhost, www.domain.com
+     * @return mixed
+     */
+    public function getHostName()
+    {
+        return $_SERVER['SERVER_NAME'];
     }
 
     /**
      * Return address of the page which referred to the current page or false if there is no referring page.
      * @return mixed
      */
-    public function getReqReferrer()
+    public function getReferrer()
     {
         return isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : false;
-    }
-
-    /**
-     * Return request scheme: http or https
-     * @return string
-     */
-    public function getReqScheme()
-    {
-        $scheme = 'http';
-        if(isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off'){
-            $scheme = 'https';
-        }
-        return $scheme;
     }
 
     /**
@@ -103,7 +145,7 @@ class Request
      * @link http://stackoverflow.com/questions/3003145/how-to-get-the-client-ip-address-in-php
      * @return array
      */
-    public function getReqIp()
+    public function getIp()
     {
         $ip = [];
         $keys = array('HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
@@ -119,76 +161,21 @@ class Request
      * Return user agent string
      * @return string
      */
-    public function getReqAgent()
+    public function getAgent()
     {
         return $_SERVER['HTTP_USER_AGENT'];
     }
 
     /**
-     * @return bool
-     */
-    public function isReqSecured()
-    {
-        return $this->getReqScheme() == 'https' ? true : false;
-    }
-
-    /**
-     * Check request for given http method
-     * @param $httpMethod
-     * @return bool
-     */
-    public function isReq($httpMethod)
-    {
-        return $this->getReqMethod() == $httpMethod ? true : false;
-    }
-
-    // Host functions
-
-    /**
-     * Return array of server IP(s)
-     * @return array
-     */
-    public function getHostIp()
-    {
-        return gethostbyname(gethostname());
-    }
-
-    /**
-     * Return server port number
-     * @return mixed
-     */
-    public function getHostPort()
-    {
-        return $_SERVER['SERVER_PORT'];
-    }
-
-    /**
-     * Return domain with subdomains eg. localhost, www.domain.com
-     * @return mixed
-     */
-    public function getHostName()
-    {
-        return $_SERVER['SERVER_NAME'];
-    }
-
-    /**
-     * Return true if host supports secure connection, otherwise false
-     * @return bool
-     */
-    public function isHostSecured()
-    {
-        isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? true : false;
-    }
-
-    // Other functions
-
-    /**
-     * Return root URL eg. http://localhost
+     * Return request scheme: http or https
      * @return string
      */
-    public function getRootUrl()
+    public function getScheme()
     {
-        return $this->getReqScheme().'://'.$this->getHostName();
+        $scheme = 'http';
+        if (isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+            $scheme = 'https';
+        }
+        return $scheme;
     }
-
 }
