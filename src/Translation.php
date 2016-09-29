@@ -366,8 +366,12 @@ class Translation
 
                         if ($val) {
                             // Log fallback usage
-                            $msg = 'key {' . $key . '} is missing in lang {' . $this->lang . '}';
-                            $msg .= ' using {' . $fallbackLang . '} lang instead';
+                            $msg = [
+                                'key' => $key,
+                                'lang' => $this->lang,
+                                'fallback' => $fallbackLang,
+                                'msg' => 'key {' . $key . '} is missing in lang {' . $this->lang . '} using {' . $fallbackLang . '} lang instead',
+                            ];
                             Log::log('translation', $msg, true);
                             break;
                         }
@@ -380,7 +384,11 @@ class Translation
         if (!$val) {
 
             // Find calling that caused the error
-            $msg = 'key {' . $key . '} is missing in lang {' . $this->lang . '}';
+            $msg = [
+                'key' => $key,
+                'lang' => $this->lang,
+                'msg' => 'key {' . $key . '} is missing in lang {' . $this->lang . '}',
+            ];
 
             // Log error
             Log::log('translation', $msg, true);

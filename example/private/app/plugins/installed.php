@@ -3,10 +3,8 @@
  * Webiik reads this file when looking for/autoloading installed components
  */
 return [
-    'namespace/class' => [
+    'plug-in-folder' => [
         'status' => 'active',
-        'namespace' => 'Namespace',
-        'class' => 'Class',
         'author' => 'Firstname Lastname',
         'ver' => 1.1,
     ],

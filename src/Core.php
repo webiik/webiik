@@ -24,7 +24,7 @@ class Core
         $this->container = new Container();
 
         // Add Router to container
-        $this->container['Router'] = function ($c) {
+        $this->container['Webiik\Router'] = function ($c) {
             return new Router();
         };
 
@@ -151,12 +151,11 @@ class Core
     }
 
     /**
-     * Inject dependencies from Container using @inject doc comment
+     * Inject dependencies from Container to $object using @inject doc comment
      */
     public static function commentDI($object, Container $container)
     {
         $reflection = new \ReflectionClass(get_class($object));
-        echo $reflection->getNamespaceName();
         $properties = $reflection->getProperties();
 
         foreach ($properties as $property) {
@@ -164,7 +163,7 @@ class Core
             preg_match('/(\$?(\w*))\s@inject/', $reflection->getProperty($property->name)->getDocComment(), $match);
             if (isset($match[1])) {
                 if ($match[1][0] == '$') {
-                    // Property is isn't class
+                    // Property isn't class
                     $object->$pn = $container[$match[2]];
                 } else {
                     // Property is class
@@ -175,7 +174,7 @@ class Core
     }
 
     /**
-     * Inject dependencies from Container using object constructor method
+     * Inject dependencies from Container to $object using object constructor method
      */
     public static function constructorDI($className, Container $container)
     {
@@ -183,7 +182,7 @@ class Core
     }
 
     /**
-     * Inject dependencies from Container using object methods with inject prefix
+     * Inject dependencies from Container to $object using object methods with inject prefix
      */
     public static function methodDI($object, Container $container)
     {
@@ -268,7 +267,7 @@ class Core
      */
     protected function router()
     {
-        return $this->container['Router'];
+        return $this->container['Webiik\Router'];
     }
 
     /**

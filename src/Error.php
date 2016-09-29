@@ -146,10 +146,18 @@ class Error
      * @param $message
      * @param $file
      * @param $line
+     * @param $trace
      */
-    private function logError($type, $message, $file, $line)
+    private function logError($type, $message, $file, $line, $trace)
     {
-        Log::log('app', $this->msgShort($type, $message, $file, $line), true);
+        $msg = [
+            'type' => $type,
+            'file' => $file,
+            'line' => $line,
+            'msg' => $this->msgShort($type, $message, $file, $line),
+            'msg_html' => $this->msgHtml($type, $message, $file, $line, $trace),
+        ];
+        Log::log('app', $msg, true);
     }
 
     /**

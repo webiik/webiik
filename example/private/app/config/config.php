@@ -4,7 +4,7 @@ return [
     'name' => 'Webiik',
 
     'error' => [
-        'hide' => false,
+        'debug' => false,
         'log' => true,
         'email' => 'jiri@mihal.me',
         'timeZone' => 'America/Los_Angeles',

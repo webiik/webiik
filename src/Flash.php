@@ -13,8 +13,17 @@ class Flash
     private $wraps = [];
 
     /**
+     * Set HTML wrap
+     * @param $type
+     * @param $wrap
+     */
+    public function setWrap($type, $wrap)
+    {
+        $this->wraps[$type] = $wrap;
+    }
+
+    /**
      * Set message into 'now' messages
-     *
      * @param $type
      * @param $message
      */
@@ -25,7 +34,6 @@ class Flash
 
     /**
      * Set message into 'next' messages and into session
-     *
      * @param $type
      * @param $message
      */
@@ -37,11 +45,10 @@ class Flash
 
     /**
      * Get all messages that should be displayed
-     *
      * @param null $type
      * @return array
      */
-    public function getFlash($type = null)
+    public function getFlashes($type = null)
     {
         if(isset($_SESSION['messages'])) {
             $messages = $this->arrayDiffMulti($_SESSION['messages'], $this->messagesNext);
@@ -61,8 +68,36 @@ class Flash
     }
 
     /**
+     * Get all messages that should be displayed in HTML wrap
+     * @param null $type
+     * @return array
+     */
+    public function getFlashesWrapped($type = null)
+    {
+        $messages = $this->getFlashes($type);
+
+        $wrappedMessages = [];
+
+        if ($type) {
+
+            foreach ($messages[$type] as $message) {
+                $wrappedMessages[$type][] = $this->wrapMessage($type, $message);
+            }
+
+        } else {
+
+            foreach ($messages as $type => $array) {
+                foreach ($array as $message) {
+                    $wrappedMessages[$type][] = $this->wrapMessage($type, $message);
+                }
+            }
+        }
+
+        return $wrappedMessages;
+    }
+
+    /**
      * Unset all displayed 'next' messages from session
-     *
      * @param $array
      * @param string $type
      */
@@ -89,46 +124,7 @@ class Flash
     }
 
     /**
-     * Get all messages that should be displayed in HTML wrap
-     *
-     * @param null $type
-     * @return array
-     */
-    public function getFlashWrapped($type = null)
-    {
-        $messages = $this->getFlash($type);
-
-        $wrappedMessages = [];
-
-        if ($type) {
-            foreach ($messages[$type] as $message) {
-                $wrappedMessages[$type][] = $this->wrapMessage($type, $message);
-            }
-
-        } else {
-            foreach ($messages as $type => $array) {
-                foreach ($array as $message) {
-                    $wrappedMessages[$type][] = $this->wrapMessage($type, $message);
-                }
-            }
-        }
-        return $wrappedMessages;
-    }
-
-    /**
-     * Set HTML wrap
-     *
-     * @param $type
-     * @param $wrap
-     */
-    public function setWrap($type, $wrap)
-    {
-        $this->wraps = array_merge($this->wraps, array($type => $wrap));
-    }
-
-    /**
      * Multidimensional array_diff
-     *
      * @param $array1
      * @param $array2
      * @return array
@@ -153,15 +149,13 @@ class Flash
 
     /**
      * Wrap message with HTML wrap. Markdown link support.
-     *
      * @param $type
      * @param $message
      * @return mixed
      */
-    // Todo: Rewrite it to wrap whatever message, it means remove str_replace with something more universal
     private function wrapMessage($type, $message)
     {
-        $wrappedMessage = str_replace('%msg%', $message, $this->wraps[$type]);
+        $wrappedMessage = str_replace('{{ msg }}', $message, $this->wraps[$type]);
         return $wrappedMessage;
     }
 }

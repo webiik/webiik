@@ -60,23 +60,20 @@ class Log
      * @param $message
      * @param bool $sendMailNotice
      */
-    public static function log($loggerName, $message, $sendMailNotice = false)
+    public static function log($loggerName, array $message, $sendMailNotice = false)
     {
         // Log only when Log class is configured and logger exists
         if (self::$dir && isset(self::$loggers[$loggerName])) {
 
             // Prepare message
             $date = new \DateTime('now', new \DateTimeZone(self::$tz));
-            $message =
-                $date->format('Y-m-d H:i:s') . ' ' .
-                '`' . self::getRequestUrl() . '`' .
-                ' -> `' . $message . '`' .
-                "\n";
+            $message['date'] = $date->format('Y-m-d H:i:s');
+            $message['url'] = self::getRequestUrl();
 
             // Send email notice
             if (self::$email && $sendMailNotice) {
                 if (!file_exists(self::$dir . '/!mail.' . self::$loggers[$loggerName])) {
-                    mail(self::$email, self::$subject, $message);
+                    mail(self::$email, self::$subject, isset($message['msg_html']) ? $message['msg_html'] : $message['msg']);
                     file_put_contents(
                         self::$dir . '/!mail.' . self::$loggers[$loggerName],
                         'Delete this file to re-activate email notifications.'
@@ -85,7 +82,7 @@ class Log
             }
 
             // Log to file
-            file_put_contents(self::$dir . '/' . self::$loggers[$loggerName], $message, FILE_APPEND);
+            file_put_contents(self::$dir . '/' . self::$loggers[$loggerName], '"msg":' . json_encode($message) . ',', FILE_APPEND);
             self::rotate(self::$loggers[$loggerName]);
         }
     }

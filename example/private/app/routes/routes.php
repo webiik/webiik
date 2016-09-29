@@ -10,11 +10,13 @@ return [
         'methods' => ['GET'],
         'controller' => 'Webiik\Controller:run',
         'middlewares' => [
-            'Webiik\AuthMiddleware' => [$this->container['connection']],
+//            'Webiik\Auth' => [],
+//            'Webiik\Auth:isLogged' => [],
+            'Webiik\Auth:can' => ['access-admin'],
         ],
     ],
     'login' => [
-        'methods' => ['GET'],
+        'methods' => ['GET', 'POST'],
         'controller' => 'Webiik\Login:run',
     ],
     'account' => [

@@ -66,8 +66,10 @@ class Middleware
             if (!isset($middleware['params'])) {
                 throw new \Exception('Middleware \'' . $middleware . '\' is missing the \'params\' key.');
             }
-            $this->checkHandler($middleware);
+            $this->checkHandler($middleware['mw']);
         }
+
+        $this->middlewares = $middlewares;
     }
 
     /**
@@ -80,7 +82,7 @@ class Middleware
             // Run first middleware
             $mw = $this->middlewares[0]['mw'];
             $params = $this->middlewares[0]['params'];
-            $this->runMiddleware(null, $mw, $params);
+            $this->runMiddleware($this->container['Webiik\Request'], $mw, $params);
         } else {
             $this->runRouteHandler($this->routeHandler);
         }
@@ -126,21 +128,26 @@ class Middleware
      */
     private function runMiddleware($request = null, $mw, $params = null)
     {
+
         // Instantiate middleware when is defined by class name and inject dependencies
         if (is_string($mw)) {
 
             $mw = explode(':', $mw);
+            $method = isset($mw[1]) ? $mw[1] : false;
+            $class = $mw[0];
 
-            if (class_exists($mw[0])) {
+            if (isset($this->container[$class])) { // Is middleware in container?
 
-                $method = isset($mw[1]) ? $mw[1] : false;
+                // Get middleware from container
+                $mw = $this->container[$class];
 
-                if (is_array($params)) {
-                    $mw = new $mw[0]($request, ...$params);
-                } elseif ($params) {
-                    $mw = new $mw[0]($request, $params);
+            } elseif ((class_exists($class))) { // Middleware isn't in container but is valid class
+
+                // Instantiate that class
+                if (method_exists($class, '__construct')) {
+                    $mw = new $class(...Core::constructorDI($class, $this->container));
                 } else {
-                    $mw = new $mw[0]($request);
+                    $mw = new $class();
                 }
 
                 // Inject dependencies
@@ -150,25 +157,38 @@ class Middleware
         }
 
         // Check and call middleware with dependencies
-        if (is_object($mw) && $mw instanceof \Closure) {
+        if (is_object($mw)) {
 
-            // Closure
-            $mw($request, $this->next(), ...$params);
+            if ($mw instanceof \Closure) {
 
-        } elseif (is_object($mw) && is_callable($mw)) {
+                // Closure
+                $mw($request, $this->next(), ...$params);
 
-            // Invokable class
-            $mw($request, $this->next(), ...$params);
+            } elseif (is_callable($mw)) {
 
-        } elseif (is_object($mw) && isset($method) && $method && method_exists($mw, $method)) {
+                // Invokable
+                $mw($request, $this->next(), ...$params);
 
-            // Class with valid method
-            $mw->$method($request, $this->next(), ...$params);
+            } elseif (isset($method) && $method && method_exists($mw, $method)) {
 
-        } elseif (!is_object($mw)) {
+                // Class:method
+                $mw->$method($request, $this->next(), ...$params);
 
-            // No object, closure, invokable or object with valid method
-            throw new \Exception('Middleware \'' . $mw[0] . '\' must be callable or valid className:methodName(optional).');
+            } elseif (!isset($method) || !$method || !method_exists($mw, $method)) {
+
+                // Error - Class without method
+                throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName. Class given.');
+
+            }
+        }
+
+        // Other errors
+        if (is_array($mw)) {
+            throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName. Array given.');
+        }
+
+        if (!is_object($mw)) {
+            throw new \Exception('Middleware \'' . $mw . '\' must be defined by closure, invokable class or className:methodName.');
         }
     }
 

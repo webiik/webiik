@@ -16,7 +16,7 @@ $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 \Webiik\Log::addLogger('app', 'error.log');
 
 // Init improved error handling
-$err = new \Webiik\Error($config['error']['hide'], $config['error']['log']);
+$err = new \Webiik\Error($config['error']['debug'], $config['error']['log']);
 unset($err);
 
 require __DIR__ . '/app.php';

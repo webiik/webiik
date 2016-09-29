@@ -29,28 +29,28 @@ class Skeleton extends Core
 
         // Add basic app services
 
-        // Add authentication
-        $this->addService('Authentication', function ($c) {
-            return new Authentication();
+        // Add Sessions
+        $this->addService('Webiik\Sessions', function ($c) {
+            return new Sessions();
         });
 
-        // Add flash messages
-        $this->addService('Flash', function ($c) {
+        // Add Request
+        $this->addService('Webiik\Request', function ($c) {
+            return new Request();
+        });
+
+        // Add Authentication
+        $this->addService('Webiik\Auth', function ($c) {
+            return new Auth($c['Webiik\Sessions']);
+        });
+
+        // Add Flash messages
+        $this->addService('Webiik\Flash', function ($c) {
             return new Flash();
         });
 
-        // Todo: It's here necessary?
-        $this->addService('auth', function ($c) {
-            return new AuthMiddleware();
-        });
-
-        // Add conversion
-        $this->addService('conversion', function ($c) {
-            return new Conversion();
-        });
-
-        // Add connection
-        $this->addService('connection', function ($c) {
+        // Add Connection
+        $this->addService('Webiik\Connection', function ($c) {
             $connection = new Connection();
             if (isset($c['config']['database'])) {
                 foreach ($c['config']['database'] as $name => $p) {
@@ -61,14 +61,24 @@ class Skeleton extends Core
         });
 
         // Add template engine
-        $this->addService('render', function ($c) {
+        $this->addService('Webiik\Render', function ($c) {
             // Todo: Configure render engine
             return new Render();
         });
 
-        // Add translation
-        $this->addService('translation', function ($c) {
+        // Add Conversion
+        $this->addService('Webiik\Conversion', function ($c) {
+            return new Conversion();
+        });
+
+        // Add Translation
+        $this->addService('Webiik\Translation', function ($c) {
             return new Translation();
+        });
+
+        // Add Filesystem
+        $this->addService('Webiik\Filesystem', function ($c) {
+            return new Filesystem();
         });
 
         // Set app main lang (can return 404)
@@ -397,7 +407,7 @@ class Skeleton extends Core
      */
     private function trans()
     {
-        return $this->container['translation'];
+        return $this->container['Webiik\Translation'];
     }
 
     /**
@@ -405,7 +415,7 @@ class Skeleton extends Core
      */
     private function conv()
     {
-        return $this->container['conversion'];
+        return $this->container['Webiik\Conversion'];
     }
 
     /**

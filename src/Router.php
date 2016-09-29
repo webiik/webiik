@@ -276,7 +276,12 @@ class Router
                                 if (isset($routeParams[$i]['condName'])) {
                                     $conditionRegex = $this->getConditionRegex($routeParams[$i]['condName']);
                                     if (!preg_match('/' . $conditionRegex . '/', $givenParam)) {
-                                        $msg = 'UrlFor() - parameter {' . $givenParam . '} must match the following regex {/' . $conditionRegex . '/}.';
+                                        $msg = [
+                                            'method' => 'UrlFor',
+                                            'param' => $givenParam,
+                                            'regex' => $conditionRegex,
+                                            'msg' => 'UrlFor() - parameter {' . $givenParam . '} must match the following regex {/' . $conditionRegex . '/}.',
+                                        ];
                                         Log::log('router', $msg, true);
                                         return false;
                                     }
@@ -287,7 +292,15 @@ class Router
                                 $i++;
                             }
                         } else {
-                            $msg = 'UrlFor() - route with name {' . $routeName . '} has {' . $reqParamsCount . '} required, {' . $optParamsCount . '} optional and {' . $wildParamsCount . '} wildcard parameter(s), but {' . $paramsCount . '} parameters was given.';
+                            $msg = [
+                                'method' => 'UrlFor',
+                                'routeName' => $routeName,
+                                'requieredParamsCount' => $reqParamsCount,
+                                'optionalParamsCount' => $optParamsCount,
+                                'wildcardParamsCount' => $wildParamsCount,
+                                'givenParamsCount' => $paramsCount,
+                                'msg' => 'UrlFor() - route with name {' . $routeName . '} has {' . $reqParamsCount . '} required, {' . $optParamsCount . '} optional and {' . $wildParamsCount . '} wildcard parameter(s), but {' . $paramsCount . '} parameters was given.',
+                            ];
                             Log::log('router', $msg, true);
                             return false;
                         }
@@ -297,7 +310,12 @@ class Router
             }
         }
 
-        $msg = 'UrlFor() - route with name {' . $routeName . '} does not exist in {' . $lang . '} lang.';
+        $msg = [
+            'method' => 'UrlFor',
+            'routeName' => $routeName,
+            'lang' => $lang,
+            'msg' => 'UrlFor() - route with name {' . $routeName . '} does not exist in {' . $lang . '} lang.',
+        ];
         Log::log('router', $msg, true);
         return false;
     }
