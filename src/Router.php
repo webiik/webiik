@@ -321,6 +321,25 @@ class Router
     }
 
     /**
+     * Return the URI with base path for a named route
+     * @param string $routeName
+     * @param bool|string $lang
+     * @param array $params
+     * @return string|boolean
+     * @throws \Exception
+     */
+    public function getUrlFor($routeName, $lang = false, $params = [])
+    {
+        $uri = $this->getUriFor($routeName, $lang, $params);
+
+        if ($uri) {
+            return $this->config['basePath'] . $uri;
+        }
+
+        return $uri;
+    }
+
+    /**
      * Match a REQUEST_URI against stored $routes
      */
     public function match()
