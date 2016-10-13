@@ -1,7 +1,7 @@
-# Webiik
+# Webiik Core
 
 ##Routes
-Routes are mapped with with method `map(array $methods, $uri, $controller, $name)`. Webiik dispatches to controller. Controller can be: closure, ClassName, ClassName:methodName.   
+Routes are mapped with with method `map(array $methods, $uri, $controller, $name)`. Webiik dispatches to controller. Controller can be: __closure, ClassName, ClassName:methodName__.   
 ```php
 $app->map(['GET'], '/', 'MyNameSpace\ClassName:methodName', 'home-page');
 ```
@@ -30,7 +30,7 @@ $app->map(['GET'], '/', 'MyNameSpace\Class:method', 'home-page')->add('\MyNameSp
 ```
 
 #### How to write middleware?
-Middleware can be: __closure, invokable Class or className:methodName__. Required parameters are `Request $request` and `$next`. Both required parameters are automatically filled during executing the middleware, so you don't need to care more about them. Signature of typical middleware looks like: `method($request, $next){}`. You can also add your own parameters: `method($request, $next, $p1, $p2...etc.){}`.
+Middleware can be: __closure, invokable Class or ClassName:methodName__. Required parameters are `Request $request` and `$next`. Both required parameters are automatically filled during executing the middleware, so you don't need to care more about them. Signature of typical middleware looks like: `method($request, $next){}`. You can also add your own parameters: `method($request, $next, $p1, $p2...etc.){}`.
 
 Example of invokable class middleware:
 ```php
@@ -84,7 +84,7 @@ Webiik uses Pimple as dependency injection container. So everything inside conta
     namespace MyNameSpace;
     class ClassName
     {
-        injectDependencies(MyClass $myClass, $appName)
+        public function injectDependencies(MyClass $myClass, $appName)
         {
         }
     }
@@ -106,7 +106,7 @@ Webiik uses Pimple as dependency injection container. So everything inside conta
     
     That's all, so easy!
 
-#### Using the automatic DI outside the middlewares and route controllers
+#### Using automatic DI outside the middlewares and route controllers
 You can also use this automatic injection for any other class using the static methods `methodDI($object, Container $container)`, `commentDI($object, Container $container)` and `constructorDI($className, Container $container)`. See examples below:
 
 __Constructor injection:__
