@@ -51,7 +51,7 @@ class Middleware
      */
     public function addDestination($handler)
     {
-        $this->checkHandler($handler);
+        $this->checkHandler($handler, false);
         $this->routeHandler = $handler;
     }
 
@@ -90,10 +90,11 @@ class Middleware
 
     /**
      * Check if handler is valid callable or class name with optional method
-     * @param $handler
+     * @param mixed $handler
+     * @param bool $isMw
      * @throws \Exception
      */
-    private function checkHandler($handler)
+    private function checkHandler($handler, $isMw = true)
     {
         if (is_string($handler)) { // We got class name
 
@@ -101,21 +102,38 @@ class Middleware
 
             // Does class exist?
             if (!class_exists($handler[0])) {
-
                 throw new \Exception('Class \'' . $handler[0] . '\' does not exist.');
-
-            } else {
-
-                if (isset($handler[1])) { // We got method name
-
-                    // Does method exist in this class?
-                    if (!method_exists($handler[0], $handler[1])) {
-                        throw new \Exception('Method \'' . $handler[1] . '\' does not exist in class \'' . $handler[0] . '\'.');
-                    }
-                }
             }
-        } elseif (!is_callable($handler)) {
-            throw new \Exception('Handler must be callable or string.');
+
+            // Has middleware valid method?
+            if ($isMw && !isset($handler[1])) {
+                throw new \Exception('Middleware defined only by className \'' . $handler[0] . '\' but should be closure, invokable class or className:methodName.');
+            }
+
+            // If we got method name, check if method exists
+            if (isset($handler[1]) && !method_exists($handler[0], $handler[1])) {
+                throw new \Exception('Method \'' . $handler[1] . '\' does not exist in class \'' . $handler[0] . '\'.');
+            }
+
+        } else { // We got something different than string
+
+            if($isMw && is_array($handler)) {
+                throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName. Array given.');
+            }
+
+            if(!$isMw && is_array($handler)) {
+                throw new \Exception('Controller must be defined by closure, className or className:methodName. Array given.');
+            }
+
+            // It can be ok, if it is middleware and it is callable
+            if ($isMw && !is_callable($handler)) {
+                throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName.');
+            }
+
+            // It can be ok, if it is controller and it is closure
+            if (!$isMw && !$handler instanceof \Closure) {
+                throw new \Exception('Controller must be defined by closure, className or className:methodName.');
+            }
         }
     }
 
@@ -128,7 +146,6 @@ class Middleware
      */
     private function runMiddleware($request = null, $mw, $params = null)
     {
-
         // Instantiate middleware when is defined by class name and inject dependencies
         if (is_string($mw)) {
 
@@ -174,21 +191,12 @@ class Middleware
                 // Class:method
                 $mw->$method($request, $this->next(), ...$params);
 
-            } elseif (!isset($method) || !$method || !method_exists($mw, $method)) {
-
-                // Error - Class without method
-                throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName. Class given.');
-
             }
         }
 
-        // Other errors
-        if (is_array($mw)) {
-            throw new \Exception('Middleware must be defined by closure, invokable class or className:methodName. Array given.');
-        }
-
+        // Unable to create middleware
         if (!is_object($mw)) {
-            throw new \Exception('Middleware \'' . $mw . '\' must be defined by closure, invokable class or className:methodName.');
+            throw new \Exception('Unable to run middleware. Middleware \'' . $mw . '\' must be defined by valid closure, invokable class or className:methodName.');
         }
     }
 
@@ -222,7 +230,7 @@ class Middleware
      */
     private function runRouteHandler($handler)
     {
-        // Instantiate route handler when is defined by class name and inject dependencies
+        // Instantiate route handler if is defined by class name and inject dependencies
         if (is_string($handler)) {
 
             $handler = explode(':', $handler);
@@ -239,25 +247,23 @@ class Middleware
         }
 
         // Check and call handler with dependencies
-        if (is_object($handler) && $handler instanceof \Closure) {
+        if (is_object($handler)) {
 
-            // Closure
-            $handler($this->container);
+            if ($handler instanceof \Closure) {
 
-        } elseif (is_object($handler) && is_callable($handler)) {
+                // Closure
+                $handler($this->container);
 
-            // Invokable class
-            isset($this->container[$class . ':__invoke']) ? $handler->$method(...$this->container[$class . ':__invoke']) : $handler->$method();
+            } elseif (is_object($handler) && isset($method) && $method && method_exists($handler, $method)) {
 
-        } elseif (is_object($handler) && isset($method) && $method && method_exists($handler, $method)) {
+                // Class with valid method
+                $handler->$method();
+            }
+        }
 
-            // Class with valid method
-            isset($this->container[$class . ':' . $method]) ? $handler->$method(...$this->container[$class . ':' . $method]) : $handler->$method();
-
-        } elseif (!is_object($handler)) {
-
-            // No object, closure, invokable or object with valid method
-            throw new \Exception('Middleware \'' . $handler[0] . '\' must be callable or valid className:methodName(optional).');
+        // Unable to create route handler
+        if (!is_object($handler)) {
+            throw new \Exception('Unable to run controller. Controller \'' . $handler . '\' must be defined by valid closure, className or className:methodName.');
         }
     }
 }
