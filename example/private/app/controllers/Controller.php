@@ -8,6 +8,7 @@ class Controller
     private $connection;
     private $router;
     private $auth;
+    private $sessions;
 
     /**
      * Controller constructor.
@@ -17,7 +18,8 @@ class Controller
         Connection $connection,
         Translation $translation,
         Router $router,
-        Auth $auth
+        Auth $auth,
+        Sessions $sessions
     )
     {
         $this->routeInfo = $routeInfo;
@@ -25,6 +27,7 @@ class Controller
         $this->connection = $connection;
         $this->router = $router;
         $this->auth = $auth;
+        $this->sessions = $sessions;
 
         print_r($routeInfo);
     }
@@ -32,20 +35,48 @@ class Controller
     public function run()
     {
         // Connect to DB
-//        $pdo = $this->connection->connect('db1');
+        $pdo = $this->connection->connect('user');
+
+
+        $this->sessions->setSessionDir(__DIR__ . '/../tmp');
+        $this->sessions->sessionStart();
+        $this->auth->setCookieName('myPC');
+        $this->auth->setWithActivation(true);
+        $this->auth->userGenerateActivationToken($uid);
+
+//        $this->auth->userSet('jiri@mihal.me', 'test', 1);
+//        echo $this->auth->userGet('jiri@mihal.me', 'test');
+//        print_r($this->auth->generateActivation(1));
+//        echo $this->auth->userActivate('e5ad2d59d1fa', '2c319e4d888234eb89db621560dd2cfa');
+//        echo $this->auth->userGet('jiri@mihal.me', 'test');
+
+//        $this->auth->login(1, true);
+//        $this->auth->userLogout();
+//
+//        if ($this->auth->userLogged()) {
+//            echo 'Is logged in.';
+//        }
+//
+//        if($this->auth->userCan('access-account')){
+//            echo 'User can access account.';
+//        }
+
+//        if ($this->auth->isActivated(1)) {
+//            echo 'Activated.';
+//        } else {
+//            echo 'Not activated.';
+//        }
+
+
 
         // Get page translation
 //        echo $this->translation->_p('t10', ['speed' => '100']);
 
-        $this->auth->can('use-uri-for');
-
         // Get route URI in some lang
         // Todo: Authenticate user (Think about how authentication will work - actions, MW)
-        //if ($this->auth->can('use-uri-for')) {
         echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
         echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
         echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
-//        }
 
         // Todo: Render page using some template engine (Twig)
 //        $this->view->render($template, $data);

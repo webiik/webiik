@@ -14,50 +14,77 @@ class AuthMw
     private $connection;
 
     /**
-     * Auth constructor.
-     * @param Sessions $sessions
+     * @var Router
      */
-    public function __construct(Sessions $sessions, Connection $connection)
+    private $router;
+
+    /**
+     * @var string Permanent login cookie name
+     */
+    private $cookieName = 'PC';
+
+    public function __construct(Sessions $sessions, Connection $connection, Router $router)
     {
         $this->sessions = $sessions;
         $this->connection = $connection;
+        $this->router = $router;
     }
 
-    public function login($uid)
+    public function setCookieName($string)
     {
-        $this->sessions->sessionRegenerateId();
-        $this->sessions->addToSession('logged', $uid);
+        $this->cookieName = $string;
     }
 
-    public function logout()
+    public function isLogged(Request $request, \Closure $next, $routeName = false)
     {
-        $this->sessions->sessionDestroy();
+        if ($this->sessions->getFromSession('logged') || $this->isPermentlyLogged()) {
+            $next($request);
+        }
+        $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName));
     }
 
-    public function isLogged()
+    public function can(Request $request, \Closure $next, $action, $routeName = false)
     {
-        return $this->sessions->getFromSession('logged');
-    }
+        if (!$this->sessions->getFromSession('logged')) {
+            // Todo: Uncomment
+//            $this->redirect($request->getRootUrl() . $this->router->getUrlFor('login'));
+        }
 
-    public function can($request, $next, $action)
-    {
-        // Look into db and check if user can do the action
+        // Todo: Look into db and check if user can do the action
+        $connNames = $this->connection->getConnectionNames();
+        $this->connection->connect($connNames[0]);
         echo 'User can ';
         echo $action;
-        $canUserDoTheAction = false;
+        $canUserDoTheAction = true;
 
         if (!$canUserDoTheAction) {
-            //$this->redirect();
-            exit;
+            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName));
         }
 
         $next($request);
     }
 
-    public function must($action)
+    // Todo: Check if user is permanently logged in
+    private function isPermentlyLogged()
     {
-        echo 'User must ';
-        echo $action;
+        return false;
     }
 
+    private function getLoginUri($routeName)
+    {
+        if($routeName){
+            $uri = $this->router->getUrlFor($routeName);
+        } else {
+            $uri = $this->router->getUrlFor('login');
+        }
+
+        return $uri;
+    }
+
+    private function redirect($path)
+    {
+        header('HTTP/1.1 302 Found');
+        header('Location:' . $path);
+        exit;
+    }
 }

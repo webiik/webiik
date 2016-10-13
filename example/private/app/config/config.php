@@ -1,19 +1,25 @@
 <?php
 return [
-    // App name
-    'name' => 'Webiik',
-
-    'error' => [
-        'debug' => false,
+    // App internal settings
+    'internal' => [
+        'name' => 'Webiik',
+        'debug' => true,
         'log' => true,
-        'email' => 'jiri@mihal.me',
+        'logEmail' => 'jiri@mihal.me',
         'timeZone' => 'America/Los_Angeles',
     ],
 
     // First database is main app database
     // $dialect, $host, $dbname, $user, $pswd, $encoding
     'database' => [
-        'db1' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
+        'user' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
+        'admin' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
+    ],
+
+    'auth' => [
+        'permanentLoginCookieName' => 'PC',
+        'withActivation' => 0, // 0 = without required account activation, 1 = 1 hour time limit to activate account
+        'maxAttempts' => 5, // how many attempts has user to perform sign-up, log-in, password renewal within 24 hours
     ],
 
     // First language is default
@@ -24,7 +30,7 @@ return [
         'sk' => ['Europe/Bratislava', ['cs']],
     ],
 
-    // Application structure
+    // App folder structure
     'folder' => [
 
         // These folders should not be accessible from the web

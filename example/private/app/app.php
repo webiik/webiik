@@ -14,11 +14,8 @@ $app = new \Webiik\Skeleton($config);
 
 //$mw = new \MySpace\Middleware();
 //$mw = function(){};
-//if(is_object($mw) && is_callable($mw)) echo 'tset';
+//if(is_object($mw) && is_callable($mw)) echo 'test';
 
-//$app->addService('Webiik\Authentication', function () {
-//    return new \Webiik\Authentication();
-//});
 
 //$app->addService('Webiik\Flash', function () {
 //    return new \Webiik\Flash();

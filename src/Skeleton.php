@@ -39,25 +39,14 @@ class Skeleton extends Core
             return new Request();
         });
 
-        // Add Authentication
-        $this->addService('Webiik\Auth', function ($c) {
-            return new Auth($c['Webiik\Sessions']);
-        });
-
         // Add Flash messages
         $this->addService('Webiik\Flash', function ($c) {
             return new Flash();
         });
 
-        // Add Connection
-        $this->addService('Webiik\Connection', function ($c) {
-            $connection = new Connection();
-            if (isset($c['config']['database'])) {
-                foreach ($c['config']['database'] as $name => $p) {
-                    $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4]);
-                }
-            }
-            return $connection;
+        // Add Token
+        $this->addService('Webiik\Token', function ($c) {
+            return new Token();
         });
 
         // Add template engine
@@ -66,19 +55,45 @@ class Skeleton extends Core
             return new Render();
         });
 
-        // Add Conversion
-        $this->addService('Webiik\Conversion', function ($c) {
-            return new Conversion();
-        });
-
         // Add Translation
         $this->addService('Webiik\Translation', function ($c) {
             return new Translation();
         });
 
+        // Add Conversion
+        $this->addService('Webiik\Conversion', function ($c) {
+            return new Conversion();
+        });
+
         // Add Filesystem
         $this->addService('Webiik\Filesystem', function ($c) {
             return new Filesystem();
+        });
+
+        // Add Connection
+        $this->addService('Webiik\Connection', function ($c) {
+            $connection = new Connection($c['config']['internal']['debug']);
+            foreach ($c['config']['database'] as $name => $p) {
+                $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4], 'utf8', date('e'));
+            }
+            return $connection;
+        });
+
+        // Add Attempts
+        $this->addService('Webiik\Attempts', function ($c) {
+            return new Attempts($c['Webiik\Connection']);
+        });
+
+        // Add Auth
+        $this->addService('Webiik\Auth', function ($c) {
+            $auth = new Auth(...self::constructorDI('Webiik\Auth', $c));
+            $auth->setCookieName($c['config']['auth']['permanentLoginCookieName']);
+            return $auth;
+        });
+
+        // Add Auth middleware
+        $this->addService('Webiik\AuthMw', function ($c) {
+            return new AuthMw(...self::constructorDI('Webiik\AuthMw', $c));
         });
 
         // Set app main lang (can return 404)
@@ -87,6 +102,12 @@ class Skeleton extends Core
 
         // Set fallback languages
         $this->setFallbackLangs();
+
+        // Set time zone according to current lang
+        date_default_timezone_set($config['language'][$this->lang][0]);
+
+        // Set internal encoding
+        mb_internal_encoding('utf-8');
     }
 
     public function run()

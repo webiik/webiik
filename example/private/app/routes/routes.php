@@ -12,7 +12,7 @@ return [
         'middlewares' => [
 //            'Webiik\Auth' => [],
 //            'Webiik\Auth:isLogged' => [],
-            'Webiik\Auth:can' => ['access-admin'],
+//            'Webiik\AuthMw:can' => ['access-admin'],
         ],
     ],
     'login' => [

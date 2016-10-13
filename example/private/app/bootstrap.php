@@ -5,9 +5,9 @@ $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 // Setup the Webiik logging
 \Webiik\Log::setup(
     $config['folder']['logs'],
-    $config['error']['email'],
-    $config['name'] . ' error notice',
-    $config['error']['timeZone'],
+    $config['internal']['logEmail'],
+    $config['internal']['name'] . ' error notice',
+    $config['internal']['timeZone'],
     2,
     10
 );
@@ -16,7 +16,7 @@ $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 \Webiik\Log::addLogger('app', 'error.log');
 
 // Init improved error handling
-$err = new \Webiik\Error($config['error']['debug'], $config['error']['log']);
+$err = new \Webiik\Error(!$config['internal']['debug'], $config['internal']['log']);
 unset($err);
 
 require __DIR__ . '/app.php';
