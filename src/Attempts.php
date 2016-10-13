@@ -12,74 +12,36 @@ namespace Webiik;
 class Attempts
 {
     /**
-     * How many individual(action, ip, agent) attempts will be stored in database from now
-     * @var array
+     * @var Connection
      */
-    private $storageLimit = ['attemptsCount' => 100, 'dateInterval' => 'PT24H'];
+    private $connection;
 
-    /**
-     * Dates of attempts will be set by this timezone identifier
-     * @var string
-     */
-    private $timezone;
-
-    /**
-     * @var \PDO
-     */
-    private $db;
-
-    public function __construct(\PDO $db, $timezone = null)
+    public function __construct(Connection $connection)
     {
-        $this->timezone = $timezone ? $timezone : date('e');
-        $this->db = $db;
+        $this->connection = $connection;
     }
 
     /**
-     * @desc see storageLimit
-     * @param $attemptsCount
-     * @param $dateInterval
-     */
-    public function setStorageLimit($attemptsCount, $dateInterval)
-    {
-        $this->storageLimit['attemptsCount'] = $attemptsCount;
-        $this->storageLimit['dateInterval'] = $dateInterval;
-    }
-
-    /**
-     * If storage limit is not exceeded, store individual(action, ip, agent) attempt in database.
-     * Delete all (old) attempts outside the storage limit date interval.
+     * Store individual(action, ip, agent) attempt in database
      * @param $action
-     * @return bool
      */
     public function setAttempt($action)
     {
         $ip = $_SERVER['REMOTE_ADDR'];
-        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
-        if (rand(1, 100) <= 5) {
-            $this->deleteOldAttempts();
-        }
-
-        if ($this->getAttemptsCount($action, $this->storageLimit['dateInterval']) < $this->storageLimit['attemptsCount']) {
-
-            $date = new \DateTime('now', new \DateTimeZone($this->timezone));
-            $date = $date->format('Y-m-d H:i:s');
-
-            $q = $this->db->prepare('INSERT INTO attempts (ip, agent, action, date) VALUES (?, ?, ?, ?)');
-            $q->execute([$ip, $agent, $action, $date]);
-            return true;
-        }
-
-        return false;
+        $q = $this->connection->connect()->prepare('INSERT INTO attempts (ip, agent, action, timestamp) VALUES (?, ?, ?, UNIX_TIMESTAMP())');
+        $q->execute([$ip, $agent, $action]);
     }
 
     /**
-     * Return count of individual(action, ip, agent) attempts for specified action and date interval.
-     * @param $action
-     * @param null $dateInterval
+     * Return count of individual(action, ip, agent) attempts for specified action and date interval
+     * @param string $action
+     * @param int $sec
+     * @param bool $checkAgent
      * @return int
      */
-    public function getAttemptsCount($action, $dateInterval = null)
+    public function getAttemptsCount($action, $sec = 0, $checkAgent = false)
     {
         $ip = $_SERVER['REMOTE_ADDR'];
 
@@ -87,21 +49,17 @@ class Attempts
         $args = [$action, $ip];
 
         $agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
-        if ($agent) {
+        if ($checkAgent && $agent) {
             $query .= ' AND agent = ?';
             $args[] = $agent;
         }
 
-        if ($dateInterval) {
-            $date = new \DateTime('now', new \DateTimeZone($this->timezone));
-            $date->sub(new \DateInterval($dateInterval));
-            $date = $date->format('Y-m-d H:i:s');
-
-            $query .= ' AND date >= ?';
-            $args[] = $date;
+        if ($sec > 0) {
+            $query .= ' AND timestamp >= ?';
+            $args[] = time() - $sec;
         }
 
-        $q = $this->db->prepare($query);
+        $q = $this->connection->connect()->prepare($query);
         $q->execute($args);
         $attempts = $q->fetchAll();
 
@@ -109,15 +67,29 @@ class Attempts
     }
 
     /**
-     * Delete all (old) attempts outside the storage limit date interval.
+     * Delete all attempts or just attempts for specified action or date interval
+     * @param null $action
+     * @param int $sec
+     * @return int
      */
-    private function deleteOldAttempts()
+    public function deleteAttempts($action = null, $sec = 0)
     {
-        $date = new \DateTime('now', new \DateTimeZone($this->timezone));
-        $date->sub(new \DateInterval($this->storageLimit['dateInterval']));
-        $date = $date->format('Y-m-d H:i:s');
+        $query = 'DELETE FROM attempts';
+        $args = [];
 
-        $q = $this->db->prepare('DELETE FROM attempts WHERE date < ?');
-        $q->execute([$date]);
+        if ($action) {
+            $query .= ' WHERE action = ?';
+            $args[] = $action;
+        }
+
+        if ($sec > 0) {
+            $query .= $action ? ' AND timestamp < ?' : ' WHERE timestamp < ?';
+            $args[] = time() - $sec;
+        }
+
+        $q = $this->connection->connect()->prepare($query);
+        $q->execute($args);
+
+        return $q->rowCount();
     }
 }
