@@ -47,6 +47,13 @@ class Auth
         'salt' => 'r489cjd3Xhed',
     ];
 
+    /**
+     * Auth constructor.
+     * @param Sessions $sessions
+     * @param Connection $connection
+     * @param Token $token
+     * @param Attempts $attempts
+     */
     public function __construct(Sessions $sessions, Connection $connection, Token $token, Attempts $attempts)
     {
         $this->sessions = $sessions;
@@ -102,7 +109,7 @@ class Auth
      */
     public function setUserSetAttempts($count, $sec)
     {
-        if($this->config['withActivation']) {
+        if ($this->config['withActivation']) {
             // Sign-up, generate activation token and activate user
             $count = $count * 3;
         }
@@ -163,7 +170,9 @@ class Auth
             return $uid;
         }
 
-        $uid = $this->isUserPermanentlyLogged();
+        if ($this->config['permanent'] > 0) {
+            $uid = $this->isUserPermanentlyLogged();
+        }
 
         if ($uid) {
             $this->userLogin($uid);
@@ -173,9 +182,27 @@ class Auth
     }
 
     /**
+     * Redirect user only to URL on the same server
+     * On error return false
+     * @param $url
+     * @return bool
+     */
+    public function redirect($url)
+    {
+        $parsedUrl = parse_url($url);
+
+        if (isset($parsedUrl['host']) && $parsedUrl['host'] == $_SERVER['SERVER_NAME']) {
+            header('HTTP/1.1 302 Found');
+            header('Location:' . $url);
+        }
+
+        return false;
+    }
+
+    /**
      * Return true if user can do the action, otherwise false
      * @param string $action
-     * @return bool
+     * @return mixed
      */
     public function userCan($action)
     {
@@ -197,12 +224,12 @@ class Auth
             (SELECT action_id FROM auth_roles_actions WHERE role_id = (SELECT role_id FROM auth_users WHERE id = ?))
         ');
         $q->execute([$uid]);
-        $rows = $q->fetchAll();
+        $r = $q->fetchAll();
 
         // Check if user can do the action
-        foreach ($rows as $row) {
+        foreach ($r as $row) {
             if ($row['action'] == $action) {
-                return true;
+                return $uid;
             }
         }
 
@@ -275,7 +302,7 @@ class Auth
      * Without activation on success return array with 'uid'
      * @param $email
      * @param $pswd
-     * @return int
+     * @return int|array
      */
     public function userGet($email, $pswd)
     {
@@ -306,7 +333,7 @@ class Auth
                 (SELECT COUNT(*) FROM auth_users_activated WHERE user_id = au.id) AS activated,
                 (SELECT COUNT(*) FROM auth_tokens_activation WHERE user_id = au.id AND expires > UNIX_TIMESTAMP()) AS trial
                 FROM auth_users au
-                WHERE au.email = ?
+                WHERE au.email = ?              
             ');
         } else {
             $q = $db->prepare('SELECT id, pswd FROM auth_users WHERE email = ?');
@@ -315,7 +342,7 @@ class Auth
         $r = $q->fetch();
 
         // User does not exist
-        if (count($r) < 1) {
+        if (!$r) {
             return -2;
         }
 
@@ -381,7 +408,7 @@ class Auth
         $r = $q->fetch();
 
         // Selector does not exist or is expired
-        if (count($r) < 1) {
+        if (!$r) {
             return false;
         }
 
@@ -492,7 +519,7 @@ class Auth
         $r = $q->fetch();
 
         // Selector does not exist or is expired
-        if (count($r) < 1) {
+        if (!$r) {
             return false;
         }
 
@@ -696,19 +723,19 @@ class Auth
         $selector = $cookie[0];
         $q = $pdo->prepare('SELECT user_id, token FROM auth_tokens_permanent WHERE selector = ? AND expires > UNIX_TIMESTAMP() LIMIT 1');
         $q->execute([$selector]);
-        $row = $q->fetch();
+        $r = $q->fetch();
 
         // Selector does not exist or is expired
-        if (count($row) < 1) {
+        if (!$r) {
             return false;
         }
 
         // Are tokens equal?
         $token = hash('sha256', $cookie[1]);
-        if (!$this->token->compare($token, $row['token'])) {
+        if (!$this->token->compare($token, $r['token'])) {
             return false;
         }
 
-        return $row['user_id'];
+        return $r['user_id'];
     }
 }
