@@ -120,6 +120,7 @@ $data = explode(':', $_GET['data']);
 
 if ($auth->userActivate($data[0], $data[1])) { // User was successfully activated      
     // Redirect user to login page
+    $auth->redirect($loginPageUrl);
 }   
 ```
 ```php
@@ -173,6 +174,7 @@ $newPassword = $_GET['pswd'];
 
 if ($auth->userChangePassword(($data[0], $data[1], $newPassword)) { // Password successfully changed
     // Redirect user to login page
+    $auth->redirect($loginPageUrl);
 }   
 ```
 
@@ -241,41 +243,43 @@ if ($auth->can('edit-post')) {
 ## Description of provided methods
 
 #### setSalt(string $string)
-Sets password salt.
+Sets password salt. No value is returned.
 #### setCookieName(string $string)
-Sets name of the permanent login cookie.
+Sets name of the permanent login cookie. No value is returned.
 #### setPermanent(int $days)
-Sets how many days is permanent login cookie valid.
+Sets how many days is permanent login cookie valid. No value is returned.
 #### setWithActivation(bool $bool)
-Sets sign-up with required account activation.
+Sets sign-up with required account activation. No value is returned.
 #### setUserGetAttempts(int $count, int $sec)
-Sets maximal count of attempts of getting the user from database for one IP address.
+Sets maximal count of attempts of getting the user from database for one IP address. No value is returned.
 #### setUserSetAttempts(int $count, int $sec)
-Sets maximal count of attempts of storing the user into database for one IP address.
+Sets maximal count of attempts of storing the user into database for one IP address. No value is returned.
 #### setUserPswdAttempts(int $count, int $sec)
-Sets maximal count of attempts of changing the user password for one IP address.
+Sets maximal count of attempts of changing the user password for one IP address. No value is returned.
 #### setConfirmationTime(int $sec)
-Sets time that user has to confirm some auth action.
+Sets time that user has to confirm some auth action. No value is returned.
 #### userLogin(int $uid)
-Logs in the user. Creates session 'logged' with value of $uid.
+Logs in the user. Creates session 'logged' with value of $uid. No value is returned.
 If `setWithActivation` is true, it also creates permanent login cookie.
 #### userLogout()
-Logs out the user. Deletes and destroys all sessions.
+Logs out the user. Deletes and destroys all sessions. No value is returned.
 If `setWithActivation` is true, it also deletes permanent login cookie.
 #### isUserLogged()
-Looks for session 'logged' and return true if that session exists.
-If `setWithActivation` is true, it also looks for permanent login cookie. It always validates cookie against database. It creates session 'logged' when session 'logged' does not exist and permanent login cookie is valid. 
+Looks for session 'logged' and return user id if that session exists, otherwise false.
+If `setWithActivation` is true, it also looks for permanent login cookie. It always validates cookie against database. It creates session 'logged' when session 'logged' does not exist and permanent login cookie is valid.
+#### redirect(string $uri)
+Redirects user only to URL on the same server.
 #### userCan(string $action)
-Calls `isUserLogged` and if gets true then it searches in database if user can perform given action. 
+Calls `isUserLogged` and if gets user id then it searches in database if user can perform given action. Return user id on success, otherwise false. 
 #### userSet(string $email, string $pswd, int $roleId)
-Stores user in database. It also stores user's 'signup' attempts and with 10% probability deletes all expired 'signup' attempts.
+Stores user in database. It also stores user's 'signup' attempts and with 10% probability deletes all expired 'signup' attempts. On success returns array with the following keys: 'uid', ('selector', 'token' - if `setWithActivation` is true). On error return -3 (too many attempts) or -2 (user already exists).
 #### userGet(string $email, string $pswd)
-Gets user from database. It also stores user's 'login' attempts and with 5% probability deletes all expired 'login' attempts.
+Gets user from database. It also stores user's 'login' attempts and with 5% probability deletes all expired 'login' attempts. On success returns array with the following keys: 'uid', ('status' - if `setWithActivation` is true). On error return -3 (too many attempts), -2 (user does not exist), -1 (user exists but is expired), 0 (user exists but password does not match).
 #### userActivate(string $selector, string $token)
-Activates the user. It also stores user's 'signup' attempts and with 5% probability deletes all expired 'signup' attempts.
+Activates the user. It also stores user's 'signup' attempts and with 5% probability deletes all expired 'signup' attempts. Returns true on success otherwise false.
 #### userGenerateActivationToken(int $uid)
-Generates user activation token. It also stores user's 'signup' attempts and with 5% probability deletes all expired 'signup' attempts.
+Generates user activation token. It also stores user's 'signup' attempts and with 5% probability deletes all expired 'signup' attempts. On success returns array with the following keys: 'selector', 'token'. On error return -3 (too many attempts) or -2 (db error).
 #### userChangePassword(string $selector, string $token, string $pswd)
-Changes the user password. It also stores user's 'renewal' attempts and with 5% probability deletes all expired 'renewal' attempts.
+Changes the user password. It also stores user's 'renewal' attempts and with 5% probability deletes all expired 'renewal' attempts. Returns true on success otherwise false.
 #### userGeneratePasswordToken(string $email)
-Generates user password renewal token. It also stores user's 'renewal' attempts and with 5% probability deletes all expired 'renewal' attempts.
+Generates user password renewal token. It also stores user's 'renewal' attempts and with 5% probability deletes all expired 'renewal' attempts. On success returns array with the following keys: 'selector', 'token'. On error return -3 (too many attempts) or -2 (db error).
