@@ -37,15 +37,23 @@ class Controller
         // Connect to DB
         $pdo = $this->connection->connect('user');
 
+//        $this->sessions->setSessionDir(__DIR__ . '/../tmp');
+//        $this->sessions->sessionStart();
+//        $this->auth->setCookieName('myPC');
+//        $this->auth->setWithActivation(true);
+        //$this->auth->userGenerateActivationToken($uid);
 
-        $this->sessions->setSessionDir(__DIR__ . '/../tmp');
-        $this->sessions->sessionStart();
-        $this->auth->setCookieName('myPC');
-        $this->auth->setWithActivation(true);
-        $this->auth->userGenerateActivationToken($uid);
+//        print_r($this->auth->userSet('vlasta@mihal.me', 'test', 1));
+//        $user = $this->auth->userGet('jiri@mihal.me', 'test');
+//        $this->auth->userLogin($user['uid']);
+        if($this->auth->isUserLogged()){
+            echo 'AHOJ!';
+        }
 
-//        $this->auth->userSet('jiri@mihal.me', 'test', 1);
-//        echo $this->auth->userGet('jiri@mihal.me', 'test');
+        if($this->auth->userCan('edit-post')){
+            echo 'POST';
+        }
+
 //        print_r($this->auth->generateActivation(1));
 //        echo $this->auth->userActivate('e5ad2d59d1fa', '2c319e4d888234eb89db621560dd2cfa');
 //        echo $this->auth->userGet('jiri@mihal.me', 'test');
@@ -66,7 +74,6 @@ class Controller
 //        } else {
 //            echo 'Not activated.';
 //        }
-
 
 
         // Get page translation

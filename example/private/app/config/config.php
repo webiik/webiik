@@ -16,10 +16,23 @@ return [
         'admin' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
     ],
 
+    'sessions' => [
+        'name' => 'US', // string|false
+        'dir' => __DIR__ . '/../tmp', // path|false
+        'lifetime' => 1440, // int sec, 0 = till session is valid
+    ],
+
+    'cookies' => [
+        'domain' => '', // (sub)domain
+        'uri' => '/', // uri
+        'secure' => false, // bool
+        'httpOnly' => false, // bool
+    ],
+
     'auth' => [
         'permanentLoginCookieName' => 'PC',
-        'withActivation' => 0, // 0 = without required account activation, 1 = 1 hour time limit to activate account
-        'maxAttempts' => 5, // how many attempts has user to perform sign-up, log-in, password renewal within 24 hours
+        'withActivation' => false,
+        'loginRouteName' => 'login',
     ],
 
     // First language is default

@@ -31,7 +31,15 @@ class Skeleton extends Core
 
         // Add Sessions
         $this->addService('Webiik\Sessions', function ($c) {
-            return new Sessions();
+            $sessions = new Sessions();
+            if ($c['config']['sessions']['name']) $sessions->setSessionName($c['config']['sessions']['name']);
+            if ($c['config']['sessions']['dir']) $sessions->setSessionDir($c['config']['sessions']['dir']);
+            $sessions->setSessionSystemLifetime($c['config']['sessions']['lifetime']);
+            if ($c['config']['cookies']['domain']) $sessions->setDomain($c['config']['cookies']['domain']);
+            if ($c['config']['cookies']['uri']) $sessions->setUri($c['config']['cookies']['uri']);
+            $sessions->setSecure($c['config']['cookies']['secure']);
+            $sessions->setHttponly($c['config']['cookies']['httpOnly']);
+            return $sessions;
         });
 
         // Add Request
@@ -88,12 +96,15 @@ class Skeleton extends Core
         $this->addService('Webiik\Auth', function ($c) {
             $auth = new Auth(...self::constructorDI('Webiik\Auth', $c));
             $auth->setCookieName($c['config']['auth']['permanentLoginCookieName']);
+            $auth->setWithActivation($c['config']['auth']['withActivation']);
             return $auth;
         });
 
         // Add Auth middleware
         $this->addService('Webiik\AuthMw', function ($c) {
-            return new AuthMw(...self::constructorDI('Webiik\AuthMw', $c));
+            $authMw = new AuthMw(...self::constructorDI('Webiik\AuthMw', $c));
+            $authMw->setLoginRouteName($c['config']['auth']['loginRouteName']);
+            return $authMw;
         });
 
         // Set app main lang (can return 404)
