@@ -88,6 +88,16 @@ class Core
     }
 
     /**
+     * Get value from Pimple
+     * @param string $name
+     * @return mixed
+     */
+    public function get($name)
+    {
+        return $this->container[$name];
+    }
+
+    /**
      * Add controller to 404 route
      * @param string $handler : ClassName or ClassName:method
      */
@@ -254,7 +264,7 @@ class Core
         } else {
 
             if ($error == 404) header('HTTP/1.1 404 Not Found');
-            if ($error == 404) header('HTTP/1.1 405 Method Not Allowed');
+            if ($error == 405) header('HTTP/1.1 405 Method Not Allowed');
             echo '<h1>' . $error . '</h1>';
         }
 
