@@ -4,14 +4,9 @@ namespace Webiik;
 class AuthMw
 {
     /**
-     * @var Sessions
+     * @var Auth
      */
-    private $sessions;
-
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private $auth;
 
     /**
      * @var Router
@@ -19,68 +14,108 @@ class AuthMw
     private $router;
 
     /**
-     * @var string Permanent login cookie name
+     * Auth configuration
+     * @var $config
      */
-    private $cookieName = 'PC';
+    private $config = [
+        // Login route name
+        'loginRouteName' => false,
+    ];
 
-    public function __construct(Sessions $sessions, Connection $connection, Router $router)
+    /**
+     * AuthMw constructor.
+     * @param Auth $auth
+     * @param Router $router
+     * @param Sessions $sessions
+     */
+    public function __construct(Auth $auth, Router $router, Sessions $sessions)
     {
-        $this->sessions = $sessions;
-        $this->connection = $connection;
+        $this->auth = $auth;
         $this->router = $router;
+        $sessions->sessionStart();
     }
 
-    public function setCookieName($string)
+    /**
+     * @param string $string
+     */
+    public function setLoginRouteName($string)
     {
-        $this->cookieName = $string;
+        $this->config['loginRouteName'] = $string;
     }
 
-    public function isLogged(Request $request, \Closure $next, $routeName = false)
+    /**
+     * Check if user is logged in and create logged session if it's necessary
+     * On success add uid to Request and run next middleware
+     * On fail redirect to login page
+     * @param Request $request
+     * @param \Closure $next
+     * @param bool $routeName
+     */
+    public function isUserLogged(Request $request, \Closure $next, $routeName = false)
     {
-        if ($this->sessions->getFromSession('logged') || $this->isPermentlyLogged()) {
+        $uid = $this->auth->isUserLogged();
+
+        if ($uid) {
+            $request->set('uid', $uid);
             $next($request);
+        } else {
+            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName) . '?ref=' . $request->getUrl());
         }
-        $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName));
     }
 
-    public function can(Request $request, \Closure $next, $action, $routeName = false)
+    /**
+     * Check if user can perform the action
+     * On success add uid to Request and run next middleware
+     * On fail redirect to login page
+     * @param Request $request
+     * @param \Closure $next
+     * @param string $action
+     * @param bool $routeName
+     */
+    public function userCan(Request $request, \Closure $next, $action, $routeName = false)
     {
-        if (!$this->sessions->getFromSession('logged')) {
-            // Todo: Uncomment
-//            $this->redirect($request->getRootUrl() . $this->router->getUrlFor('login'));
+        $uid = $this->auth->userCan($action);
+
+        if ($uid) {
+            $request->set('uid', $uid);
+            $next($request);
+        } else {
+            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName) . '?ref=' . $request->getUrl());
         }
-
-        // Todo: Look into db and check if user can do the action
-        $connNames = $this->connection->getConnectionNames();
-        $this->connection->connect($connNames[0]);
-        echo 'User can ';
-        echo $action;
-        $canUserDoTheAction = true;
-
-        if (!$canUserDoTheAction) {
-            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName));
-        }
-
-        $next($request);
     }
 
-    // Todo: Check if user is permanently logged in
-    private function isPermentlyLogged()
-    {
-        return false;
-    }
-
+    /**
+     * Get login URI by route name
+     * On success return login URI
+     * On error throw exception
+     * @param $routeName
+     * @return bool|string
+     * @throws \Exception
+     */
     private function getLoginUri($routeName)
     {
-        if($routeName){
-            $uri = $this->router->getUrlFor($routeName);
-        } else {
-            $uri = $this->router->getUrlFor('login');
+        if(!$routeName && !$this->config['loginRouteName']){
+            throw new \Exception('Login route name is not set.');
+        }
+
+        if (!$routeName) {
+            $routeName = $this->config['loginRouteName'];
+        }
+
+        $uri = $this->router->getUrlFor($routeName);
+
+        if(!$uri) {
+            throw new \Exception('Login route name does not exist.');
         }
 
         return $uri;
     }
 
+
+    /**
+     * 302 redirect to given $path
+     * @param $path
+     */
     private function redirect($path)
     {
         header('HTTP/1.1 302 Found');
