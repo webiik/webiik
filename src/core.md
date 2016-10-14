@@ -58,7 +58,7 @@ Webiik uses Pimple as dependency injection container. So everything inside conta
 3. method injection
 
 #### How to inject?
-1. At first add service(s) and value(s) you want to inject into Pimple container. Webiik provides the following methods for working with Pimple container: `addService()`, `addServiceFactory()`, `addParam()` and `addFunction()`.
+1. At first add service(s) and value(s) you want to inject into Pimple container. Webiik provides the following methods for working with Pimple container: `addService()`, `addServiceFactory()`, `addParam()`, `addFunction()` and `get()`.
     ```php
     $app->addService('MyNameSpace\MyClass', function($c){return new \MyNameSpace\MyClass();});
     $app->addParam('appName', 'MyApp');

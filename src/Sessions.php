@@ -4,13 +4,13 @@ namespace Webiik;
 class Sessions
 {
     private $sessionName = 'PHPSESSID';
-    private $sessionDir = null;
-    private $sessionLifetime = 1440;
+    private $sessionDir = '';
+    private $sessionLifetime = 0;
 
-    private $domain = null;
-    private $uri = null;
-    private $secure = null;
-    private $httponly = null;
+    private $domain = '';
+    private $uri = '/';
+    private $secure = false;
+    private $httponly = false;
 
     /**
      * Set session name
@@ -104,7 +104,11 @@ class Sessions
 
     /**
      * Delete cookie
-     * @param $name
+     * @param string $name
+     * @param null $uri
+     * @param null $domain
+     * @param null $secure
+     * @param null $httponly
      */
     public function delCookie($name, $uri = null, $domain = null, $secure = null, $httponly = null)
     {
@@ -131,22 +135,25 @@ class Sessions
     /**
      * Start session if is not started and set session parameters and add basic values
      * Delete session if is expired or if is suspicious
-     * @param null $lifetime
-     * @param null $uri
-     * @param null $domain
-     * @param null $secure
-     * @param null $httponly
+     * @param int $lifetime
+     * @param string $uri
+     * @param string $domain
+     * @param bool $secure
+     * @param bool $httponly
      * @return bool
      */
-    public function sessionStart($lifetime = null, $uri = null, $domain = null, $secure = null, $httponly = null)
+    public function sessionStart($lifetime = 0, $uri = '/', $domain = '', $secure = false, $httponly = false)
     {
         if (session_status() == PHP_SESSION_NONE) {
 
             $lifetime = $this->lifetime($lifetime);
 
             ini_set('session.gc_maxlifetime', $lifetime);
+
             if ($this->sessionDir) session_save_path($this->sessionDir);
+
             session_name($this->sessionName);
+
             session_set_cookie_params($lifetime, $uri, $domain, $secure, $httponly);
 
             session_start();
