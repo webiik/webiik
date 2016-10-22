@@ -29,13 +29,13 @@ class Controller
         $this->auth = $auth;
         $this->sessions = $sessions;
 
-        print_r($routeInfo);
+//        print_r($routeInfo);
     }
 
     public function run()
     {
         // Connect to DB
-        $pdo = $this->connection->connect('user');
+//        $pdo = $this->connection->connect('user');
 
 //        $this->sessions->setSessionDir(__DIR__ . '/../tmp');
 //        $this->sessions->sessionStart();
@@ -46,13 +46,35 @@ class Controller
 //        print_r($this->auth->userSet('vlasta@mihal.me', 'test', 1));
 //        $user = $this->auth->userGet('jiri@mihal.me', 'test');
 //        $this->auth->userLogin($user['uid']);
-        if($this->auth->isUserLogged()){
+        if ($this->auth->isUserLogged()) {
             echo 'AHOJ!';
         }
 
-        if($this->auth->userCan('edit-post')){
+        if ($this->auth->userCan('edit-post')) {
             echo 'POST';
         }
+
+        //print_r($http->get($url));
+//        print_r($http->get($url));
+
+        //$handle=curl_init($url);
+//        curl_setopt($handle, CURLOPT_VERBOSE, true);
+//        curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+//        curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, false);
+//        $content = curl_exec($handle);
+//
+//        if(!curl_errno($handle))
+//        {
+//            $info = curl_getinfo($handle);
+//
+//            echo '<br/> Took ' . $info['total_time'] . ' seconds to send a request to ' . $info['url'];
+//        }
+//        else
+//        {
+//            echo 'Curl error: ' . curl_error($handle);
+//        }
+//
+//        echo '<img src ="'.$content.'"/>';
 
 //        print_r($this->auth->generateActivation(1));
 //        echo $this->auth->userActivate('e5ad2d59d1fa', '2c319e4d888234eb89db621560dd2cfa');
@@ -80,16 +102,14 @@ class Controller
 //        echo $this->translation->_p('t10', ['speed' => '100']);
 
         // Get route URI in some lang
-        // Todo: Authenticate user (Think about how authentication will work - actions, MW)
-        echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
-        echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
-        echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
+//        echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
+//        echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
+//        echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
 
         // Todo: Render page using some template engine (Twig)
 //        $this->view->render($template, $data);
-        echo '<br/>';
-        echo 'Controller';
+//        echo '<br/>';
+//        echo 'Controller';
 
-        // Todo: PLUG-INS, COMPONENTS design
     }
 }

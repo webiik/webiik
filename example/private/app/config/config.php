@@ -16,6 +16,12 @@ return [
         'admin' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
     ],
 
+    'auth' => [
+        'permanentLoginCookieName' => 'PC',
+        'withActivation' => false,
+        'loginRouteName' => 'login',
+    ],
+
     'sessions' => [
         'name' => 'US', // string|false
         'dir' => __DIR__ . '/../tmp', // path|false
@@ -29,10 +35,8 @@ return [
         'httpOnly' => false, // bool
     ],
 
-    'auth' => [
-        'permanentLoginCookieName' => 'PC',
-        'withActivation' => false,
-        'loginRouteName' => 'login',
+    'csrf' => [
+        'tokenName' => 'csrf',
     ],
 
     // First language is default

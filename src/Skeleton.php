@@ -87,6 +87,13 @@ class Skeleton extends Core
             return $connection;
         });
 
+        // Add Csrf
+        $this->addService('Webiik\Csrf', function ($c) {
+            $csrf = new Csrf(...self::constructorDI('Webiik\Csrf', $c));
+            $csrf->setTokenName($c['config']['csrf']['tokenName']);
+            return $csrf;
+        });
+
         // Add Attempts
         $this->addService('Webiik\Attempts', function ($c) {
             return new Attempts($c['Webiik\Connection']);

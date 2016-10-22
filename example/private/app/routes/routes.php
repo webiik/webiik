@@ -3,11 +3,6 @@ return [
     'home' => [
         'methods' => ['GET'],
         'controller' => 'Webiik\Controller:run',
-        'middlewares' => [
-//            'Webiik\Auth' => [],
-            'Webiik\AuthMw:isUserLogged' => [],
-//            'Webiik\AuthMw:userCan' => ['access-admin'],
-        ],
     ],
     'login' => [
         'methods' => ['GET', 'POST'],
@@ -16,5 +11,10 @@ return [
     'account' => [
         'methods' => ['GET'],
         'controller' => 'Webiik\Controller:run',
+        'middlewares' => [
+//            'Webiik\Auth' => [],
+            'Webiik\AuthMw:isUserLogged' => [],
+//            'Webiik\AuthMw:userCan' => ['access-admin'],
+        ],
     ],
 ];
