@@ -141,7 +141,7 @@ class Auth
     public function userLogin($uid)
     {
         $this->sessions->sessionRegenerateId();
-        $this->sessions->addToSession('logged', $uid);
+        $this->sessions->setToSession('logged', $uid);
 
         if ($this->config['permanent'] > 0) {
             $this->userLoginPermanent($uid);
