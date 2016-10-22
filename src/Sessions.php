@@ -186,7 +186,7 @@ class Sessions
      * @param $key
      * @param $value
      */
-    public function addToSession($key, $value)
+    public function setToSession($key, $value)
     {
         $_SESSION[$key] = $value;
     }
@@ -280,11 +280,11 @@ class Sessions
     private function addBasicSessionValues()
     {
         if (!$this->getFromSession('ip')) {
-            $this->addToSession('ip', $_SERVER['REMOTE_ADDR']);
+            $this->setToSession('ip', $_SERVER['REMOTE_ADDR']);
         }
 
         if (!$this->getFromSession('agent')) {
-            $this->addToSession('agent', $_SERVER['HTTP_USER_AGENT']);
+            $this->setToSession('agent', $_SERVER['HTTP_USER_AGENT']);
         }
     }
 
