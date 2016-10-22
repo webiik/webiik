@@ -11,7 +11,7 @@ namespace Webiik;
  * @link        https://github.com/webiik/webiik
  * @license     MIT
  */
-class Remote
+class Download
 {
     /**
      * @var Http
@@ -29,73 +29,50 @@ class Remote
 
     /**
      * Download remote file by chunks using curl
-     * @param $url
-     * @param $file
+     * @param string $url
+     * @param string $filePath
      * @param array $options
      * @param int $chunkSize
-     * @return bool
+     * @return array
      */
-    public function download($url, $file, $options = [], $chunkSize = 8096)
+    public function download($url, $filePath, $options = [], $chunkSize = 8096)
     {
-        $curlWrite = function ($ch, $chunk) use ($file) {
-            if (!file_put_contents($file, $chunk, FILE_APPEND)) {
+        $opt = [
+                CURLOPT_BINARYTRANSFER => 1,
+                CURLOPT_BUFFERSIZE => $chunkSize,
+                CURLOPT_WRITEFUNCTION => $this->getWriteFunction($filePath),
+                CURLOPT_HEADER => 0,
+            ];
+
+        // Merge options
+        foreach ($options as $key => $val){
+            $opt[$key] = $val;
+        }
+
+        $res = $this->http->get($url, $opt);
+
+        // If request fails
+        if (count($res['err']) > 0) {
+            @unlink($filePath);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Return Curl write function
+     * @param $filePath
+     * @return \Closure
+     */
+    private function getWriteFunction($filePath)
+    {
+        return function ($curl, $chunk) use ($filePath) {
+            if (!file_put_contents($filePath, $chunk, FILE_APPEND)) {
                 return false;
             }
             ob_flush();
             flush();
             return strlen($chunk);
         };
-
-        $options = array_merge($options, [
-            CURLOPT_BINARYTRANSFER => 1,
-            CURLOPT_BUFFERSIZE => $chunkSize,
-            CURLOPT_WRITEFUNCTION => $curlWrite,
-        ]);
-
-        $res = $this->http->get($url, $options);
-
-        // If curl fails
-        if (is_string($res)) {
-            @unlink($file);
-            return false;
-        }
-
-        return true;
-
-//        if (!$this->getFile($url)) {
-//            return false;
-//        }
-//
-//
-//
-//        // Set up curl
-//        $ch = curl_init();
-//        curl_setopt($ch, CURLOPT_URL, $url);
-//        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-//        curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
-//        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->timeout);
-//        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-//        curl_setopt($ch, CURLOPT_BUFFERSIZE, $this->buffer);
-//        curl_setopt($ch, CURLOPT_WRITEFUNCTION, $curlWrite);
-//
-//
-//        if ($followLocation) curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-//        if ($this->agent) curl_setopt($ch, CURLOPT_USERAGENT, $this->agent);
-//        if ($this->referrer) {
-//            curl_setopt($ch, CURLOPT_REFERER, $this->referrer);
-//        } else {
-//            curl_setopt($ch, CURLOPT_REFERER, $url);
-//        }
-//        $cr = curl_exec($ch);
-//        curl_close($ch);
-//
-//        // If curl fails
-//        if (!$cr) {
-//            @unlink($file);
-//            return false;
-//        }
-//
-//        return true;
     }
 }
