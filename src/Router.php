@@ -200,7 +200,7 @@ class Router
     private function slashRedirect()
     {
         if ($this->config['slashRedirect'] == true) {
-            if (substr($_SERVER['REQUEST_URI'], -1) != '/' || substr($_SERVER['REQUEST_URI'], -2) == '//') {
+            if (count($_GET) == 0 && (substr($_SERVER['REQUEST_URI'], -1) != '/' || substr($_SERVER['REQUEST_URI'], -2) == '//')) {
                 $redirectUrl = rtrim($_SERVER['REQUEST_URI'], '/') . '/';
                 header('HTTP/1.1 301 Moved Permanently');
                 header('Location:' . $redirectUrl);
