@@ -1,7 +1,7 @@
 <?php
 namespace Webiik;
 
- // Clean flash messaging with custom wrappers.
+// Clean flash messaging with custom wrappers.
 class Flash
 {
     /** @var array All 'now' messages */
@@ -50,21 +50,19 @@ class Flash
      */
     public function getFlashes($type = null)
     {
-        if(isset($_SESSION['messages'])) {
+        if (isset($_SESSION['messages'])) {
             $messages = $this->arrayDiffMulti($_SESSION['messages'], $this->messagesNext);
             $this->unsetFromSession($messages);
             $messages = array_merge_recursive($messages, $this->messages);
-
         } else {
-
             $messages = $this->messages;
         }
 
-        if($type){
-            return [$type => $messages[$type]];
+        if ($type) {
+            return isset($messages[$type]) ? [$type => $messages[$type]] : [];
         }
 
-        return($messages);
+        return ($messages);
     }
 
     /**
@@ -78,13 +76,13 @@ class Flash
 
         $wrappedMessages = [];
 
-        if ($type) {
+        if ($type && isset($messages[$type])) {
 
             foreach ($messages[$type] as $message) {
                 $wrappedMessages[$type][] = $this->wrapMessage($type, $message);
             }
 
-        } else {
+        } elseif (count($messages) > 0) {
 
             foreach ($messages as $type => $array) {
                 foreach ($array as $message) {
@@ -113,11 +111,11 @@ class Flash
                 }
             } else {
                 unset($_SESSION['messages'][$type][$key]);
-                if(empty($_SESSION['messages'][$type])){
+                if (empty($_SESSION['messages'][$type])) {
                     unset($_SESSION['messages'][$type]);
                 }
             }
-            if(empty($_SESSION['messages'])){
+            if (empty($_SESSION['messages'])) {
                 unset($_SESSION['messages']);
             }
         }
@@ -136,7 +134,7 @@ class Flash
             if (array_key_exists($key, $array2)) {
                 if (is_array($val) && is_array($array2[$key]) && !empty($val)) {
                     $temRes = $this->arrayDiffMulti($val, $array2[$key]);
-                    if(count($temRes) > 0){
+                    if (count($temRes) > 0) {
                         $result[$key] = $temRes;
                     }
                 }
