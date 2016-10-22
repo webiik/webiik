@@ -1,14 +1,6 @@
 <?php
 namespace Webiik;
 
-/**
- * Class Validate
- * @package     Webiik
- * @author      Jiří Mihal <jiri@mihal.me>
- * @copyright   2016 Jiří Mihal
- * @link        https://github.com/webiik/webiik
- * @license     MIT
- */
 class Validate
 {
     /**
@@ -32,7 +24,7 @@ class Validate
     }
 
     /**
-     * Return array with validated and formatted firstname and lastname on success, otherwise false
+     * Return array with validated and formatted firstname and lastname(s) on success, otherwise false
      * @param $name
      * @return bool|string
      */
@@ -82,7 +74,7 @@ class Validate
     }
 
     /**
-     * Capitalize string
+     * Capitalize string (multi byte)
      * @param $str
      * @return string
      */
