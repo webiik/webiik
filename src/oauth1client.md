@@ -63,35 +63,35 @@ print_r($accessTokenData);
     
 ## Description of provided methods
 
-__setCallbackUrl(string $url)__
+#### setCallbackUrl(string $url)
 Sets callback URL. Callback URL should be URL at your web site. User will be redirected to this URL after authorization against OAuth provider.
 
-__setConsumerSecret(string $secret)__
+#### setConsumerSecret(string $secret)
 Sets API consumer secret.
 
-__setConsumerKey(string $key)__
+#### setConsumerKey(string $key)
 Sets API consumer key.
 
-__setSignatureSecret(string $secret)__
+#### setSignatureSecret(string $secret)
 Sets API signature secret.
 
-__setReqestTokenUrl(string $url)__
+#### setReqestTokenUrl(string $url)
 Sets API endpoint for getting the request token.
 
-__setAccessTokenUrl(string $url)__
+#### setAccessTokenUrl(string $url)
 Sets API endpoint for getting the access token.
 
-__setAuthorizeUrl(string $url)__
+#### setAuthorizeUrl(string $url)
 Sets API endpoint for authorization.
 
-__getRequestTokenData():array__
+#### getRequestTokenData():array
 On success returns array with 'oauth_token' and other data if provided. On error returns array with response 'header', 'body', 'err' and 'info'.
 
-__getLoginUrl(string $requestToken):string__
+#### getLoginUrl(string $requestToken):string
 Returns authorization URL with filled request token.
 
-__redirectToLoginUrl(string $requestToken)__
+#### redirectToLoginUrl(string $requestToken)
 Redirects to authorization URL with filled request token.
 
-__getAccessTokenData():array__
+#### getAccessTokenData():array
 On success returns array with 'oauth_token' and other data if provided. On error returns array with response 'header', 'body', 'err' and 'info'.
