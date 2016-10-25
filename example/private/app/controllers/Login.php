@@ -122,9 +122,179 @@ class Login
         echo '<input type="submit" value="login">';
         echo '</form>';
 
-        // Twitter auth test
+
         $http = new Http();
         $token = new Token();
+        $oauth = new OAuth1Client($http, $token);
+
+        // Your callback URL after authorization
+        $oauth->setCallbackUrl('https://localhost/skeletons/webiik/example/login/');
+
+        // API end points
+        $oauth->setReqestTokenUrl('https://api.twitter.com/oauth/request_token');
+        $oauth->setAuthorizeUrl('https://api.twitter.com/oauth/authenticate');
+        $oauth->setAccessTokenUrl('https://api.twitter.com/oauth/access_token');
+
+        // API credentials
+        $oauth->setConsumerSecret('rZcebQTj3S01dnVPNeYXwctmxmhvZfG6WdSN9KcCoLzCGrB1g0');
+        $oauth->setConsumerKey('YgMxXP37WfVhJT6t1iC9f5PkB');
+
+        // Make API calls
+
+        // Log in a user
+        if (!isset($_GET['oauth_verifier'])) {
+            $requestTokenData = $oauth->getRequestTokenData();
+            if (isset($requestTokenData['oauth_token'])) {
+                $oauth->redirectToLoginUrl($requestTokenData['oauth_token']);
+            }
+        }
+
+        $accessToken = $oauth->getAccessTokenData();
+
+        print_r($accessToken);
+
+        exit;
+
+//        // GOOGLE
+//
+//        // API SETTINGS
+//        $clientId = '661558313642-k9q0kpsqfo3kiopinufjibmoo0dja7q5.apps.googleusercontent.com';
+//        $clientSecret = 'KB9aZO0P41PxfvJdLFc8ym68';
+//        $callbackUrl = 'https://localhost/skeletons/webiik/example/login';
+//
+//        // STEP 1 - Redirect user for authorization
+//        $scope = [
+//            'https://www.googleapis.com/auth/userinfo.email',
+//            'https://www.googleapis.com/auth/userinfo.profile',
+//        ];
+//
+//        $data = [
+//            'client_id' => $clientId,
+//            'scope' => implode(' ', $scope),
+//            'redirect_uri' => $callbackUrl,
+//            'response_type' => 'code',
+//        ];
+//
+//        $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($data);
+//        echo '<a href="' . $url . '">Google login</a>';
+//
+//        // STEP 2 - Getting access token
+//        if (isset($_GET['code'])) {
+//
+//            $data = [
+//                'client_id' => $clientId,
+//                'client_secret' => $clientSecret,
+//                'redirect_uri' => $callbackUrl,
+//                'code' => $_GET['code'],
+//                'grant_type' => 'authorization_code'
+//            ];
+//
+//            $url = 'https://www.googleapis.com/oauth2/v4/token';
+//
+//            $res = $http->post($url, [], $data);
+//
+//            $data = json_decode($res['body'], true);
+//
+//            $accessToken = $data['access_token'];
+//            $tokenType = $data['token_type'];
+//            $expiresIn = $data['expires_in'];
+//            $idToken = $data['id_token'];
+//
+//            print_r($res);
+//
+//            // STEP 3 - Get token info
+//            $data = [
+//                'input_token' => $accessToken,
+//                'access_token' => $accessToken,
+//            ];
+//            $url = 'https://www.googleapis.com/oauth2/v2/tokeninfo';
+//
+//            $res = $http->post($url, [], $data);
+//
+//            print_r($res);
+//
+//            // STEP 4 - Access protected resources (obtain user info)
+//            $data = [
+//                'access_token' => $accessToken,
+//                'fields' => 'id,name,email',
+//            ];
+//
+//            $url = 'https://www.googleapis.com/oauth2/v2/userinfo?' . http_build_query($data);;
+//            $res = $http->get($url);
+//
+//            print_r($res);
+//
+//        }
+//
+//        // FACEBOOK
+//
+//        // API SETTINGS
+//        $appId = '1789792224627518';
+//        $appSecret = '04f626a495ae205185c7271c3d6a7d9a';
+//        $callbackUrl = 'https://localhost/skeletons/webiik/example/login/';
+//
+//        // STEP 1 - Redirect user for authorization
+//        $data = [
+//            'client_id' => $appId,
+//            'redirect_uri' => $callbackUrl,
+//            'auth_type' => 'rerequest',
+//            'scope' => 'email',
+//        ];
+//        $url = 'https://www.facebook.com/v2.8/dialog/oauth?' . http_build_query($data);
+//        echo '<a href="' . $url . '">FB login</a>';
+//
+//        // STEP 2 - Getting access token
+//        if (isset($_GET['code'])) {
+//
+//            $data = [
+//                'client_id' => $appId,
+//                'redirect_uri' => $callbackUrl,
+//                'client_secret' => $appSecret,
+//                'code' => $_GET['code'],
+//            ];
+//
+//            $url = 'https://graph.facebook.com/v2.8/oauth/access_token?' . http_build_query($data);
+//
+//            $res = $http->get($url);
+//
+//            $data = json_decode($res['body'], true);
+//
+//            $accessToken = $data['access_token'];
+//            $tokenType = $data['token_type'];
+//            $expiresIn = $data['expires_in'];
+//            $authType = $data['auth_type'];
+//
+//            print_r($res);
+//
+//            // STEP 3 - Get token info and FB user ID (Inspecting Access Tokens)
+//            $data = [
+//                'input_token' => $accessToken,
+//                'access_token' => $appId . '|' . $appSecret,
+//            ];
+//            $url = 'https://graph.facebook.com/debug_token?' . http_build_query($data);
+//
+//            $res = $http->get($url);
+//
+//            $data = json_decode($res['body'], true);
+//
+//            print_r($res);
+//
+//            $userId = $data['data']['user_id'];
+//
+//            // STEP 4 - Access protected resources (obtain user info)
+//            $data = [
+//                'access_token' => $accessToken,
+//                'fields' => 'id,name,email',
+//            ];
+//
+//            $url = 'https://graph.facebook.com/v2.8/' . $userId . '?' . http_build_query($data);;
+//            $res = $http->get($url);
+//
+//            print_r($res);
+//
+//        }
+//
+        // TWITTER
 
         // API SETTINGS
         $consumerSecret = 'rZcebQTj3S01dnVPNeYXwctmxmhvZfG6WdSN9KcCoLzCGrB1g0';
