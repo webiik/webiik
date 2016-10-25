@@ -59,6 +59,9 @@ if (isset($accessTokenData['oauth_token'])) {
 
 print_r($accessTokenData);
 ```
+
+## OAuth 1 flow
+And here is the visual explanation of code above. See how OAuth 1 works.
 ![Image of Yaktocat](https://oauth.net/core/diagram.png)
     
 ## Description of provided methods
