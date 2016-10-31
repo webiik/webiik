@@ -8,6 +8,9 @@ class OAuth1Client
      */
     private $token;
 
+    /**
+     * @var Http
+     */
     private $http;
 
     private $oauth_callback_url = '';
@@ -18,7 +21,7 @@ class OAuth1Client
 
     private $oauth_authorize_url = '';
 
-    private $oauth_consumer_secret;
+    private $oauth_consumer_secret = '';
 
     private $oauth_consumer_key = '';
 
