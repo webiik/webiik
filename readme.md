@@ -9,6 +9,13 @@ Create your story!
 ## Comparison
 Webiik is ultra minimalistic, but powerful.
 
+|   |Webiik Core|Lumen|Webiik Skeleton|Laravel|
+|---|---|---|---|---|
+|requests per second|---|---|---|---|
+|memory usage|---|---|---|---|
+|data weight|---|---|---|---|
+
+See more detailed comparison [here]().
 <!--Todo: Add speed/size/memory usage/functionality comparison table between Webiik, Laravel, Slim. -->
 
 ## Webiik Core
@@ -17,7 +24,7 @@ If you want to stay minimalistic as possible use Core as foundation of your web 
 [Core](core.md)
 
 ## Webiik Skeleton
-Localization, user management, security, error reporting... everything solved. Just focus on your amazing website or web app.
+Localization, user management, security, error reporting... everything solved. Just focus on your amazing website or web app. And one more thing, everything what is valid in Core is valid in Skeleton too.
 
 [Skeleton]()
 
