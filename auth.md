@@ -8,28 +8,24 @@ Safe user authentication and authorisation for your website:
 - user roles and actions
 
 ## Installation
-Before using Auth in your project, add it to your `composer.json` file:
-```bash
-composer require webiik/auth
-```
-It will also install the dependencies webiik/sessions, webiik/connection, webiik/token and webiik/attempts.
-
-## Quick setup in 4 easy steps
-1. Prepare [auth]() and [attempts]() database tables
-2. Setup connection to your database
+1. Auth is part of [Webiik platform](readme.md). Before using Auth in your project, install it with the following command:
+    ```bash
+    composer require mihi/webiik
+    ```
+2. Prepare [auth]() and [attempts]() database tables
+3. Setup connection to your database
     ```php
     $connection = new \Webiik\Connection();
     $connection->add('app', 'mysql', 'localhost', 'webiik', 'root', 'root'); // Change it to your values
     ```
-3. Instantiate Auth class
+4. Instantiate Auth class
     ```php
     $auth = new \Webiik\Auth(new \Webiik\Sessions(), $connection, new \Webiik\Token(), new \Webiik\Attempts());
     ```  
-4. Configure Auth class
+5. Configure Auth class
     ```php
     $auth->setSalt('YOUR-PASSWORD-SALT');
     ```
-    
     
 ## Cookbook
 In the cookbook you can find some useful recipes how to work with Auth. Please note that code of all examples is simplified for better understanding the problematics. Cookbook is written for inspiration not for copy/paste. Cookbook expects that you already did [Auth setup](#quick-setup-in-4-easy-steps).

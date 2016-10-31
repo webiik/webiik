@@ -1,22 +1,23 @@
-# OAuth1 client
-Tiny OAuth1 client for your web app. Only one class and 125 lines of code which you will easily understand. Use it as it is or rewrite it for your needs.
+# OAuth 1 client
+Tiny OAuth 1 client for your web app. Only one class and 125 lines of code you will easily understand. Use it as it is or rewrite it for your needs.
 
 ## Supported providers
-- every that uses OAuth1 (Twitter, LinkedIn, Vimeo, Dropbox,...)  
+- every that uses OAuth 1 (Twitter, LinkedIn, Vimeo, Dropbox,...)  
 
 ## Installation
-Before using OAuth1 in your project, add it to your `composer.json` file:
+OAuth1 client is part of [Webiik platform](readme.md). Before using OAuth2 in your project, install it with the following command:
 ```bash
-composer require webiik/oauth1
+composer require mihi/webiik
 ```
-It will also install dependencies [webiik/http](), [webiik/token]().
 
-## How to use it? (Twitter login example)
+## How to use it?
+
+#### Twitter login example
 ```php
 // Instatiate required classes
 $http = new Http();
 $token = new Token();
-$oauth = new OAuthOneClient($http, $token);
+$oauth = new OAuth1Client($http, $token);
 
 // Setup
 
@@ -54,7 +55,7 @@ $accessTokenData = $oauth->getAccessTokenData();
 // If we have access oauth_token (F), access protected resources (G)
 if (isset($accessTokenData['oauth_token'])) {
       
-      // Get user info...
+      // Get protected resources...
 }
 
 print_r($accessTokenData);

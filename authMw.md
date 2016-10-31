@@ -1,8 +1,8 @@
 # AuthMw
-Auth middleware is part of Webiik Skeleton.
+Auth middleware is part of [Webiik platform](readme.md) and requires [Auth](auth.md) service.
 
 ## Configuration
-AuthMw requires configuration of login route name. AuthMw is configured via [config.php]() like any other core services in Webiik Skeleton. 
+AuthMw requires configuration of login route name. AuthMw can be configured via [config.php]() like some other core services of Webiik Skeleton. 
 ```php
 'auth' => [
         'permanentLoginCookieName' => 'PC',
