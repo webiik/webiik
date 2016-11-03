@@ -15,47 +15,50 @@ Webiik is ultra minimalistic, but powerful.
 |memory usage|---|---|---|---|
 |data weight|---|---|---|---|
 
-See more detailed comparison [here]().
-<!--Todo: Add speed/size/memory usage/functionality comparison table between Webiik, Laravel, Slim. -->
+<!--Todo: Fill table with benchmark results. -->
 
 ## Webiik Core
-If you want to stay minimalistic as possible use Core as foundation of your web project and connect only services you really need.
+If you want to stay tiny use Core as foundation of your web project and connect only [services](#available-services) you really need. Just 50 Kb and you will get router, middleware and dependency injection.
 
 [Core](core.md)
 
 ## Webiik Skeleton
-Localization, user management, security, error reporting... everything solved. Just focus on your amazing website or web app. And one more thing, everything what is valid in Core is valid in Skeleton too.
+Everything what modern website needs just in 159 Kb. Localization, user management, security, error reporting and many more. Just focus on your amazing website or web app. Skeleton inherits from Core, so everything what works in Core, works in Skeleton too.
 
 [Skeleton]()
 
 ## Available services
-Everything what modern website needs in few simple classes.
+List of available services that come with Webiik platform. Sorted by usage.
 
+Core
+[Middleware]()
+[Request]()
+[Route]()
+[Router]()
+
+Skeleton
 [Attempts]()
 [Auth](auth.md)
 [AuthMw](authMw.md)
-[Autoload]()
 [Config]()
 [Connection]()
 [Conversion]()
 [Csrf]()
-[Download]()
 [Error]()
 [Filesystem]()
 [Flash]()
-[Http]()
 [Log]()
-[Mail]()
-[Middleware]()
-[OAuth1Client](oauth1client.md)
-[OAuth2Client](oauth2client.md)
-[Render]()
-[Request]()
-[Response]()
-[Route]()
-[Router]()
 [Sessions]()
 [Token]()
 [Translation]()
+
+Unused
+[Autoload]()
+[Download]()
+[Http]()
+[Mail]()
+[OAuth1Client](oauth1client.md)
+[OAuth2Client](oauth2client.md)
+[Response]()
 [Utils]()
 [Validate]()

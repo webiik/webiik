@@ -5,7 +5,7 @@ Tiny OAuth 2 client for your web app. Only one class and 130 lines of code you w
 - every that uses OAuth 2 (FB, Google,...)  
 
 ## Installation
-OAuth2 client is part of [Webiik platform](readme.md). Before using OAuth2 in your project, install it with the following command:
+OAuth2Client is part of [Webiik platform](readme.md). Before using OAuth2Client in your project, install it with the following command:
 ```bash
 composer require mihi/webiik
 ```

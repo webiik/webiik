@@ -5,7 +5,7 @@ Tiny OAuth 1 client for your web app. Only one class and 125 lines of code you w
 - every that uses OAuth 1 (Twitter, LinkedIn, Vimeo, Dropbox,...)  
 
 ## Installation
-OAuth1 client is part of [Webiik platform](readme.md). Before using OAuth2 in your project, install it with the following command:
+OAuth1Client is part of [Webiik platform](readme.md). Before using OAuth1Client in your project, install it with the following command:
 ```bash
 composer require mihi/webiik
 ```
