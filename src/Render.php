@@ -1,15 +1,19 @@
 <?php
 namespace Webiik;
 
-/**
- * Class Render
- * @package     Webiik
- * @author      Jiří Mihal <jiri@mihal.me>
- * @copyright   2016 Jiří Mihal
- * @link        https://github.com/webiik/webiik
- * @license     MIT
- */
+
 class Render
 {
-    // Todo: Render
+    private $renderHandler;
+
+    public function addRenderHandler($handler)
+    {
+        $this->renderHandler = $handler;
+    }
+
+    public function render($options = [])
+    {
+        $rh = $this->renderHandler;
+        return $rh(...$options);
+    }
 }
