@@ -309,10 +309,23 @@ class Translation
         return $string ? $string : false;
     }
 
-    public function _tAll()
+    /**
+     * Return key value array of all translations or all translations for given lang
+     * @param bool $lang
+     * @return array
+     */
+    public function _tAll($lang = false)
     {
         $this->isLangSet();
-        // Todo: Get key value array of all tranlations with all fallbacks
+
+        if ($lang) {
+            if (isset($this->translation[$lang])) {
+                return $this->translation[$lang];
+            } else {
+                return [];
+            }
+        }
+
         return $this->translation;
     }
 
