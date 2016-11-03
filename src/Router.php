@@ -433,6 +433,7 @@ class Router
                 $this->routeInfo['methods'] = $route['methods'];
                 $this->routeInfo['id'] = $routeId;
                 $this->routeInfo['name'] = $route['name'];
+                $this->routeInfo['lang'] = $this->lang;
 
                 // If we have some params, associate values from request uri with params names
                 // and check if values of params match params conditions
