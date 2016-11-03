@@ -32,7 +32,7 @@ class Sessions
 
     /**
      * Set max time in sec how long will be session stored on the server and session cookie in the browser
-     * Default value is set to 1440 sec (24 min)
+     * Default value is set to 0, it means till session is valid
      * @param $sec
      */
     public function setSessionSystemLifetime($sec)
