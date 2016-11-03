@@ -28,6 +28,11 @@ class Core
             return new Router();
         };
 
+        // Add Request
+        $this->addService('Webiik\Request', function ($c) {
+            return new Request();
+        });
+
         // Set router base path
         $this->router()->base($this->getScriptDir());
     }
