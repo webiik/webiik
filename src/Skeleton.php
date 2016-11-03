@@ -120,10 +120,11 @@ class Skeleton extends Core
 
     public function run()
     {
-        // Load route definitions for current lang from file.
-        // If routes definitions exist, map routes that has translation(incl. fallbacks).
-        // Load route translations in current lang
-        $this->mapTranslatedRoutes();
+        // Load app translations at first because we need them for routes mapping
+        $this->loadTranslations($this->lang, '_app', false, 'routes');
+
+        // Map routes
+        $this->mapRoutes($this->lang);
 
         // Match URI against mapped routes
         $routeInfo = $this->router()->match();
@@ -136,19 +137,18 @@ class Skeleton extends Core
         $this->addParam('routeInfo', $routeInfo);
 
         // Load app and current page translations in to Translation
-        $this->loadTranslation($this->lang, '_app');
-        $this->loadTranslation($this->lang, $routeInfo['name']);
+        $this->loadTranslations($this->lang, $routeInfo['name']);
 
         // Load translation formats in to Translation
         $this->loadFormats($this->lang);
 
-        // Load app and page conversions in to Conversion
+        // Load app and page conversions in to Conversion (same for languages)
         $this->loadConversions('_app');
         $this->loadConversions($routeInfo['name']);
 
         // Map rest of routes with empty controllers.
         // Webiik needs this step to provide getUriFor() for every route in every lang.
-        $this->mapEmptyTranslatedRoutes();
+        $this->mapRoutesEmptyTranslated();
 
         // Instantiate middleware
         $middleware = new Middleware($this->container);
@@ -163,32 +163,6 @@ class Skeleton extends Core
 
         // Run
         $middleware->run();
-    }
-
-    /**
-     * Return translation for given key and lang.
-     * If translation does not exist, try to load fallback translation from given file.
-     * Return false if translation does not exist in any lang.
-     * @param string $file
-     * @param string $key
-     * @param int $fallbackIndex
-     * @return bool|mixed
-     */
-    private function _t($file, $key, $lang, $fallbackIndex = 0)
-    {
-        $trans = $this->trans();
-        $trans->setLang($lang);
-        $t = $trans->_t($key);
-        if (!$t) {
-            $fl = $this->getFallbackLangs($lang);
-            if ($fl && isset($fl[$fallbackIndex])) {
-                $this->loadTranslation($fl[$fallbackIndex], $file, $key);
-                $fallbackIndex++;
-                $t = $this->_t($file, $key, $lang, $fallbackIndex);
-            }
-        }
-        $trans->setLang($this->lang);
-        return $t;
     }
 
     /**
@@ -258,39 +232,150 @@ class Skeleton extends Core
     }
 
     /**
-     * If translation file exists, add all translations from that file to Translation.
-     * If key is set, add to Translation only translation for that key.
-     * If key is set and does not exist, don't add any translation.
-     * Save memory by using keys.
-     * @param string $lang
-     * @param bool|string $key
-     * @param string $file
+     * Route definitions does not provide fallbacks, otherwise it would be messy.
+     * You can define routes for specific language in routes.{lang}.php or for all languages in routes.php
+     * If route definition has no valid translation then route will not be mapped!
+     * @param $lang
+     * @param bool $empty
      */
-    private function loadTranslation($lang, $file, $key = false)
+    private function mapRoutes($lang, $empty = false)
     {
-        $file = $this->container['config']['folder']['translations'] . '/' . $file . '.' . $lang . '.php';
-
+        // Get route definitions
+        $routes = [];
+        $file = $this->container['config']['folder']['routes'] . '/routes.' . $lang . '.php';
         if (file_exists($file)) {
+            $routes = require $file;
+        } else {
+            $file = $this->container['config']['folder']['routes'] . '/routes.php';
+            $routes = require $file;
+        }
 
-            $trans = $this->trans();
-            $val = require $file;
+        // Get route translations
 
-            // If key exists, get value from translation array by dot notation signature
-            if ($key) {
-                $pieces = explode('.', $key);
-                foreach ($pieces as $piece) {
-                    if (isset($val[$piece])) {
-                        $val = $val[$piece];
-                    } else {
-                        $val = false;
-                    }
+        $trans = $this->trans();
+
+        // Get route translations for current lang
+        $trans->setLang($lang);
+        $routeTranslations = $trans->_t('routes');
+        if (!is_array($routeTranslations)) $routeTranslations = [];
+
+        // Get route translations for current lang fallbacks
+        $fl = $this->getFallbackLangs($lang);
+        foreach ($fl as $flLang) {
+            $trans->setLang($flLang);
+            $fallbackRoutes = $trans->_t('routes');
+            if (is_array($fallbackRoutes)) {
+                foreach ($fallbackRoutes as $name => $uri) {
+                    $routeTranslations[$name] = $uri;
                 }
             }
+        }
+        $trans->setLang($this->lang);
 
-            if ($val) {
-                $trans->addTrans($lang, $val, $key);
+        // Now iterate route definitions and map only routes that have translation
+
+        $this->router()->setLang($lang);
+
+        foreach ($routes as $name => $p) {
+
+            if (isset($routeTranslations[$name])) {
+                $uri = '/' . trim($routeTranslations[$name], '/');
+
+                if (!$empty) {
+
+                    // Standard route mapping
+                    $route = $this->map($p['methods'], $uri, $p['controller'], $name);
+                    if (isset($p['middlewares'])) {
+                        foreach ($p['middlewares'] as $mw => $params) {
+                            $route->add($mw, $params);
+                        }
+                    }
+                } else {
+
+                    // Empty route mapping just for translation purpose
+                    $this->map(['GET'], $uri, '', $name);
+                }
             }
         }
+    }
+
+    /**
+     * Map empty routes for all other languages than current lang.
+     * Empty means routes without controllers and only with GET method.
+     */
+    private function mapRoutesEmptyTranslated()
+    {
+        foreach ($this->container['config']['language'] as $lang => $prop) {
+
+            // Iterate all langs except current lang, because routes for current lang are already loaded
+            if ($lang != $this->lang) {
+                $this->mapRoutes($lang, true);
+            }
+        }
+    }
+
+    /**
+     * Load translation from file into Translation service
+     * @param $lang
+     * @param $fileName
+     * @param bool $addOnlyDiffTranslation - Add only missing translations in current lang
+     * @param bool $key - When $addOnlyDiffTranslation is false, you can specify what part of translation will be added
+     */
+    private function loadTranslations($lang, $fileName, $addOnlyDiffTranslation = true, $key = false)
+    {
+        $file = $this->container['config']['folder']['translations'] . '/' . $fileName . '.' . $lang . '.php';
+
+        // Add translation for current lang
+        if (file_exists($file)) {
+
+            $translation = require $file;
+            $this->trans()->addTrans($lang, $translation);
+
+        }
+
+        // Get fallback languages and iterate them
+        $fl = $this->getFallbackLangs($this->lang);
+
+        foreach ($fl as $flLang) {
+
+            $file = $this->container['config']['folder']['translations'] . '/' . $fileName . '.' . $flLang . '.php';
+
+            // Load fallback translations
+            if (file_exists($file)) {
+
+                // Get translation for current lang
+                $currentLangTranslation = $this->trans()->_tAll($this->lang);
+
+                // Get translation for iterated fallback
+                $translation = require $file;
+
+                if (!$addOnlyDiffTranslation) {
+
+                    // Add translation
+                    if ($key) {
+                        $this->trans()->addTrans($flLang, $translation[$key], $key);
+                    } else {
+                        $this->trans()->addTrans($flLang, $translation);
+                    }
+
+                }
+
+                // Find keys that missing in current lang translation
+                $missingTranslations = $this->arrayDiffMulti($translation, $currentLangTranslation);
+
+                // Add this missing translation
+                foreach ($missingTranslations as $key => $val) {
+
+                    // Todo: Multi key concatenation
+                    print_r($key);
+                    print_r($val);
+                    $this->trans()->addTrans($flLang, $val, $key);
+                }
+
+            }
+        }
+
+//        print_r($this->trans()->_tAll());
     }
 
     /**
@@ -344,94 +429,6 @@ class Skeleton extends Core
     }
 
     /**
-     * If route definition file exists, return route definitions, otherwise return false
-     * @param $lang
-     * @return bool|mixed
-     */
-    private function loadRoutes($lang)
-    {
-        $dir = $this->container['config']['folder']['routes'];
-
-        if (file_exists($dir . '/routes.' . $lang . '.php')) {
-            $routes = require $dir . '/routes.' . $lang . '.php';
-        } elseif (file_exists($dir . '/routes.php')) {
-            $routes = require $dir . '/routes.php';
-        }
-
-        return isset($routes) ? $routes : false;
-    }
-
-    /**
-     * Map all routes in current lang, that has the translation or fallback translation.
-     */
-    private function mapTranslatedRoutes()
-    {
-        // Load route definitions in current language
-        $routes = $this->loadRoutes($this->lang);
-        if ($routes) {
-
-            // Load translation of route definitions in current language
-            $this->loadTranslation($this->lang, '_app', 'routes');
-
-            // Set router to current lang, so route will be mapped in this lang
-            $this->router()->setLang($this->lang);
-
-            // Iterate all loaded route definitions
-            // If route definition has translation or fallback translation, map it
-            foreach ($routes as $name => $p) {
-                $uri = $this->_t('_app', 'routes.' . $name, $this->lang);
-                if ($uri) {
-                    $uri = '/' . trim($uri, '/');
-                    $route = $this->map($p['methods'], $uri, $p['controller'], $name);
-                    if (isset($p['middlewares'])) {
-                        foreach ($p['middlewares'] as $mw => $params) {
-                            $route->add($mw, $params);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Map all routes, except routes in current lang, that has the translation or fallback translation.
-     * Map them with an empty controller, we don't need more for translation.
-     * @throws \Exception
-     */
-    private function mapEmptyTranslatedRoutes()
-    {
-        foreach ($this->container['config']['language'] as $lang => $prop) {
-
-            // Iterate all langs except current lang, because routes for current lang are already loaded
-            if ($lang != $this->lang) {
-
-                // Load route definitions in iterated language
-                $routes = $this->loadRoutes($lang);
-                if ($routes) {
-
-                    // Load translation of route definitions in iterated language
-                    $this->loadTranslation($lang, '_app', 'routes');
-
-                    // Set router to iterated lang, so route will be mapped in that lang
-                    $this->router()->setLang($lang);
-
-                    // Iterate all loaded route definitions
-                    // If route definition has translation or fallback translation, map it
-                    foreach ($routes as $name => $p) {
-                        $uri = $this->_t('_app', 'routes.' . $name, $lang);
-                        if ($uri) {
-                            $uri = '/' . trim($uri, '/');
-                            $this->router()->map(['GET'], $uri, '', $name);
-                        }
-                    }
-                }
-            }
-        }
-        // Set router back to current lang
-        $this->router()->setLang($this->lang);
-    }
-
-    /**
      * @return Translation
      */
     private function trans()
@@ -471,5 +468,29 @@ class Skeleton extends Core
         $pageURL = $this->getHostRoot();
         $pageURL .= rtrim($this->getScriptDir(), '/');
         return $pageURL;
+    }
+
+    /**
+     * Multidimensional array_diff
+     * @param $array1
+     * @param $array2
+     * @return array
+     */
+    private function arrayDiffMulti($array1, $array2)
+    {
+        $result = array();
+        foreach ($array1 as $key => $val) {
+            if (array_key_exists($key, $array2)) {
+                if (is_array($val) && is_array($array2[$key]) && !empty($val)) {
+                    $temRes = $this->arrayDiffMulti($val, $array2[$key]);
+                    if (count($temRes) > 0) {
+                        $result[$key] = $temRes;
+                    }
+                }
+            } else {
+                $result[$key] = $val;
+            }
+        }
+        return $result;
     }
 }

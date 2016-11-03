@@ -58,9 +58,22 @@ class Controller
         }
 
         // Todo: Get translations for current page
+//        $trans = new Translation();
+//        $trans->setLang('en');
+//        $trans->setFallbacks('en', ['cs']);
+//        $trans->setFallbacks('cs', ['sk']);
 
-        print_r($this->translation->_t('t7'));
+//        $trans->addTrans('en', 'Welcome', 'g1');
+//        $trans->addTrans('cs', 'Vítejte', 'g1');
+//        $trans->addTrans('sk', 'Vítajte', 'g1');
+
+//        echo $trans->_t('g1');
+
+//        print_r($this->translation->_t('t7'));
+
 //        print_r($this->translation->_tAll());
+
+        echo $this->router->getUriFor('account', 'cs');
 
         $data = [
             'seo' => [
@@ -71,63 +84,6 @@ class Controller
         ];
 
         echo $this->twig->render('home.twig', $data);
-
-        //print_r($http->get($url));
-//        print_r($http->get($url));
-
-        //$handle=curl_init($url);
-//        curl_setopt($handle, CURLOPT_VERBOSE, true);
-//        curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-//        curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, false);
-//        $content = curl_exec($handle);
-//
-//        if(!curl_errno($handle))
-//        {
-//            $info = curl_getinfo($handle);
-//
-//            echo '<br/> Took ' . $info['total_time'] . ' seconds to send a request to ' . $info['url'];
-//        }
-//        else
-//        {
-//            echo 'Curl error: ' . curl_error($handle);
-//        }
-//
-//        echo '<img src ="'.$content.'"/>';
-
-//        print_r($this->auth->generateActivation(1));
-//        echo $this->auth->userActivate('e5ad2d59d1fa', '2c319e4d888234eb89db621560dd2cfa');
-//        echo $this->auth->userGet('jiri@mihal.me', 'test');
-
-//        $this->auth->login(1, true);
-//        $this->auth->userLogout();
-//
-//        if ($this->auth->userLogged()) {
-//            echo 'Is logged in.';
-//        }
-//
-//        if($this->auth->userCan('access-account')){
-//            echo 'User can access account.';
-//        }
-
-//        if ($this->auth->isActivated(1)) {
-//            echo 'Activated.';
-//        } else {
-//            echo 'Not activated.';
-//        }
-
-
-        // Get page translation
-//        echo $this->translation->_p('t10', ['speed' => '100']);
-
-        // Get route URI in some lang
-//        echo '<br/>CS URI: ' . $this->router->getUriFor('account', 'cs') . '<br/>';
-//        echo 'SK URI: ' . $this->router->getUriFor('account', 'sk') . '<br/>';
-//        echo 'EN URI: ' . $this->router->getUriFor('account', 'en') . '<br/>';
-
-        // Todo: Render page using some template engine (Twig)
-//        $this->view->render($template, $data);
-//        echo '<br/>';
-//        echo 'Controller';
 
     }
 }

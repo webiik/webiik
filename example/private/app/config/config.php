@@ -43,7 +43,7 @@ return [
     // Signature is: [language in ISO 639-1, timezone, [array of fallbacks in ISO 639-1]]
     'language' => [
         'en' => ['America/Los_Angeles', ['cs']],
-        'cs' => ['Europe/Prague', ['en']],
+        'cs' => ['Europe/Prague', ['sk']],
         'sk' => ['Europe/Bratislava', ['cs']],
     ],
 

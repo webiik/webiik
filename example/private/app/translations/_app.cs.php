@@ -2,6 +2,7 @@
 return [
     'routes' => [
         'home' => '/',
+        'login' => '/prihlaseni',
         'account' => '/ucet',
     ],
     'other' => [

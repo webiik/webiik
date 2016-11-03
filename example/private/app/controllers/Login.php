@@ -31,7 +31,7 @@ class Login
      */
     private $csrf;
 
-    public function __construct(Sessions $sessions, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
+    public function __construct($routeInfo, Sessions $sessions, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
     {
         $this->sessions = $sessions;
         $this->router = $router;

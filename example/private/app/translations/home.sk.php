@@ -16,5 +16,5 @@ return [
         'desc' => 'Vítejte na úvodní stránce Webiiku.',
         'kw' => 'webiik',
     ],
-//    't7' => 'Já jsem fallback.',
+    't7' => 'Já jsem fallback.',
 ];

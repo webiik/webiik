@@ -11,7 +11,7 @@ return [
     // Todo: Nav translation
     'routes' => [
         'home' => '/',
-        'login' => '/login',
+//        'login' => '/login',
         'account' => '/account',
     ],
     'login' => [
