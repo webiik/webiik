@@ -1,5 +1,14 @@
 <?php
+/**
+ * All shared translations of current lang.
+ *
+ * Special key:
+ * 'routes' - here you assign translated URIs to route definition '/routes/routes.php' by route name
+ *
+ * Note: Only assigned routes in current/fallback(s) lang(s) will be available in current lang.
+ */
 return [
+    // Todo: Nav translation
     'routes' => [
         'home' => '/',
         'login' => '/login',

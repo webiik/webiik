@@ -1,4 +1,8 @@
 <?php
+/*
+ * PROPOSAL
+ */
+
 /**
  * Webiik reads this file when looking for/autoloading installed components
  */

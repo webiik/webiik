@@ -3,10 +3,28 @@
 require __DIR__ . '/middlewares/Middleware.php';
 require __DIR__ . '/middlewares/MiddlewareTwo.php';
 
-// Todo: THINK ABOUT installers (what basic folders and files, installer steps) for Core(API), Skeleton, CMS
-
 //$app = new \Webiik\Core();
 $app = new \Webiik\Skeleton($config);
+
+// Add template engine
+$app->addService('Twig_Environment', function ($c){
+
+    // Set Twig basic settings
+    $loader = new Twig_Loader_Filesystem(__DIR__ . '/views');
+    $twig = new Twig_Environment($loader, array(
+        'cache' => __DIR__ . '/tmp/cache/views',
+        'debug' => true,
+    ));
+
+    // Add Twig extension(s)
+    $twig->addExtension(new \Twig_Extension_Debug());
+
+    // Add additional params, functions, etc.
+    $twig->addGlobal('ROOT', $c['ROOT']);
+
+    // Return configured template engine
+    return $twig;
+});
 
 // Add own error routes handlers
 //$app->error404('Webiik\Error404:run');

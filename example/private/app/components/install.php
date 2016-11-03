@@ -1,4 +1,8 @@
 <?php
+/*
+ * PROPOSAL
+ */
+
 /**
  * This CLI script provides single component installation
  */

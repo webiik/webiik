@@ -9,6 +9,7 @@ class Controller
     private $router;
     private $auth;
     private $sessions;
+    private $twig;
 
     /**
      * Controller constructor.
@@ -19,7 +20,8 @@ class Controller
         Translation $translation,
         Router $router,
         Auth $auth,
-        Sessions $sessions
+        Sessions $sessions,
+        \Twig_Environment $twig
     )
     {
         $this->routeInfo = $routeInfo;
@@ -28,6 +30,7 @@ class Controller
         $this->router = $router;
         $this->auth = $auth;
         $this->sessions = $sessions;
+        $this->twig = $twig;
 
 //        print_r($routeInfo);
     }
@@ -53,6 +56,21 @@ class Controller
         if ($this->auth->userCan('edit-post')) {
             echo 'POST';
         }
+
+        // Todo: Get translations for current page
+
+        print_r($this->translation->_t('t7'));
+//        print_r($this->translation->_tAll());
+
+        $data = [
+            'seo' => [
+                'title' => $this->translation->_t('seo.title'),
+                'desc' => $this->translation->_t('seo.desc'),
+            ],
+            't2' => $this->translation->_p('t2', ['numCats' => 1]),
+        ];
+
+        echo $this->twig->render('home.twig', $data);
 
         //print_r($http->get($url));
 //        print_r($http->get($url));

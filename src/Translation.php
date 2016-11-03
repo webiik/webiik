@@ -309,6 +309,13 @@ class Translation
         return $string ? $string : false;
     }
 
+    public function _tAll()
+    {
+        $this->isLangSet();
+        // Todo: Get key value array of all tranlations with all fallbacks
+        return $this->translation;
+    }
+
     /**
      * Add Conversion obj and allow to use conv type
      * @param Conversion $conversion

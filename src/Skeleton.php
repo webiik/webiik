@@ -24,27 +24,23 @@ class Skeleton extends Core
     {
         parent::__construct();
 
-        // Add config array to container
+        // Add params shared inside app
         $this->addParam('config', $config);
+        $this->addParam('ROOT', $this->getWebRoot());
 
         // Add basic app services
 
         // Add Sessions
         $this->addService('Webiik\Sessions', function ($c) {
             $sessions = new Sessions();
-            if ($c['config']['sessions']['name']) $sessions->setSessionName($c['config']['sessions']['name']);
-            if ($c['config']['sessions']['dir']) $sessions->setSessionDir($c['config']['sessions']['dir']);
+            $sessions->setSessionName($c['config']['sessions']['name']);
+            $sessions->setSessionDir($c['config']['sessions']['dir']);
             $sessions->setSessionSystemLifetime($c['config']['sessions']['lifetime']);
-            if ($c['config']['cookies']['domain']) $sessions->setDomain($c['config']['cookies']['domain']);
-            if ($c['config']['cookies']['uri']) $sessions->setUri($c['config']['cookies']['uri']);
+            $sessions->setDomain($c['config']['cookies']['domain']);
+            $sessions->setUri($c['config']['cookies']['uri']);
             $sessions->setSecure($c['config']['cookies']['secure']);
             $sessions->setHttponly($c['config']['cookies']['httpOnly']);
             return $sessions;
-        });
-
-        // Add Request
-        $this->addService('Webiik\Request', function ($c) {
-            return new Request();
         });
 
         // Add Flash messages
@@ -55,12 +51,6 @@ class Skeleton extends Core
         // Add Token
         $this->addService('Webiik\Token', function ($c) {
             return new Token();
-        });
-
-        // Add template engine
-        $this->addService('Webiik\Render', function ($c) {
-            // Todo: Configure render engine
-            return new Render();
         });
 
         // Add Translation
@@ -142,7 +132,7 @@ class Skeleton extends Core
         if ($routeInfo['http_status'] == 404) $this->error(404);
         if ($routeInfo['http_status'] == 405) $this->error(405);
 
-        // Store route info into container to allow its injection in route handlers and middlewares
+        // Store route info into container
         $this->addParam('routeInfo', $routeInfo);
 
         // Load app and current page translations in to Translation
@@ -184,7 +174,7 @@ class Skeleton extends Core
      * @param int $fallbackIndex
      * @return bool|mixed
      */
-    public function _t($file, $key, $lang, $fallbackIndex = 0)
+    private function _t($file, $key, $lang, $fallbackIndex = 0)
     {
         $trans = $this->trans();
         $trans->setLang($lang);

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+    <head>
+        {% block head %}
+        <meta charset="utf-8">
+
+        {# Basic SEO #}
+        <title>{{ seo.title }}</title>
+        <meta name="description" content="{{ seo.desc }}"/>
+        <meta name="keywords" content="{{ seo.kw }}"/>
+        <meta name="robots" content="all,follow"/>
+
+        {# CSS #}
+        <link rel="stylesheet" href="{{ ROOT }}/assets/css/main.css" type="text/css" media="screen"/>
+        {% endblock %}
+    </head>
+    <body>
+        {% block nav %}
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>

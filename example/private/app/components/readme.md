@@ -1,7 +1,7 @@
 # Components proposal
 Component is UI element driven by its own controller and rendered by its own template. Component can access DI container so it can be really powerful. Optionally you can add translations and assets 
 
-Runtime of component is during executing the `render` method of `View` class.
+Runtime of component is during executing the `render` method of `Render` class.
 
 ## Component folder structure
 Folders marked with * are optional.
@@ -22,6 +22,16 @@ component_name
 |   └── js
 |       └── main.js
 └── desc.php
+
+## Component template signature
+```html
+ [[poll]]
+ 'question' => 'What is you favorite color?',
+ 'answers' => [white,blue,red,black,orange]
+ [[/poll]]
+ 
+ [[pagination/]] 
+```
  
 ## File desc.php
 Here comes your component description.
@@ -51,4 +61,4 @@ return [
 ## Uninstalling component
 1. Open terminal window and go to `components` folder and run command `php uninstall.php`
 2. Follow the install steps.
-3. If component used some database tables, you need to detele them manually.
+3. If component used some database tables, you need to delete them manually.

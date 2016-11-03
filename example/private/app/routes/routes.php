@@ -1,4 +1,8 @@
 <?php
+/**
+ * Here come all Skeleton route definitions: 'routeName' => ['methods' => array, 'controller' => string]
+ * Assign these routes to specific language in /translations/_app.{lang}.php
+ */
 return [
     'home' => [
         'methods' => ['GET'],
@@ -12,7 +16,6 @@ return [
         'methods' => ['GET'],
         'controller' => 'Webiik\Controller:run',
         'middlewares' => [
-//            'Webiik\Auth' => [],
             'Webiik\AuthMw:isUserLogged' => [],
 //            'Webiik\AuthMw:userCan' => ['access-admin'],
         ],

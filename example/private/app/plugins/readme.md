@@ -1,7 +1,7 @@
 # Plug-ins proposal
 Plug-in is complete part of application with routes, translations etc. Its structure and functionality is same like Webiik's app.
 
-Runtime of plug-in is during executing the `run` method of `Skeleton` class.
+Runtime of plug-in is during executing the `render` method of `Render` class.
 
 ## Component folder structure
 Folders marked with * are optional.

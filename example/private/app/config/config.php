@@ -19,12 +19,12 @@ return [
     'auth' => [
         'permanentLoginCookieName' => 'PC',
         'withActivation' => false,
-        'loginRouteName' => 'login',
+        'loginRouteName' => 'login', // <-- this value is used only by AuthMw
     ],
 
     'sessions' => [
         'name' => 'US', // string|false
-        'dir' => __DIR__ . '/../tmp', // path|false
+        'dir' => __DIR__ . '/../tmp/sessions', // path|false
         'lifetime' => 1440, // int sec, 0 = till session is valid
     ],
 
@@ -56,10 +56,6 @@ return [
         'translations' => __DIR__ . '/../translations',
         'conversions' => __DIR__ . '/../translations/conversions',
         'formats' => __DIR__ . '/../translations/formats',
-        'views' => __DIR__ . '/../views',
-        'components' => __DIR__ . '/../components',
-        'plugins' => __DIR__ . '/../plugins',
-        'tmp' => __DIR__ . '/../components',
 
         // These folders must be accessible from the web
         'js' => __DIR__ . '/../../../assets/js',
@@ -69,7 +65,4 @@ return [
 
     // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
     'dlInUri' => false,
-
-    // Template engine
-    'view' => 'Twig',
 ];
