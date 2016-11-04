@@ -18,6 +18,12 @@ class Skeleton extends Core
     private $lang;
 
     /**
+     * Language list of all mapped routes
+     * @var array
+     */
+    private $mappedRoutesLang = [];
+
+    /**
      * Skeleton constructor.
      */
     public function __construct($config)
@@ -120,10 +126,10 @@ class Skeleton extends Core
 
     public function run()
     {
-        // Load app translations at first because we need them for routes mapping
+        // Load translations for current lang with all fallback route translations and fallbacks of missing translations
         $this->loadTranslations($this->lang, '_app', false, 'routes');
 
-        // Map routes
+        // Map routes for current lang and fallbacks routes of missing current lang routes
         $this->mapRoutes($this->lang);
 
         // Match URI against mapped routes
@@ -207,7 +213,7 @@ class Skeleton extends Core
     {
         $langs = $this->container['config']['language'];
         foreach ($langs as $lang => $p) {
-            if (isset($p[1]) && is_array($p[1])) {
+            if (isset($p[1][0])) {
                 $this->trans()->setFallbacks($lang, $p[1]);
             }
         }
@@ -225,7 +231,7 @@ class Skeleton extends Core
         if (isset($langs[$lang][1]) && is_array($langs[$lang][1])) {
             $fallbackLangs = $langs[$lang][1];
         } else {
-            $fallbackLangs = false;
+            $fallbackLangs = [];
         }
 
         return $fallbackLangs;
@@ -266,11 +272,16 @@ class Skeleton extends Core
             $fallbackRoutes = $trans->_t('routes');
             if (is_array($fallbackRoutes)) {
                 foreach ($fallbackRoutes as $name => $uri) {
-                    $routeTranslations[$name] = $uri;
+                    if (!isset($routeTranslations[$name])){
+                        $routeTranslations[$name] = $uri;
+                    }
                 }
             }
         }
         $trans->setLang($this->lang);
+
+        // Store info about that we already tried to map routes in this $lang
+        $this->mappedRoutesLang[] = $lang;
 
         // Now iterate route definitions and map only routes that have translation
 
@@ -297,6 +308,8 @@ class Skeleton extends Core
                 }
             }
         }
+
+        $this->router()->setLang($this->lang);
     }
 
     /**
@@ -309,6 +322,12 @@ class Skeleton extends Core
 
             // Iterate all langs except current lang, because routes for current lang are already loaded
             if ($lang != $this->lang) {
+
+                // Load translations for routes we did not map before
+                if (!in_array($lang, $this->mappedRoutesLang)) {
+                    $this->loadTranslations($lang, '_app', false, 'routes');
+                }
+
                 $this->mapRoutes($lang, true);
             }
         }
@@ -357,7 +376,6 @@ class Skeleton extends Core
                     } else {
                         $this->trans()->addTrans($flLang, $translation);
                     }
-
                 }
 
                 // Find keys that missing in current lang translation
@@ -365,17 +383,10 @@ class Skeleton extends Core
 
                 // Add this missing translation
                 foreach ($missingTranslations as $key => $val) {
-
-                    // Todo: Multi key concatenation
-                    print_r($key);
-                    print_r($val);
                     $this->trans()->addTrans($flLang, $val, $key);
                 }
-
             }
         }
-
-//        print_r($this->trans()->_tAll());
     }
 
     /**
