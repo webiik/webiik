@@ -1,9 +1,4 @@
 <?php
-//require __DIR__ . '/../classes/MyClass.php';
-require __DIR__ . '/middlewares/Middleware.php';
-require __DIR__ . '/middlewares/MiddlewareTwo.php';
-
-//$app = new \Webiik\Core();
 $app = new \Webiik\Skeleton($config);
 
 // Add template engine
@@ -20,11 +15,56 @@ $app->addService('Twig_Environment', function ($c){
     $twig->addExtension(new \Twig_Extension_Debug());
 
     // Add additional params, functions, etc.
+
+    // Add root path
     $twig->addGlobal('ROOT', $c['ROOT']);
+
+    // Add router functions
+
+    /* @var $router \Webiik\Router */
+    $router = $c['Webiik\Router'];
+
+    // Return uri for given route name
+    $function = new \Twig_SimpleFunction('uriFor', function ($routeName, $lang = false) use ($router) {
+        return $router->getUriFor($routeName, $lang);
+    });
+    $twig->addFunction($function);
+
+    // Return current route name
+    $function = new \Twig_SimpleFunction('currentRoute', function () use ($router) {
+        return $router->routeInfo['name'];
+    });
+    $twig->addFunction($function);
+
+    // Check if given route name is current route
+    $function = new \Twig_SimpleFunction('isCurrentRoute', function ($routeName) use ($router) {
+        return $routeName == $router->routeInfo['name'] ? true : false;
+    });
+    $twig->addFunction($function);
+
+    // Add translation functions
+
+    /* @var $translation \Webiik\Translation */
+    $translation = $c['Webiik\Translation'];
+
+    // Return translation for given key
+    $function = new \Twig_SimpleFunction('_t', function ($key) use ($translation) {
+        return $translation->_t($key);
+    });
+    $twig->addFunction($function);
+
+    // Return parsed translation for given key
+    $function = new \Twig_SimpleFunction('_p', function ($key, $val) use ($translation) {
+        return $translation->_p($key, $val);
+    });
+    $twig->addFunction($function);
 
     // Return configured template engine
     return $twig;
 });
+
+// Run app
+$app->run();
 
 // Add own error routes handlers
 //$app->error404('Webiik\Error404:run');
@@ -55,8 +95,6 @@ $app->addService('Twig_Environment', function ($c){
 //};
 //$app->addService('Webiik\Controller', $factoryController);
 
-// Run app
-$app->run();
 
 
 //$conv = new \Webiik\Conversion();
