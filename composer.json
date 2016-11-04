@@ -19,5 +19,8 @@
         "src/"
       ]
     }
+  },
+  "scripts": {
+    "create": "phpunit"
   }
 }

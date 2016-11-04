@@ -11,7 +11,7 @@ return [
     // Todo: Nav translation
     'routes' => [
         'home' => '/',
-//        'login' => '/login',
+        'login' => '/login',
         'account' => '/account',
     ],
     'login' => [
@@ -23,6 +23,6 @@ return [
         'link-activation' => 'Re-send activation email.',
     ],
     'other' => [
-        'key' => 'asd',
+        'key' => 'val',
     ],
 ];

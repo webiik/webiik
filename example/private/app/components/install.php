@@ -34,14 +34,6 @@
 
 // Add record to installed.php
 
-
-
-
-
-
-
-
-
 // via api
         // 'https://github.com/Jiri-Mihal/RocketRouter' -> user: Jiri-Mihal repo: RocketRouter
         // https://api.github.com/repos/User/repo/zipball/master
