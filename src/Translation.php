@@ -271,7 +271,11 @@ class Translation
             }
 
             // Add value to prepared context
-            $context = $val;
+            if (is_array($context)) {
+                array_merge($context, $val);
+            } else {
+                $context = $val;
+            }
 
         } else {
             $this->isArrAssoc($val);
@@ -310,20 +314,37 @@ class Translation
     }
 
     /**
-     * Return key value array of all translations or all translations for given lang
+     * Return key value array of all translations
+     * Options:
+     * If lang is defined by string, return translations for given lang
+     * If lang is false, return merged translation of all langs (Warning! Same keys will be overwritten)
+     * If lang is true, return all translations divided by lang
      * @param bool $lang
      * @return array
      */
-    public function _tAll($lang = false)
+    public function _tAll($lang = true)
     {
         $this->isLangSet();
 
-        if ($lang) {
+        if (is_string($lang)) {
             if (isset($this->translation[$lang])) {
                 return $this->translation[$lang];
             } else {
                 return [];
             }
+        }
+
+        if(is_bool($lang) && !$lang){
+
+            $mergedTranslation = [];
+
+            foreach ($this->translation as $lang => $val) {
+                $mergedTranslation = $mergedTranslation + $this->translation[$lang];
+            }
+
+            unset($mergedTranslation['routes']);
+
+            return $mergedTranslation;
         }
 
         return $this->translation;
@@ -390,7 +411,7 @@ class Translation
                                 'key' => $key,
                                 'lang' => $this->lang,
                                 'fallback' => $fallbackLang,
-                                'msg' => 'key {' . $key . '} is missing in lang {' . $this->lang . '} using {' . $fallbackLang . '} lang instead',
+                                'msg' => 'Key {' . $key . '} is missing in lang {' . $this->lang . '} using {' . $fallbackLang . '} lang instead.',
                             ];
                             Log::log('translation', $msg, true);
                             break;
@@ -400,14 +421,13 @@ class Translation
             }
         }
 
-        // Log error with back trace
+        // Log error
         if (!$val) {
 
-            // Find calling that caused the error
             $msg = [
                 'key' => $key,
                 'lang' => $this->lang,
-                'msg' => 'key {' . $key . '} is missing in lang {' . $this->lang . '}',
+                'msg' => 'Key {' . $key . '} is missing in lang {' . $this->lang . '}.',
             ];
 
             // Log error
@@ -419,18 +439,24 @@ class Translation
 
     /**
      * Return value of given array key from given array
-     * Throws exception if given array does not contain given array key
      * @param array $arr
      * @param string $paramName (array key)
      * @return string
-     * @throws \Exception
      */
     private function getParamVal(array $arr, $paramName)
     {
         if (isset($arr[$paramName])) {
             $paramVal = $arr[$paramName];
         } else {
-            throw new \Exception('Missing value for param: ' . htmlspecialchars($paramName));
+            $paramVal = '{' . $paramName . '}';
+
+            // Log error
+            $msg = [
+                'key' => htmlspecialchars($paramName),
+                'lang' => $this->lang,
+                'msg' => 'Missing value for param {' . htmlspecialchars($paramName) . '} in lang {' . $this->lang . '}.',
+            ];
+            Log::log('translation', $msg, true);
         }
 
         return $paramVal;
@@ -617,7 +643,7 @@ class Translation
             $dateFormat = $this->types[$type][$this->lang]['default'];
         }
 
-        $bracketResult = DATE($dateFormat, $timestamp);
+        $bracketResult = date($dateFormat, $timestamp);
 
         // Translate month and day names if we have their translations
         foreach (['monthsLong', 'monthsShort', 'daysLong', 'daysShort'] as $key) {
@@ -672,7 +698,14 @@ class Translation
         }
 
         if (!$conditionKeyFound) {
-            throw new \Exception('Condition key for \'' . $value . '\' not found.');
+            // Log error
+            $msg = [
+                'key' => $value,
+                'lang' => $this->lang,
+                'msg' => 'Condition key for {' . $value . '} not found.',
+            ];
+            Log::log('translation', $msg, true);
+            return $conditionalMessage;
         }
 
         // Get all brackets in the conditional message
