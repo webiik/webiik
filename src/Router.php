@@ -76,7 +76,7 @@ class Router
      * Set base directory of your web app relative to web root
      * @param $basePath
      */
-    public function base($basePath)
+    public function setBasePath($basePath)
     {
         if ($basePath == '/') {
             $basePath = '';
@@ -85,6 +85,15 @@ class Router
         }
 
         $this->config['basePath'] = $basePath;
+    }
+
+    /**
+     * Return base path
+     * @return mixed
+     */
+    public function getBasePath()
+    {
+        return $this->config['basePath'];
     }
 
     /**
@@ -160,53 +169,6 @@ class Router
     public function setConditionTypes($keyValueArray)
     {
         $this->conditionTypes = array_merge($this->conditionTypes, $keyValueArray);
-    }
-
-    /**
-     * Return a regex for the given name or false if the name does not exists.
-     * @param $condName
-     * @return string|bool
-     */
-    private function getConditionRegex($condName)
-    {
-        if (isset($this->conditionTypes[$condName])) {
-            return $this->conditionTypes[$condName];
-        }
-        return false;
-    }
-
-    /**
-     * Get URI lang prefix
-     * URIs in other language than default will have lang prefix according
-     * to the following pattern /{lang}/{uri} eg.: /cs/kontakt
-     * @return string
-     */
-    private function getUriLangPrefix($lang)
-    {
-        $defaultLang = $this->config['defaultLang'];
-        if ($lang != $defaultLang || $this->config['defaultLangInUri']) {
-            $langPrefix = '/' . $lang;
-        } else {
-            $langPrefix = '';
-        }
-
-        return $langPrefix;
-    }
-
-    /**
-     * Redirect the URL without or with many slashes at the and to the URL with one slash at the end
-     * http://googlewebmastercentral.blogspot.cz/2010/04/to-slash-or-not-to-slash.html
-     */
-    private function slashRedirect()
-    {
-        if ($this->config['slashRedirect'] == true) {
-            if (count($_GET) == 0 && (substr($_SERVER['REQUEST_URI'], -1) != '/' || substr($_SERVER['REQUEST_URI'], -2) == '//')) {
-                $redirectUrl = rtrim($_SERVER['REQUEST_URI'], '/') . '/';
-                header('HTTP/1.1 301 Moved Permanently');
-                header('Location:' . $redirectUrl);
-                exit();
-            }
-        }
     }
 
     /**
@@ -305,7 +267,7 @@ class Router
                             return false;
                         }
                     }
-                    return $uri;
+                    return $this->config['basePath'] . $uri;
                 }
             }
         }
@@ -333,7 +295,11 @@ class Router
         $uri = $this->getUriFor($routeName, $lang, $params);
 
         if ($uri) {
-            return $this->config['basePath'] . $uri;
+            $scheme = 'http';
+            if (isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                $scheme = 'https';
+            }
+            return $scheme . '://' . $_SERVER['SERVER_NAME'] . $uri;
         }
 
         return $uri;
@@ -486,5 +452,52 @@ class Router
         }
 
         return $this->routeInfo;
+    }
+
+    /**
+     * Return a regex for the given name or false if the name does not exists.
+     * @param $condName
+     * @return string|bool
+     */
+    private function getConditionRegex($condName)
+    {
+        if (isset($this->conditionTypes[$condName])) {
+            return $this->conditionTypes[$condName];
+        }
+        return false;
+    }
+
+    /**
+     * Get URI lang prefix
+     * URIs in other language than default will have lang prefix according
+     * to the following pattern /{lang}/{uri} eg.: /cs/kontakt
+     * @return string
+     */
+    private function getUriLangPrefix($lang)
+    {
+        $defaultLang = $this->config['defaultLang'];
+        if ($lang != $defaultLang || $this->config['defaultLangInUri']) {
+            $langPrefix = '/' . $lang;
+        } else {
+            $langPrefix = '';
+        }
+
+        return $langPrefix;
+    }
+
+    /**
+     * Redirect the URL without or with many slashes at the and to the URL with one slash at the end
+     * http://googlewebmastercentral.blogspot.cz/2010/04/to-slash-or-not-to-slash.html
+     */
+    private function slashRedirect()
+    {
+        if ($this->config['slashRedirect'] == true) {
+            if (count($_GET) == 0 && (substr($_SERVER['REQUEST_URI'], -1) != '/' || substr($_SERVER['REQUEST_URI'], -2) == '//')) {
+                $redirectUrl = rtrim($_SERVER['REQUEST_URI'], '/') . '/';
+                header('HTTP/1.1 301 Moved Permanently');
+                header('Location:' . $redirectUrl);
+                exit();
+            }
+        }
     }
 }
