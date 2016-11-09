@@ -317,7 +317,7 @@ class Translation
      * Return key value array of all translations
      * Options:
      * If lang is defined by string, return translations for given lang
-     * If lang is false, return merged translation of all langs (Warning! Same keys will be overwritten)
+     * If lang is false, return merged translation of all langs (Warning! Same keys will be overwritten and routes will be removed)
      * If lang is true, return all translations divided by lang
      * @param bool $lang
      * @return array
