@@ -1,13 +1,13 @@
 <?php
 return [
     'date' => [
-        'default' => 'l j. M Y'
+        'default' => 'l M j, Y'
     ],
     'time' => [
-        'default' => 'H:i:s'
+        'default' => 'g:i A'
     ],
     'number' => [
-        'default' => [2, ',', ' ']
+        'default' => [2, '.', ' ']
     ],
     'currency' => [
         'usd' => '$ %i'
