@@ -1,0 +1,5 @@
+RewriteEngine On
+#RewriteBase /
+RewriteRule /\.|^\. - [F]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule !\.(pdf|js|ico|gif|jpg|png|css|rar|zip|tar\.gz) index.php [QSA,L]

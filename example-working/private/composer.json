@@ -1,0 +1,14 @@
+{
+  "require": {
+    "twig/twig": "~1.0"
+//    "webiik/webiik": "~0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Webiik\\": [
+        "app/controllers",
+        "app/models"
+      ]
+    }
+  }
+}
