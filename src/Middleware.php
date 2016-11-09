@@ -63,7 +63,7 @@ class Middleware
     public function add(array $middlewares)
     {
         foreach ($middlewares as $middleware) {
-            if (!isset($middleware['params'])) {
+            if (!array_key_exists('params', $middleware)) {
                 throw new \Exception('Middleware \'' . $middleware . '\' is missing the \'params\' key.');
             }
             $this->checkHandler($middleware['mw']);
@@ -106,7 +106,7 @@ class Middleware
             }
 
             // Has middleware valid method?
-            if ($isMw && !isset($handler[1])) {
+            if ($isMw && !isset($handler[1]) && !method_exists($handler[0], '__invoke')) {
                 throw new \Exception('Middleware defined only by className \'' . $handler[0] . '\' but should be closure, invokable class or className:methodName.');
             }
 
@@ -175,6 +175,8 @@ class Middleware
 
         // Check and call middleware with dependencies
         if (is_object($mw)) {
+
+            $params = $params ? $params : [];
 
             if ($mw instanceof \Closure) {
 
