@@ -26,13 +26,11 @@ class AuthMw
      * AuthMw constructor.
      * @param Auth $auth
      * @param Router $router
-     * @param Sessions $sessions
      */
-    public function __construct(Auth $auth, Router $router, Sessions $sessions)
+    public function __construct(Auth $auth, Router $router)
     {
         $this->auth = $auth;
         $this->router = $router;
-        $sessions->sessionStart();
     }
 
     /**
@@ -51,7 +49,7 @@ class AuthMw
      * @param \Closure $next
      * @param bool $routeName
      */
-    public function isUserLogged(Request $request, \Closure $next, $routeName = false)
+    public function redirectUnloggedUser(Request $request, \Closure $next, $routeName = false)
     {
         $uid = $this->auth->isUserLogged();
 
@@ -59,7 +57,27 @@ class AuthMw
             $request->set('uid', $uid);
             $next($request);
         } else {
-            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName) . '?ref=' . $request->getUrl());
+            $this->redirect($this->getLoginUrl($routeName) . '?ref=' . $request->getUrl());
+        }
+    }
+
+    /**
+     * Check if user is logged out and create logged session if it's necessary
+     * On success add uid to Request and run next middleware
+     * On fail redirect to login page
+     * @param Request $request
+     * @param \Closure $next
+     * @param bool $routeName
+     */
+    public function redirectLoggedUser(Request $request, \Closure $next, $routeName = false)
+    {
+        $uid = $this->auth->isUserLogged();
+
+        if (!$uid) {
+            $next($request);
+        } else {
+            $uri = $routeName ? $this->router->getUriFor($routeName) : $this->router->getBasePath();
+            $this->redirect($request->getRootUrl() . $uri);
         }
     }
 
@@ -80,7 +98,7 @@ class AuthMw
             $request->set('uid', $uid);
             $next($request);
         } else {
-            $this->redirect($request->getRootUrl() . $this->getLoginUri($routeName) . '?ref=' . $request->getUrl());
+            $this->redirect($this->getLoginUrl($routeName) . '?ref=' . $request->getUrl());
         }
     }
 
@@ -92,7 +110,7 @@ class AuthMw
      * @return bool|string
      * @throws \Exception
      */
-    private function getLoginUri($routeName)
+    private function getLoginUrl($routeName)
     {
         if(!$routeName && !$this->config['loginRouteName']){
             throw new \Exception('Login route name is not set.');
@@ -102,15 +120,14 @@ class AuthMw
             $routeName = $this->config['loginRouteName'];
         }
 
-        $uri = $this->router->getUrlFor($routeName);
+        $url = $this->router->getUrlFor($routeName);
 
-        if(!$uri) {
+        if(!$url) {
             throw new \Exception('Login route name does not exist.');
         }
 
-        return $uri;
+        return $url;
     }
-
 
     /**
      * 302 redirect to given $path

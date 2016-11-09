@@ -1,16 +1,8 @@
 <?php
 namespace Webiik;
 
-use Simplon\Twitter\Twitter;
-use Simplon\Twitter\TwitterException;
-
 class Login
 {
-    /**
-     * @var Sessions
-     */
-    private $sessions;
-
     /**
      * @var Router
      */
@@ -31,9 +23,8 @@ class Login
      */
     private $csrf;
 
-    public function __construct($routeInfo, Sessions $sessions, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
+    public function __construct($routeInfo, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
     {
-        $this->sessions = $sessions;
         $this->router = $router;
         $this->auth = $auth;
         $this->flash = $flash;
@@ -60,8 +51,6 @@ class Login
         $referrer = $this->getReferrer();
 
         // CSRF protection
-        $this->sessions->sessionStart();
-
         if (!$_POST) {
             $this->csrf->setToken();
         }
@@ -70,7 +59,7 @@ class Login
             if ($this->csrf->validateToken($_POST[$this->csrf->getTokenName()])) {
                 $this->csrf->setToken();
             } else {
-                $this->flash->setFlashNow('err', 'Token mismatch.');
+                $this->flash->addFlashNow('err', 'Token mismatch.');
             }
         }
 
@@ -91,27 +80,28 @@ class Login
             } else {
 
                 if ($user == -3) {
-                    $this->flash->setFlashNow('err', 'Too many login attempts.');
+                    $this->flash->addFlashNow('err', 'Too many login attempts.');
                 }
 
                 if ($user == -2) {
-                    $this->flash->setFlashNow('err', 'User does not exist.');
+                    $this->flash->addFlashNow('err', 'User does not exist.');
                 }
 
                 if ($user == -1) {
-                    $this->flash->setFlashNow('err', 'User account expired.');
+                    $this->flash->addFlashNow('err', 'User account expired.');
                 }
 
                 if ($user == 0) {
-                    $this->flash->setFlashNow('err', 'Invalid password.');
+                    $this->flash->addFlashNow('err', 'Invalid password.');
                 }
 
             }
         }
 
         // Messages
-        if (count($this->flash->getFlashes()) > 0) {
-            print_r($this->flash->getFlashes());
+        $messages = $this->flash->getFlashes();
+        if (count($messages) > 0) {
+            print_r($messages);
         }
 
         echo '<form action="" method="post">';

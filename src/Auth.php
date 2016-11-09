@@ -154,6 +154,7 @@ class Auth
     public function userLogout()
     {
         $this->sessions->sessionDestroy();
+        $this->sessions->delFromSession('logged');
         $this->userLogoutPermanent();
     }
 
@@ -190,7 +191,6 @@ class Auth
     public function redirect($url)
     {
         $parsedUrl = parse_url($url);
-
         if (isset($parsedUrl['host']) && $parsedUrl['host'] == $_SERVER['SERVER_NAME']) {
             header('HTTP/1.1 302 Found');
             header('Location:' . $url);
@@ -200,7 +200,7 @@ class Auth
     }
 
     /**
-     * Return true if user can do the action, otherwise false
+     * Return user id if user can do the action, otherwise false
      * @param string $action
      * @return mixed
      */
