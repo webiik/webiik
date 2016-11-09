@@ -4,7 +4,7 @@ $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 
 // Setup the Webiik logging
 \Webiik\Log::setup(
-    $config['folder']['logs'],
+    $config['folder']['private'] . '/app/logs',
     $config['internal']['logEmail'],
     $config['internal']['name'] . ' error notice',
     $config['internal']['timeZone'],
