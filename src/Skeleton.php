@@ -30,15 +30,24 @@ class Skeleton extends Core
     {
         parent::__construct();
 
+        // Add middlewares
+        $this->add('Webiik\SecurityMw');
+
         // Add params shared inside app
         $this->addParam('config', $config);
+        $this->addParam('HOST', $this->getHostRoot());
         $this->addParam('ROOT', $this->getWebRoot());
 
         // Add basic app services
 
+        // Add Array functions
+        $this->addService('Webiik\Arr', function ($c) {
+            return new Arr();
+        });
+
         // Add Sessions
         $this->addService('Webiik\Sessions', function ($c) {
-            $sessions = new Sessions();
+            $sessions = new Sessions($c['Webiik\Arr']);
             $sessions->setSessionName($c['config']['sessions']['name']);
             $sessions->setSessionDir($c['config']['sessions']['dir']);
             $sessions->setSessionSystemLifetime($c['config']['sessions']['lifetime']);
@@ -51,7 +60,7 @@ class Skeleton extends Core
 
         // Add Flash messages
         $this->addService('Webiik\Flash', function ($c) {
-            return new Flash();
+            return new Flash($c['Webiik\Sessions'], $c['Webiik\Arr']);
         });
 
         // Add Token
@@ -85,7 +94,7 @@ class Skeleton extends Core
 
         // Add Csrf
         $this->addService('Webiik\Csrf', function ($c) {
-            $csrf = new Csrf(...self::constructorDI('Webiik\Csrf', $c));
+            $csrf = new Csrf($c['Webiik\Token'], $c['Webiik\Sessions']);
             $csrf->setTokenName($c['config']['csrf']['tokenName']);
             return $csrf;
         });
@@ -97,7 +106,7 @@ class Skeleton extends Core
 
         // Add Auth
         $this->addService('Webiik\Auth', function ($c) {
-            $auth = new Auth(...self::constructorDI('Webiik\Auth', $c));
+            $auth = new Auth($c['Webiik\Sessions'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
             $auth->setCookieName($c['config']['auth']['permanentLoginCookieName']);
             $auth->setWithActivation($c['config']['auth']['withActivation']);
             return $auth;
@@ -105,7 +114,7 @@ class Skeleton extends Core
 
         // Add Auth middleware
         $this->addService('Webiik\AuthMw', function ($c) {
-            $authMw = new AuthMw(...self::constructorDI('Webiik\AuthMw', $c));
+            $authMw = new AuthMw($c['Webiik\Auth'], $c['Webiik\Router']);
             $authMw->setLoginRouteName($c['config']['auth']['loginRouteName']);
             return $authMw;
         });
@@ -248,11 +257,11 @@ class Skeleton extends Core
     {
         // Get route definitions
         $routes = [];
-        $file = $this->container['config']['folder']['routes'] . '/routes.' . $lang . '.php';
+        $file = $this->container['config']['folder']['private'] . '/app/routes/routes.' . $lang . '.php';
         if (file_exists($file)) {
             $routes = require $file;
         } else {
-            $file = $this->container['config']['folder']['routes'] . '/routes.php';
+            $file = $this->container['config']['folder']['private'] . '/app/routes/routes.php';
             $routes = require $file;
         }
 
@@ -272,7 +281,7 @@ class Skeleton extends Core
             $fallbackRoutes = $trans->_t('routes');
             if (is_array($fallbackRoutes)) {
                 foreach ($fallbackRoutes as $name => $uri) {
-                    if (!isset($routeTranslations[$name])){
+                    if (!isset($routeTranslations[$name])) {
                         $routeTranslations[$name] = $uri;
                     }
                 }
@@ -342,7 +351,7 @@ class Skeleton extends Core
      */
     private function loadTranslations($lang, $fileName, $addOnlyDiffTranslation = true, $key = false)
     {
-        $file = $this->container['config']['folder']['translations'] . '/' . $fileName . '.' . $lang . '.php';
+        $file = $this->container['config']['folder']['private'] . '/app/translations/' . $fileName . '.' . $lang . '.php';
 
         // Add translation for current lang
         if (file_exists($file)) {
@@ -357,7 +366,7 @@ class Skeleton extends Core
 
         foreach ($fl as $flLang) {
 
-            $file = $this->container['config']['folder']['translations'] . '/' . $fileName . '.' . $flLang . '.php';
+            $file = $this->container['config']['folder']['private'] . '/app/translations/' . $fileName . '.' . $flLang . '.php';
 
             // Load fallback translations
             if (file_exists($file)) {
@@ -379,7 +388,7 @@ class Skeleton extends Core
                 }
 
                 // Find keys that missing in current lang translation
-                $missingTranslations = $this->arrayDiffMulti($translation, $currentLangTranslation);
+                $missingTranslations = $this->arr()->diffMulti($translation, $currentLangTranslation);
 
                 // Add this missing translation
                 foreach ($missingTranslations as $key => $val) {
@@ -395,7 +404,7 @@ class Skeleton extends Core
      */
     private function loadConversions($file)
     {
-        $dir = $this->container['config']['folder']['conversions'];
+        $dir = $this->container['config']['folder']['private'] . '/app/translations/conversions';
 
         if (file_exists($dir . '/' . $file . '.php')) {
 
@@ -414,7 +423,7 @@ class Skeleton extends Core
      */
     private function loadFormats($lang)
     {
-        $dir = $this->container['config']['folder']['formats'];
+        $dir = $this->container['config']['folder']['private'] . '/app/translations/formats';
 
         if (file_exists($dir . '/' . $lang . '.php')) {
 
@@ -456,6 +465,14 @@ class Skeleton extends Core
     }
 
     /**
+     * @return Arr
+     */
+    private function arr()
+    {
+        return $this->container['Webiik\Arr'];
+    }
+
+    /**
      * Return host root with current scheme eg.: http://localhost
      * @return string
      */
@@ -470,38 +487,10 @@ class Skeleton extends Core
         return $pageURL;
     }
 
-    /**
-     * Return web root with current scheme eg.: http://localhost/my-web-site/
-     * @return string
-     */
     private function getWebRoot()
     {
         $pageURL = $this->getHostRoot();
         $pageURL .= rtrim($this->getScriptDir(), '/');
         return $pageURL;
-    }
-
-    /**
-     * Multidimensional array_diff
-     * @param $array1
-     * @param $array2
-     * @return array
-     */
-    private function arrayDiffMulti($array1, $array2)
-    {
-        $result = array();
-        foreach ($array1 as $key => $val) {
-            if (array_key_exists($key, $array2)) {
-                if (is_array($val) && is_array($array2[$key]) && !empty($val)) {
-                    $temRes = $this->arrayDiffMulti($val, $array2[$key]);
-                    if (count($temRes) > 0) {
-                        $result[$key] = $temRes;
-                    }
-                }
-            } else {
-                $result[$key] = $val;
-            }
-        }
-        return $result;
     }
 }
