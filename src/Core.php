@@ -34,7 +34,7 @@ class Core
         });
 
         // Set router base path
-        $this->router()->base($this->getScriptDir());
+        $this->router()->setBasePath($this->getScriptDir());
     }
 
     /**
