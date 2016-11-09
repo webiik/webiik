@@ -3,6 +3,11 @@ namespace Webiik;
 
 class Sessions
 {
+    /**
+     * @var Arr
+     */
+    private $arr;
+
     private $sessionName = 'PHPSESSID';
     private $sessionDir = '';
     private $sessionLifetime = 0;
@@ -11,6 +16,15 @@ class Sessions
     private $uri = '/';
     private $secure = false;
     private $httponly = false;
+
+    /**
+     * Sessions constructor.
+     * @param Arr $arr
+     */
+    public function __construct(Arr $arr)
+    {
+        $this->arr = $arr;
+    }
 
     /**
      * Set session name
@@ -89,7 +103,15 @@ class Sessions
     public function setCookie($name, $value = null, $expire = null, $uri = null, $domain = null, $secure = null, $httponly = null)
     {
         if ($expire) $expire = strtotime($expire);
-        setcookie($name, $value, $expire, $this->uri($uri), $this->domain($domain), $this->secure($secure), $this->httponly($httponly));
+        setcookie(
+            $name,
+            $value,
+            $expire,
+            $this->uri($uri),
+            $this->domain($domain),
+            $this->secure($secure),
+            $this->httponly($httponly)
+        );
     }
 
     /**
@@ -133,51 +155,11 @@ class Sessions
     }
 
     /**
-     * Start session if is not started and set session parameters and add basic values
-     * Delete session if is expired or if is suspicious
-     * @param int $lifetime
-     * @param string $uri
-     * @param string $domain
-     * @param bool $secure
-     * @param bool $httponly
-     * @return bool
-     */
-    public function sessionStart($lifetime = 0, $uri = '/', $domain = '', $secure = false, $httponly = false)
-    {
-        if (session_status() == PHP_SESSION_NONE) {
-
-            $lifetime = $this->lifetime($lifetime);
-
-            ini_set('session.gc_maxlifetime', $lifetime);
-
-            if ($this->sessionDir) session_save_path($this->sessionDir);
-
-            session_name($this->sessionName);
-
-            session_set_cookie_params($lifetime, $uri, $domain, $secure, $httponly);
-
-            session_start();
-
-            $this->addBasicSessionValues();
-
-            if ($this->isSessionSuspicious()) {
-                $this->sessionDestroy();
-                return false;
-            }
-
-            if (rand(1, 100) <= 5) {
-                $this->sessionRegenerateId();
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Regenerate session id and delete old session
      */
     public function sessionRegenerateId()
     {
+        $this->sessionStart();
         session_regenerate_id(true);
     }
 
@@ -188,7 +170,19 @@ class Sessions
      */
     public function setToSession($key, $value)
     {
-        $_SESSION[$key] = $value;
+        $this->sessionStart();
+        $this->arr->set($_SESSION, $key, $value);
+    }
+
+    /**
+     * Add value into session
+     * @param $key
+     * @param $value
+     */
+    public function addToSession($key, $value)
+    {
+        $this->sessionStart();
+        $this->arr->add($_SESSION, $key, $value);
     }
 
     /**
@@ -198,16 +192,28 @@ class Sessions
      */
     public function getFromSession($key)
     {
-        return isset($_SESSION[$key]) ? $_SESSION[$key] : false;
+        $this->sessionStart();
+        return $this->arr->get($_SESSION, $key);
+    }
+
+    /**
+     * Return all session values
+     * @return mixed
+     */
+    public function getAllSessions()
+    {
+        $this->sessionStart();
+        return $_SESSION;
     }
 
     /**
      * Delete value from session
      * @param $key
      */
-    public function delFromSession($key = null)
+    public function delFromSession($key)
     {
-        unset($_SESSION[$key]);
+        $this->sessionStart();
+        $this->arr->delete($_SESSION, $key);
     }
 
     /**
@@ -215,6 +221,7 @@ class Sessions
      */
     public function dellAllFromSession()
     {
+        $this->sessionStart();
         $_SESSION = [];
     }
 
@@ -227,6 +234,53 @@ class Sessions
         $this->dellAllFromSession();
         $this->delCookie(session_name());
         session_destroy();
+    }
+
+    /**
+     * Start session if is not started and set session parameters and add basic values
+     * Delete session if is expired or if is suspicious
+     * @param int $lifetime
+     * @param null $uri
+     * @param null $domain
+     * @param null $secure
+     * @param null $httponly
+     * @return bool
+     */
+    private function sessionStart($lifetime = 0, $uri = null, $domain = null, $secure = null, $httponly = null)
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+
+            $lifetime = $this->lifetime($lifetime);
+
+            ini_set('session.gc_maxlifetime', $lifetime);
+
+            if ($this->sessionDir) session_save_path($this->sessionDir);
+
+            session_name($this->sessionName);
+
+            session_set_cookie_params(
+                $lifetime,
+                $this->uri($uri),
+                $this->domain($domain),
+                $this->secure($secure),
+                $this->httponly($httponly)
+            );
+
+            session_start();
+
+            $this->addBasicSessionValues();
+
+            if ($this->isSessionSuspicious()) {
+                $this->sessionDestroy();
+                return false;
+            }
+
+            if (rand(1, 100) <= 5) {
+                //$this->sessionRegenerateId();
+            }
+        }
+
+        return true;
     }
 
     /**
