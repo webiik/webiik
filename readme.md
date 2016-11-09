@@ -1,34 +1,38 @@
 # Webiik
-From [indie hacker](https://mihal.me) for [indie hackers](https://www.indiehackers.com), [KISS](https://en.wikipedia.org/wiki/KISS_principle) platform for quick creation of websites and web apps. Stop learning over bloated frameworks and start creating right now.
+From [indie hacker](https://mihal.me) for [indie hackers](https://www.indiehackers.com), [KISS](https://en.wikipedia.org/wiki/KISS_principle) framework for quick creation of websites and web apps. Stop learning over bloated frameworks and start creating now.
 
 [Create API]()
 [Create website]()
 [Create blog]()
-Create your story!
+Create your first [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)!
 
 ## Comparison
 Webiik is ultra minimalistic, but powerful.
-
+<!--Todo: Fill table with benchmark results. -->
 |   |Webiik Core|Lumen|Webiik Skeleton|Laravel|
 |---|---|---|---|---|
 |requests per second|---|---|---|---|
 |memory usage|---|---|---|---|
 |data weight|---|---|---|---|
+|count of provided methods|---|---|---|---|
+|lines of code|---|---|---|---|
 
-<!--Todo: Fill table with benchmark results. -->
+Less lines of code and less provided methods mean quick orientation in the framework.
 
 ## Webiik Core
-If you want to stay tiny use Core as foundation of your web project and connect only [services](#available-services) you really need. Just 50 Kb and you will get router, middleware and dependency injection.
+If you want to stay tiny use Core as foundation of your web project and connect only [services](#available-services) you really need.
 
-[Core](core.md)
+[Core manual](core.md)
 
 ## Webiik Skeleton
-Everything what modern website needs just in 159 Kb. Localization, user management, security, error reporting and many more. Just focus on your amazing website or web app. Skeleton inherits from Core, so everything what works in Core, works in Skeleton too.
+Everything what modern website or web app needs. You can focus just on your project.
 
-[Skeleton]()
+[Skeleton manual]()
+
+_Did you start with Core and you realised that you need more? There is no problem. Skeleton inherits from Core, so what works in Core, works in Skeleton too._
 
 ## Available services
-List of available services that come with Webiik platform. Sorted by usage.
+List of available services that come with Webiik. Sorted by usage in Core and Skeleton.
 
 Core
 [Middleware]()
