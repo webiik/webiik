@@ -5,7 +5,7 @@ return [
         'name' => 'Webiik',
         'debug' => true,
         'log' => true,
-        'logEmail' => 'jiri@mihal.me',
+        'logEmail' => 'jiri@mihal.me', // Todo: change it to void@webiik.org
         'timeZone' => 'America/Los_Angeles',
     ],
 
@@ -23,8 +23,8 @@ return [
     ],
 
     'sessions' => [
-        'name' => 'US', // string|false
-        'dir' => __DIR__ . '/../tmp/sessions', // path|false
+        'name' => 'US', // string|false = default name
+        'dir' => __DIR__ . '/../tmp/sessions', // path|false = default path
         'lifetime' => 1440, // int sec, 0 = till session is valid
     ],
 
@@ -42,27 +42,20 @@ return [
     // First language is default
     // Signature is: [language in ISO 639-1, timezone, [array of fallbacks in ISO 639-1]]
     'language' => [
-        'en' => ['America/Los_Angeles', ['cs']],
-        'cs' => ['Europe/Prague', ['sk']],
-        'sk' => ['Europe/Bratislava', ['cs']],
-    ],
-
-    // App folder structure
-    'folder' => [
-
-        // These folders should not be accessible from the web
-        'logs' => __DIR__ . '/../logs',
-        'routes' => __DIR__ . '/../routes',
-        'translations' => __DIR__ . '/../translations',
-        'conversions' => __DIR__ . '/../translations/conversions',
-        'formats' => __DIR__ . '/../translations/formats',
-
-        // These folders must be accessible from the web
-        'js' => __DIR__ . '/../../../assets/js',
-        'css' => __DIR__ . '/../../../assets/css',
-        'img' => __DIR__ . '/../../../assets/img',
+        'en' => ['America/Los_Angeles'],
+        'cs' => ['Europe/Prague', ['en']],
     ],
 
     // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
     'dlInUri' => false,
+
+    // App folder structure
+    'folder' => [
+
+        // Web root folder
+        'public' => __DIR__ . '/../../../',
+
+        // This folder should not be accessible from the web
+        'private' => __DIR__ . '/../../',
+    ],
 ];
