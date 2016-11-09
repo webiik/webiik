@@ -1,9 +1,18 @@
 <?php
 namespace Webiik;
 
-// Clean flash messaging with custom wrappers.
 class Flash
 {
+    /**
+     * @var Arr
+     */
+    private $arr;
+
+    /**
+     * @var Sessions
+     */
+    private $sessions;
+
     /** @var array All 'now' messages */
     private $messages = [];
 
@@ -11,6 +20,17 @@ class Flash
     private $messagesNext = [];
 
     private $wraps = [];
+
+    /**
+     * Flash constructor.
+     * @param $sessions Sessions
+     * @param $arr Arr
+     */
+    public function __construct(Sessions $sessions, Arr $arr)
+    {
+        $this->sessions = $sessions;
+        $this->arr = $arr;
+    }
 
     /**
      * Set HTML wrap
@@ -27,7 +47,7 @@ class Flash
      * @param $type
      * @param $message
      */
-    public function setFlashNow($type, $message)
+    public function addFlashNow($type, $message)
     {
         $this->messages[$type][] = $message;
     }
@@ -37,10 +57,10 @@ class Flash
      * @param $type
      * @param $message
      */
-    public function setFlashNext($type, $message)
+    public function addFlashNext($type, $message)
     {
-        $_SESSION['messages'][$type][] = $message;
         $this->messagesNext[$type][] = $message;
+        $this->sessions->addToSession('messages.' . $type, $message);
     }
 
     /**
@@ -50,11 +70,16 @@ class Flash
      */
     public function getFlashes($type = null)
     {
-        if (isset($_SESSION['messages'])) {
-            $messages = $this->arrayDiffMulti($_SESSION['messages'], $this->messagesNext);
+        $messages = $this->sessions->getFromSession('messages');
+
+        if ($messages) {
+
+            $messages = $this->arr->diffMulti($messages, $this->messagesNext);
             $this->unsetFromSession($messages);
             $messages = array_merge_recursive($messages, $this->messages);
+
         } else {
+
             $messages = $this->messages;
         }
 
@@ -62,7 +87,7 @@ class Flash
             return isset($messages[$type]) ? [$type => $messages[$type]] : [];
         }
 
-        return ($messages);
+        return $messages;
     }
 
     /**
@@ -104,45 +129,22 @@ class Flash
         foreach ($array as $key => $val) {
             if (is_array($val)) {
                 if (empty($val)) {
-                    unset($_SESSION['messages'][$key]);
+                    $this->sessions->delFromSession('messages.' . $key);
                 } else {
                     $this->unsetFromSession($val, $key);
 
                 }
             } else {
-                unset($_SESSION['messages'][$type][$key]);
-                if (empty($_SESSION['messages'][$type])) {
-                    unset($_SESSION['messages'][$type]);
-                }
-            }
-            if (empty($_SESSION['messages'])) {
-                unset($_SESSION['messages']);
-            }
-        }
-    }
+                $this->sessions->delFromSession('messages.' . $type . $key);
 
-    /**
-     * Multidimensional array_diff
-     * @param $array1
-     * @param $array2
-     * @return array
-     */
-    private function arrayDiffMulti($array1, $array2)
-    {
-        $result = array();
-        foreach ($array1 as $key => $val) {
-            if (array_key_exists($key, $array2)) {
-                if (is_array($val) && is_array($array2[$key]) && !empty($val)) {
-                    $temRes = $this->arrayDiffMulti($val, $array2[$key]);
-                    if (count($temRes) > 0) {
-                        $result[$key] = $temRes;
-                    }
+                if (empty($this->sessions->getFromSession('messages.' . $type))) {
+                    $this->sessions->delFromSession('messages.' . $type);
                 }
-            } else {
-                $result[$key] = $val;
+            }
+            if (empty($this->sessions->getFromSession('messages'))) {
+                $this->sessions->delFromSession('messages');
             }
         }
-        return $result;
     }
 
     /**
