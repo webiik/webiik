@@ -1,7 +1,7 @@
 <?php
 namespace Webiik;
 
-class Validate
+class Format
 {
     /**
      * Return validated and formatted email on success, otherwise false
@@ -10,13 +10,11 @@ class Validate
      */
     public function email($email)
     {
-        $email = mb_strtolower(strtolower(str_replace('..', '.', trim($email, " .\t\n\r\0\x0B"))));
+        $pattern = '/^[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*\@[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*\.[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~\.]{2,63}$/';
 
-        if (mb_strlen($email) > 60) {
-            return false;
-        }
+        preg_match($pattern, $email, $match);
 
-        if (preg_match('/^[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*@[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*\.[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~\.]{2,63}$/', $email)) {
+        if (empty($match)) {
             return false;
         }
 
@@ -43,7 +41,7 @@ class Validate
                 return false;
             }
 
-            if(mb_strlen($npart, 'utf-8') > $maxNamePartLength){
+            if (mb_strlen($npart, 'utf-8') > $maxNamePartLength) {
                 return false;
             }
 
@@ -64,13 +62,37 @@ class Validate
     }
 
     /**
-     * Return array with validated and formatted url on success, otherwise false
+     * On success return formatted $url
+     * On error return false  
      * @param $url
      * @return bool|string
      */
     public function url($url)
     {
-        return filter_var($url, FILTER_VALIDATE_URL) === false ? false : strtolower($url);
+        $pu = parse_url($url);
+        $url = false;
+
+        if ($pu) {
+
+            if (isset($pu['scheme'])) {
+                $url .= strtolower($pu['scheme']) . '://';
+            }
+
+            if (isset($pu['host'])) {
+                $url .= strtolower($pu['host']);
+            }
+
+            if (isset($pu['path'])) {
+                $url .= strtolower($pu['path']);
+            }
+
+            if (isset($pu['query'])) {
+                $url .= '?' . $pu['query'];
+            }
+
+        }
+
+        return $url;
     }
 
     /**
@@ -78,7 +100,7 @@ class Validate
      * @param $str
      * @return string
      */
-    private function capitalize($str)
+    public function capitalize($str)
     {
         $str = mb_strtolower($str, 'utf-8');
         $fc = mb_strtoupper(mb_substr($str, 0, 1, 'utf-8'), 'utf-8');

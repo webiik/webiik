@@ -63,51 +63,57 @@ class Auth
     }
 
     /**
+     * Configure salt
      * @param string $string
      */
-    public function setSalt($string)
+    public function confSalt($string)
     {
         $this->config['salt'] = $string;
     }
 
     /**
+     * Configure permanent cookie name
      * @param string $string
      */
-    public function setCookieName($string)
+    public function confCookieName($string)
     {
         $this->config['cookieName'] = $string;
     }
 
     /**
+     * Configure how many days can permanently logged user be logged in
      * @param int $days
      */
-    public function setPermanent($days)
+    public function confPermanent($days)
     {
         $this->config['permanent'] = $days;
     }
 
     /**
+     * Configure if sign-up needs activation or not
      * @param bool $bool
      */
-    public function setWithActivation($bool)
+    public function confWithActivation($bool)
     {
         $this->config['withActivation'] = $bool;
     }
 
     /**
+     * Configure get user from DB (login) attempts count per time period from same IP
      * @param int $count
      * @param int $sec
      */
-    public function setUserGetAttempts($count, $sec)
+    public function confUserGetAttempts($count, $sec)
     {
         $this->config['userGetAttempts'] = [$count, $sec];
     }
 
     /**
+     * Configure set user to DB (sign-up) attempts count per time period from same IP
      * @param int $count
      * @param int $sec
      */
-    public function setUserSetAttempts($count, $sec)
+    public function confUserSetAttempts($count, $sec)
     {
         if ($this->config['withActivation']) {
             // Sign-up, generate activation token and activate user
@@ -117,10 +123,11 @@ class Auth
     }
 
     /**
+     * Configure password renewal attempts count per time period from same IP
      * @param int $count
      * @param int $sec
      */
-    public function setUserPswdAttempts($count, $sec)
+    public function confUserPswdAttempts($count, $sec)
     {
         // Generate renewal token and change password
         $count = $count * 2;
@@ -128,14 +135,16 @@ class Auth
     }
 
     /**
+     * Configure how much time has user to confirm activation or password renewal
      * @param int $sec
      */
-    public function setConfirmationTime($sec)
+    public function confConfirmationTime($sec)
     {
         $this->config['confirmationTime'] = $sec;
     }
 
     /**
+     * Create logged session with given user id, eventually do steps necessary for permanent login
      * @param int $uid
      */
     public function userLogin($uid)
@@ -149,13 +158,13 @@ class Auth
     }
 
     /**
-     * Destroy all sessions and delete permanent login cookie
+     *  Delete all logged indicators and for sure destroy session
      */
     public function userLogout()
     {
-        $this->sessions->sessionDestroy();
-        $this->sessions->delFromSession('logged');
         $this->userLogoutPermanent();
+        $this->sessions->delFromSession('logged');
+        $this->sessions->sessionDestroy();
     }
 
     /**
@@ -194,6 +203,7 @@ class Auth
         if (isset($parsedUrl['host']) && $parsedUrl['host'] == $_SERVER['SERVER_NAME']) {
             header('HTTP/1.1 302 Found');
             header('Location:' . $url);
+            exit;
         }
 
         return false;
