@@ -1,7 +1,7 @@
 <?php
 namespace Webiik;
 
-class Controller
+class Page
 {
     private $translation;
     private $twig;
