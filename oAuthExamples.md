@@ -1,167 +1,60 @@
-<?php
-namespace Webiik;
+```php
+// Messages
+//        $messages = $this->flash->getFlashes();
+//        if (count($messages) > 0) {
+//            print_r($messages);
+//        }
+//
+//        echo '<form action="" method="post">';
+//        echo '<input type="text" name="email" placeholder="email" value="' . $email . '">';
+//        echo '<input type="password" name="pswd" placeholder="password" value="' . $pswd . '">';
+//        echo $this->csrf->getHiddenInput();
+//        echo '<input type="hidden" name="ref" value="' . $referrer . '">';
+//        echo '<input type="submit" value="login">';
+//        echo '</form>';
+//
+//
+//        $http = new Http();
+//        $token = new Token();
+//
+//        $oauth = new OAuth2Client($http);
+//
+//        // Your callback URL after authorization
+//        $oauth->setRedirectUri('https://localhost/skeletons/webiik/example/login/');
+//
+//        // API end points
+//        $oauth->setAuthorizeUrl('https://www.facebook.com/v2.8/dialog/oauth');
+//        $oauth->setAccessTokenUrl('https://graph.facebook.com/v2.8/oauth/access_token');
+//        $oauth->setValidateTokenUrl('https://graph.facebook.com/debug_token');
+//
+//        // API credentials
+//        $oauth->setClientId('1789792224627518');
+//        $oauth->setClientSecret('04f626a495ae205185c7271c3d6a7d9a');
+//
+//        // Make API calls
+//
+//        // Log in a user
+//        $url = $oauth->getLoginUrl(
+//            [
+//                'email',
+//            ],
+//            'code'
+//        );
+//        echo '<a href="' . $url . '">FB login</a>';
+//
+//        // Get Access token
+//        if (isset($_GET['code'])) {
+//
+//            $data = $oauth->getAccessTokenByCode($_GET['code'], 'GET');
+//            print_r($data);
+//
+//            if (isset($data['access_token'])) {
+//                $info = $oauth->getTokenInfo($data['access_token'], $data['access_token'], 'GET');
+//                print_r($info);
+//            }
+//        }
 
-use Simplon\Twitter\Twitter;
-use Simplon\Twitter\TwitterException;
-
-class Login
-{
-    /**
-     * @var Sessions
-     */
-    private $sessions;
-
-    /**
-     * @var Router
-     */
-    private $router;
-
-    /**
-     * @var Auth
-     */
-    private $auth;
-
-    /**
-     * @var Flash
-     */
-    private $flash;
-
-    /**
-     * @var Csrf
-     */
-    private $csrf;
-
-    public function __construct($routeInfo, Sessions $sessions, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
-    {
-        $this->sessions = $sessions;
-        $this->router = $router;
-        $this->auth = $auth;
-        $this->flash = $flash;
-        $this->csrf = $csrf;
-    }
-
-    private function getReferrer()
-    {
-        if (isset($_POST['ref'])) {
-            $referrer = $_POST['ref'];
-        } elseif (isset($_GET['ref'])) {
-            $referrer = $_GET['ref'];
-        } else {
-            $referrer = $this->router->getUrlFor('account');
-        }
-
-        return $referrer;
-    }
-
-    public function run()
-    {
-        $email = isset($_POST['email']) ? $_POST['email'] : '';
-        $pswd = isset($_POST['pswd']) ? $_POST['pswd'] : '';
-        $referrer = $this->getReferrer();
-
-        // CSRF protection
-        if (!$_POST) {
-            $this->csrf->setToken();
-        }
-
-        if ($_POST) {
-            if ($this->csrf->validateToken($_POST[$this->csrf->getTokenName()])) {
-                $this->csrf->setToken();
-            } else {
-                $this->flash->addFlashNow('err', 'Token mismatch.');
-            }
-        }
-
-        // Post data
-        if ($_POST && count($this->flash->getFlashes('err')) == 0) {
-
-            $user = $this->auth->userGet($_POST['email'], $_POST['pswd']);
-
-            if (is_array($user)) {
-
-                $uid = $user['uid'];
-                $this->auth->userLogin($uid);
-
-                if (!$this->auth->redirect($referrer)) {
-                    $this->auth->redirect($this->router->getUrlFor('account'));
-                }
-
-            } else {
-
-                if ($user == -3) {
-                    $this->flash->addFlashNow('err', 'Too many login attempts.');
-                }
-
-                if ($user == -2) {
-                    $this->flash->addFlashNow('err', 'User does not exist.');
-                }
-
-                if ($user == -1) {
-                    $this->flash->addFlashNow('err', 'User account expired.');
-                }
-
-                if ($user == 0) {
-                    $this->flash->addFlashNow('err', 'Invalid password.');
-                }
-
-            }
-        }
-
-        // Messages
-        if (count($this->flash->getFlashes()) > 0) {
-            print_r($this->flash->getFlashes());
-        }
-
-        echo '<form action="" method="post">';
-        echo '<input type="text" name="email" placeholder="email" value="' . $email . '">';
-        echo '<input type="password" name="pswd" placeholder="password" value="' . $pswd . '">';
-        echo $this->csrf->getHiddenInput();
-        echo '<input type="hidden" name="ref" value="' . $referrer . '">';
-        echo '<input type="submit" value="login">';
-        echo '</form>';
-
-
-        $http = new Http();
-        $token = new Token();
-
-        $oauth = new OAuth2Client($http);
-
-        // Your callback URL after authorization
-        $oauth->setRedirectUri('https://localhost/skeletons/webiik/example/login/');
-
-        // API end points
-        $oauth->setAuthorizeUrl('https://www.facebook.com/v2.8/dialog/oauth');
-        $oauth->setAccessTokenUrl('https://graph.facebook.com/v2.8/oauth/access_token');
-        $oauth->setValidateTokenUrl('https://graph.facebook.com/debug_token');
-
-        // API credentials
-        $oauth->setClientId('1789792224627518');
-        $oauth->setClientSecret('04f626a495ae205185c7271c3d6a7d9a');
-
-        // Make API calls
-
-        // Log in a user
-        $url = $oauth->getLoginUrl(
-            [
-                'email',
-            ],
-            'code'
-        );
-        echo '<a href="' . $url . '">FB login</a>';
-
-        // Get Access token
-        if (isset($_GET['code'])) {
-
-            $data = $oauth->getAccessTokenByCode($_GET['code'], 'GET');
-            print_r($data);
-
-            if (isset($data['access_token'])) {
-                $info = $oauth->getTokenInfo($data['access_token'], $data['access_token'], 'GET');
-                print_r($info);
-            }
-        }
-
-        exit;
+//        exit;
 
 //        $oauth = new OAuth1Client($http, $token);
 //
@@ -445,5 +338,5 @@ class Login
 //        }
 //
 //        print_r($res);
-    }
-}
+//    }
+```

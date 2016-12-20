@@ -1,27 +1,45 @@
 <?php
 return [
-    // App internal settings
-    'internal' => [
-        'name' => 'Webiik',
+    // Error class settings
+    'error' => [
         'debug' => true,
+    ],
+
+    // Log class settings
+    'log' => [
         'log' => true,
-        'logEmail' => 'jiri@mihal.me', // Todo: change it to void@webiik.org
+        'logEmail' => 'void@webiik.com',
+        'logEmailSubject' => 'Webiik error notice',
         'timeZone' => 'America/Los_Angeles',
     ],
 
-    // First database is main app database
-    // $dialect, $host, $dbname, $user, $pswd, $encoding
-    'database' => [
+    // Skeleton class settings
+    'skeleton' => [
+
+        // First language is default
+        // Signature is: [language in ISO 639-1, timezone, [array of fallback languages in ISO 639-1]]
+        'languages' => [
+            'en' => ['America/Los_Angeles'],
+            'cs' => ['Europe/Prague', ['en']],
+        ],
+
+        // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
+        'dlInUri' => false, // Todo: Fix when set to true: http://localhost/skeletons/webiik/example/
+
+        // Folder structure
+        'publicDir' => __DIR__ . '/../../../',
+        'privateDir' => __DIR__ . '/../../',
+    ],
+
+    // Connection class settings
+    // First connection is used as default. Skeleton uses default connection for Auth and Attempts.
+    'connection' => [
+        // $dialect, $host, $dbname, $user, $pswd, $encoding
         'user' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
         'admin' => ['mysql', 'localhost', 'webiik', 'root', 'root'],
     ],
 
-    'auth' => [
-        'permanentLoginCookieName' => 'PC',
-        'withActivation' => false,
-        'loginRouteName' => 'login', // <-- this value is used only by AuthMw
-    ],
-
+    // Sessions class settings
     'sessions' => [
         'name' => 'US', // string|false = default name
         'dir' => __DIR__ . '/../tmp/sessions', // path|false = default path
@@ -35,27 +53,45 @@ return [
         'httpOnly' => false, // bool
     ],
 
+    // Csrf class settings
     'csrf' => [
         'tokenName' => 'csrf',
     ],
 
-    // First language is default
-    // Signature is: [language in ISO 639-1, timezone, [array of fallbacks in ISO 639-1]]
-    'language' => [
-        'en' => ['America/Los_Angeles'],
-        'cs' => ['Europe/Prague', ['en']],
+    // Auth class settings
+    'auth' => [
+        'permanentLoginCookieName' => 'PC',
+        'withActivation' => true,
     ],
 
-    // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
-    'dlInUri' => false,
+    // AuthMw class settings
+    'authMw' => [
+        'loginRouteName' => 'login',
+    ],
 
-    // App folder structure
-    'folder' => [
+    // Separate application parts settings
+    // These parts are built on top of Skeleton. Normally controllers, middlewares etc.
 
-        // Web root folder
-        'public' => __DIR__ . '/../../../',
+    // Accounts service routes settings
+    'accounts' => [
 
-        // This folder should not be accessible from the web
-        'private' => __DIR__ . '/../../',
+        // We will send authorisation messages with these credential
+        'email' => 'no-reply@webiik.com',
+        'name' => 'Webiik',
+
+        // Accounts service routes
+        'routes' => [
+            'loginRouteName' => 'login',
+            'signupRouteName' => 'signup',
+            'passwordRenewalRequestRouteName' => 'forgot-request',
+            'passwordRenewalConfirmationRouteName' => 'forgot-confirm',
+            'activationRequestRouteName' => 'activate-request',
+            'activationConfirmationRouteName' => 'activate-confirm',
+            'logoutRouteName' => 'logout',
+        ],
+
+        // Default actions
+        'defaultAfterLoginRouteName' => 'account',
+        'defaultAfterLogoutRouteName' => 'login',
     ],
 ];

@@ -1,10 +1,3 @@
-# Users
-# Status:
-# 0 - inactive
-# 1 - active
-# 2 - disabled (deleted)
-# 3 - banned
-
 # Attempts
 # related classes: Attempts
 CREATE TABLE `attempts`(
@@ -50,26 +43,45 @@ CREATE TABLE `auth_roles_actions`(
   INDEX `i_action_id` (`action_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+# Users
+# Status:
+# 0 - inactive
+# 1 - active
+# 2 - expired
+# 3 - forbidden
 CREATE TABLE `auth_users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_id` TINYINT UNSIGNED NOT NULL,
   `email` VARCHAR(60) NOT NULL,
   `pswd` CHAR(64) NOT NULL,
   `signup_ts` INT,
-  UNIQUE (`email`),
+  `status` TINYINT UNSIGNED,
   PRIMARY KEY (`id`),
   CONSTRAINT `fku_role_id` FOREIGN KEY (`role_id`) REFERENCES `auth_roles` (`id`),
   INDEX `i_email` (`email`),
   INDEX `i_pswd` (`pswd`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `auth_users_activated` (
+CREATE TABLE `auth_users_social` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
-  UNIQUE (`user_id`),
+  `provider_key` VARCHAR(128) NULL,
+  `provider` VARCHAR(15) NOT NULL,
+  UNIQUE INDEX `u_user` (`user_id`, `provider`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fks_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_provider` (`provider`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_users_suspended` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `till_ts` INT,
   PRIMARY KEY (`id`),
   INDEX `i_user_id` (`user_id`),
-  CONSTRAINT `fkaa_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  INDEX `i_till_ts` (`till_ts`),
+  CONSTRAINT `fkss_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Steps:
@@ -90,7 +102,6 @@ CREATE TABLE `auth_tokens_activation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # https://paragonie.com/blog/2015/04/secure-authentication-php-with-long-term-persistence#title.2
-# Todo: Max. 5 permanent logins for one user_id
 CREATE TABLE `auth_tokens_permanent` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
@@ -109,24 +120,23 @@ CREATE TABLE `auth_tokens_permanent` (
 # -> User sends password request by submitting the email address
 # -> User receives email with link to password change page
 # -> User sets new password on that page
-CREATE TABLE `auth_tokens_renewal` (
+CREATE TABLE `auth_tokens_password` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `email` VARCHAR(60) NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
   `selector` CHAR(12),
   `token` CHAR(64),
   `expires` INT,
   UNIQUE (`selector`),
   PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
   INDEX `i_selector` (`selector`),
   INDEX `i_expires` (`expires`),
-  CONSTRAINT `fk_email` FOREIGN KEY (`email`) REFERENCES `auth_users` (`email`)
+  CONSTRAINT `fkpswd_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-
 # Inserts
-
 INSERT INTO `auth_roles` (role) VALUES ('user');
-INSERT INTO `auth_actions` (action) VALUES ('edit-post');
+INSERT INTO `auth_actions` (action) VALUES ('access-account');
 INSERT INTO `auth_roles_actions` (`role_id`, `action_id`) VALUES (1, 1);
 #INSERT INTO auth_users (role_id, email, pswd, signup_ts) VALUES (1, 'jiri@mihal.me', '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', UNIX_TIMESTAMP());
 #INSERT INTO auth_users_activated (user_id) VALUES (1);

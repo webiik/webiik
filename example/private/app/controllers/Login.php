@@ -3,52 +3,40 @@ namespace Webiik;
 
 class Login
 {
-    /**
-     * @var Router
-     */
-    private $router;
+    private $translation;
+    private $twig;
 
-    /**
-     * @var Auth
-     */
     private $auth;
-
-    /**
-     * @var Flash
-     */
     private $flash;
-
-    /**
-     * @var Csrf
-     */
     private $csrf;
+    private $router;
+    private $config;
 
-    public function __construct($routeInfo, Router $router, Auth $auth, Flash $flash, Csrf $csrf)
+    public function __construct(
+        Translation $translation,
+        \Twig_Environment $twig,
+        Auth $auth,
+        Flash $flash,
+        Csrf $csrf,
+        Router $router,
+        $config
+    )
     {
-        $this->router = $router;
+        $this->translation = $translation;
+        $this->twig = $twig;
         $this->auth = $auth;
-        $this->flash = $flash;
         $this->csrf = $csrf;
-    }
-
-    private function getReferrer()
-    {
-        if (isset($_POST['ref'])) {
-            $referrer = $_POST['ref'];
-        } elseif (isset($_GET['ref'])) {
-            $referrer = $_GET['ref'];
-        } else {
-            $referrer = $this->router->getUrlFor('account');
-        }
-
-        return $referrer;
+        $this->flash = $flash;
+        $this->router = $router;
+        $this->config = $config['authAPI'];
     }
 
     public function run()
     {
-        $email = isset($_POST['email']) ? $_POST['email'] : '';
-        $pswd = isset($_POST['pswd']) ? $_POST['pswd'] : '';
-        $referrer = $this->getReferrer();
+        // Get merged translations
+        // We always get all shared translations and translations only for current page,
+        // because Skeleton save resources and adds only these data to Translation class
+        $translations = $this->translation->_tAll(false);
 
         // CSRF protection
         if (!$_POST) {
@@ -59,383 +47,179 @@ class Login
             if ($this->csrf->validateToken($_POST[$this->csrf->getTokenName()])) {
                 $this->csrf->setToken();
             } else {
+                // Todo: Add texts to flashes from Translation
                 $this->flash->addFlashNow('err', 'Token mismatch.');
+                $formErr = true;
             }
         }
 
         // Post data
-        if ($_POST && count($this->flash->getFlashes('err')) == 0) {
+        if ($_POST && !isset($formErr)) {
 
-            $user = $this->auth->userGet($_POST['email'], $_POST['pswd']);
+            // Format data
+            $email = mb_strtolower(trim($_POST['email']));
+            $pswd = str_replace(' ', '', trim($_POST['pswd']));
 
-            if (is_array($user)) {
+            // Prepare form data
+            $translations['form']['email'] = $email;
+            $translations['form']['pswd'] = $pswd;
 
-                $uid = $user['uid'];
-                $this->auth->userLogin($uid);
+            // Validate data
+            $validator = new Validator();
 
-                if (!$this->auth->redirect($referrer)) {
-                    $this->auth->redirect($this->router->getUrlFor('account'));
+            $validator->addData('email', $email)
+                ->filter('required', ['msg' => 'Required field.'])
+                ->filter('email', ['msg' => 'Invalid email format.']);
+
+            $validator->addData('pswd', $pswd)
+                ->filter('required', ['msg' => 'Required field.'])
+                ->filter('minLength', ['msg' => 'Too short.', 'length' => 4]);
+
+            $err = $validator->validate();
+
+            // Prepare error messages
+            if (isset($err['err'])) {
+
+                $formErr = true;
+                $this->flash->addFlashNow('err', 'Correct red marked fields.');
+
+                foreach ($err['err'] as $data => $messages) {
+                    $translations['form']['err'][$data] = $messages;
                 }
+            }
 
-            } else {
+            // Send request to Account API
+            if (!isset($formErr)) {
 
-                if ($user == -3) {
-                    $this->flash->addFlashNow('err', 'Too many login attempts.');
+                $http = new Http();
+
+                $options = [
+                    'getHeaders' => true,
+                    'httpHeaders' => [
+                        'X-WEBIIK-SECRET: ' . $this->config['secret'],
+                    ],
+                ];
+
+                $res = $http->post($this->router->getUrlFor('api-login'), $options, [
+                    'email' => $email,
+                    'pswd' => $pswd,
+                ]);
+
+                $res = json_decode($res['body'], true);
+
+                // Do we have awaited response?
+                if (isset($res['status'])) {
+
+                    // Handle successful login
+                    if ($res['status'] == 'ok') {
+
+                        // Login the user
+                        $this->auth->userLogin($res['user']['id']);
+
+                        // Check if activation is required and if user is activated
+                        if (isset($res['user']['status'])) {
+
+                            $translations['user']['status'] = $res['user']['status'];
+
+                            // User is not activated
+                            if ($res['user']['status'] == 0) {
+                                $this->flash->addFlashNext('inf', 'Activate your account, otherwise will be deleted within 24 hours.');
+                            }
+                        }
+
+                        // If we have valid referrer
+                        // redirect user to that page
+                        $referrer = $this->getReferrer();
+                        if ($referrer) {
+                            $this->auth->redirect($referrer);
+                        }
+
+                        // If login is accessed from login page without any referrer
+                        // redirect user to defaultAfterLoginRouteName, otherwise
+                        // redirect user to current page.
+                        $loginUrl = $this->router->getUrlFor($this->config['loginRouteName']);
+                        $currentUrl = $this->router->getUrlFor($this->router->routeInfo['name']);
+
+                        if ($loginUrl == $currentUrl) {
+                            $redirUrl = $this->router->getUrlFor($this->config['defaultAfterLoginRouteName']);
+                        } else {
+                            $redirUrl = $currentUrl;
+                        }
+
+                        $this->auth->redirect($redirUrl);
+                    }
+
+                    // Handle error
+                    if ($res['status'] == 'err') {
+
+                        if ($res['err_code'] == -6) {
+
+                            $this->flash->addFlashNow('err', 'Correct red marked fields.');
+
+                            foreach ($res['missing'] as $data) {
+                                $translations['form']['err'][$data] = [];
+                            }
+                        }
+
+                        if ($res['err_code'] == -5) {
+                            $this->flash->addFlashNow('err', 'Unauthorized access.');
+                        }
+
+                        if ($res['err_code'] == -4) {
+                            $this->flash->addFlashNow('err', 'Unknown login error.');
+                        }
+
+                        if ($res['err_code'] == -3) {
+                            $this->flash->addFlashNow('err', 'Too many login attempts.');
+                        }
+
+                        if ($res['err_code'] == -2) {
+                            $this->flash->addFlashNow('err', 'User does not exist.');
+                            $translations['form']['err']['email'][] = '';
+                        }
+
+                        if ($res['err_code'] == -1) {
+                            $this->flash->addFlashNow('err', 'User account expired.');
+                        }
+
+                        if ($res['err_code'] == 0) {
+                            $this->flash->addFlashNow('err', 'Invalid password.');
+                            $translations['form']['err']['pswd'][] = '';
+                        }
+                    }
+
+                } else {
+
+                    // Unknown error
+                    $this->flash->addFlashNow('err', 'Unknown API error.');
                 }
-
-                if ($user == -2) {
-                    $this->flash->addFlashNow('err', 'User does not exist.');
-                }
-
-                if ($user == -1) {
-                    $this->flash->addFlashNow('err', 'User account expired.');
-                }
-
-                if ($user == 0) {
-                    $this->flash->addFlashNow('err', 'Invalid password.');
-                }
-
             }
         }
 
-        // Messages
-        $messages = $this->flash->getFlashes();
-        if (count($messages) > 0) {
-            print_r($messages);
+        // Render page
+        echo $this->twig->render('login.twig', $translations);
+
+        if($email){
+
+            // Yes
+
+        } else {
+
+            // No
+            $err = 'User does not exist.';
+        }
+    }
+
+    private function getReferrer()
+    {
+        $referrer = false;
+
+        if (isset($_POST['ref'])) {
+            $referrer = $_POST['ref'];
+        } elseif (isset($_GET['ref'])) {
+            $referrer = $_GET['ref'];
         }
 
-        echo '<form action="" method="post">';
-        echo '<input type="text" name="email" placeholder="email" value="' . $email . '">';
-        echo '<input type="password" name="pswd" placeholder="password" value="' . $pswd . '">';
-        echo $this->csrf->getHiddenInput();
-        echo '<input type="hidden" name="ref" value="' . $referrer . '">';
-        echo '<input type="submit" value="login">';
-        echo '</form>';
-
-
-        $http = new Http();
-        $token = new Token();
-
-        $oauth = new OAuth2Client($http);
-
-        // Your callback URL after authorization
-        $oauth->setRedirectUri('https://localhost/skeletons/webiik/example/login/');
-
-        // API end points
-        $oauth->setAuthorizeUrl('https://www.facebook.com/v2.8/dialog/oauth');
-        $oauth->setAccessTokenUrl('https://graph.facebook.com/v2.8/oauth/access_token');
-        $oauth->setValidateTokenUrl('https://graph.facebook.com/debug_token');
-
-        // API credentials
-        $oauth->setClientId('1789792224627518');
-        $oauth->setClientSecret('04f626a495ae205185c7271c3d6a7d9a');
-
-        // Make API calls
-
-        // Log in a user
-        $url = $oauth->getLoginUrl(
-            [
-                'email',
-            ],
-            'code'
-        );
-        echo '<a href="' . $url . '">FB login</a>';
-
-        // Get Access token
-        if (isset($_GET['code'])) {
-
-            $data = $oauth->getAccessTokenByCode($_GET['code'], 'GET');
-            print_r($data);
-
-            if (isset($data['access_token'])) {
-                $info = $oauth->getTokenInfo($data['access_token'], $data['access_token'], 'GET');
-                print_r($info);
-            }
-        }
-
-        exit;
-
-//        $oauth = new OAuth1Client($http, $token);
-//
-//        // Your callback URL after authorization
-//        $oauth->setCallbackUrl('https://localhost/skeletons/webiik/example/login/');
-//
-//        // API end points
-//        $oauth->setReqestTokenUrl('https://api.twitter.com/oauth/request_token');
-//        $oauth->setAuthorizeUrl('https://api.twitter.com/oauth/authenticate');
-//        $oauth->setAccessTokenUrl('https://api.twitter.com/oauth/access_token');
-//
-//        // API credentials
-//        $oauth->setConsumerSecret('rZcebQTj3S01dnVPNeYXwctmxmhvZfG6WdSN9KcCoLzCGrB1g0');
-//        $oauth->setConsumerKey('YgMxXP37WfVhJT6t1iC9f5PkB');
-//
-//        // Make API calls
-//
-//        // Log in a user
-//        if (!isset($_GET['oauth_verifier'])) {
-//            $requestTokenData = $oauth->getRequestTokenData();
-//            if (isset($requestTokenData['oauth_token'])) {
-//                $oauth->redirectToLoginUrl($requestTokenData['oauth_token']);
-//            }
-//        }
-//
-//        $accessToken = $oauth->getAccessTokenData();
-//
-//        print_r($accessToken);
-//
-//        exit;
-
-//        // GOOGLE
-//
-//        // API SETTINGS
-//        $clientId = '661558313642-k9q0kpsqfo3kiopinufjibmoo0dja7q5.apps.googleusercontent.com';
-//        $clientSecret = 'KB9aZO0P41PxfvJdLFc8ym68';
-//        $callbackUrl = 'https://localhost/skeletons/webiik/example/login';
-//
-//        // STEP 1 - Redirect user for authorization
-//        $scope = [
-//            'https://www.googleapis.com/auth/userinfo.email',
-//            'https://www.googleapis.com/auth/userinfo.profile',
-//        ];
-//
-//        $data = [
-//            'client_id' => $clientId,
-//            'scope' => implode(' ', $scope),
-//            'redirect_uri' => $callbackUrl,
-//            'response_type' => 'code',
-//        ];
-//
-//        $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($data);
-//        echo '<a href="' . $url . '">Google login</a>';
-//
-//        // STEP 2 - Getting access token
-//        if (isset($_GET['code'])) {
-//
-//            $data = [
-//                'client_id' => $clientId,
-//                'client_secret' => $clientSecret,
-//                'redirect_uri' => $callbackUrl,
-//                'code' => $_GET['code'],
-//                'grant_type' => 'authorization_code'
-//            ];
-//
-//            $url = 'https://www.googleapis.com/oauth2/v4/token';
-//
-//            $res = $http->post($url, [], $data);
-//
-//            $data = json_decode($res['body'], true);
-//
-//            $accessToken = $data['access_token'];
-//            $tokenType = $data['token_type'];
-//            $expiresIn = $data['expires_in'];
-//            $idToken = $data['id_token'];
-//
-//            print_r($res);
-//
-//            // STEP 3 - Get token info
-//            $data = [
-//                'input_token' => $accessToken,
-//                'access_token' => $accessToken,
-//            ];
-//            $url = 'https://www.googleapis.com/oauth2/v2/tokeninfo';
-//
-//            $res = $http->post($url, [], $data);
-//
-//            print_r($res);
-//
-//            // STEP 4 - Access protected resources (obtain user info)
-//            $data = [
-//                'access_token' => $accessToken,
-//                'fields' => 'id,name,email',
-//            ];
-//
-//            $url = 'https://www.googleapis.com/oauth2/v2/userinfo?' . http_build_query($data);;
-//            $res = $http->get($url);
-//
-//            print_r($res);
-//
-//        }
-//
-//        // FACEBOOK
-//
-//        // API SETTINGS
-//        $appId = '1789792224627518';
-//        $appSecret = '04f626a495ae205185c7271c3d6a7d9a';
-//        $callbackUrl = 'https://localhost/skeletons/webiik/example/login/';
-//
-//        // STEP 1 - Redirect user for authorization
-//        $data = [
-//            'client_id' => $appId,
-//            'redirect_uri' => $callbackUrl,
-//            'auth_type' => 'rerequest',
-//            'scope' => 'email',
-//        ];
-//        $url = 'https://www.facebook.com/v2.8/dialog/oauth?' . http_build_query($data);
-//        echo '<a href="' . $url . '">FB login</a>';
-//
-//        // STEP 2 - Getting access token
-//        if (isset($_GET['code'])) {
-//
-//            $data = [
-//                'client_id' => $appId,
-//                'redirect_uri' => $callbackUrl,
-//                'client_secret' => $appSecret,
-//                'code' => $_GET['code'],
-//            ];
-//
-//            $url = 'https://graph.facebook.com/v2.8/oauth/access_token?' . http_build_query($data);
-//
-//            $res = $http->get($url);
-//
-//            $data = json_decode($res['body'], true);
-//
-//            $accessToken = $data['access_token'];
-//            $tokenType = $data['token_type'];
-//            $expiresIn = $data['expires_in'];
-//            $authType = $data['auth_type'];
-//
-//            print_r($res);
-//
-//            // STEP 3 - Get token info and FB user ID (Inspecting Access Tokens)
-//            $data = [
-//                'input_token' => $accessToken,
-//                'access_token' => $appId . '|' . $appSecret,
-//            ];
-//            $url = 'https://graph.facebook.com/debug_token?' . http_build_query($data);
-//
-//            $res = $http->get($url);
-//
-//            $data = json_decode($res['body'], true);
-//
-//            print_r($res);
-//
-//            $userId = $data['data']['user_id'];
-//
-//            // STEP 4 - Access protected resources (obtain user info)
-//            $data = [
-//                'access_token' => $accessToken,
-//                'fields' => 'id,name,email',
-//            ];
-//
-//            $url = 'https://graph.facebook.com/v2.8/' . $userId . '?' . http_build_query($data);;
-//            $res = $http->get($url);
-//
-//            print_r($res);
-//
-//        }
-//
-//        // TWITTER
-//
-//        // API SETTINGS
-//        $consumerSecret = 'rZcebQTj3S01dnVPNeYXwctmxmhvZfG6WdSN9KcCoLzCGrB1g0';
-//        $consumerKey = 'YgMxXP37WfVhJT6t1iC9f5PkB';
-//        $oauth_signature_method = 'HMAC-SHA1';
-//
-//        // My Twitter Auth
-//        if (!isset($_GET['oauth_verifier'])) {
-//
-//            // STEP 1 - TWITTER OBTAINING A REQUEST TOKEN
-//            $callbackUrl = 'https://localhost/skeletons/webiik/example/login/';
-//            $url = 'https://api.twitter.com/oauth/request_token';
-//
-//            // Data we will send
-//            $data = [
-//                'oauth_callback' => $callbackUrl,
-//                'oauth_consumer_key' => $consumerKey,
-//                'oauth_signature_method' => $oauth_signature_method,
-//                'oauth_timestamp' => time(),
-//                'oauth_nonce' => $token->generate(3),
-//                'oauth_version' => '1.0',
-//            ];
-//
-//            // Sort data alphabetically, because Twitter requires that
-//            ksort($data);
-//
-//            // Generate signature and add it to data array
-//            $signData = 'POST&' . urlencode($url) . '&' . urlencode(http_build_query($data));
-//            $secret = '';
-//            $signKey = urlencode($consumerSecret) . '&' . urlencode($secret);
-//            $data['oauth_signature'] = base64_encode(hash_hmac('sha1', $signData, $signKey, true));
-//
-//            // Prepare http headers from data
-//            $httpHeaders = [];
-//            foreach ($data as $key => $value) {
-//                $httpHeaders[] = urlencode($key) . '="' . urlencode($value) . '"';
-//            }
-//
-//            // Add OAuth header with all data
-//            $httpHeaders = 'Authorization: OAuth ' . implode(', ', $httpHeaders);
-//
-//            // Send post request to Twitter API with http headers and data
-//            $res = $http->post($url, ['httpHeaders' => [$httpHeaders]], []);
-//
-//            // If we got some error, show error message and stop
-//            if ($res['status'] != 200) {
-//                echo $res['err'];
-//                exit;
-//            }
-//
-//            // Prepare data for step 2 and 3 from Twitter's response
-//            parse_str($res['body'], $res);
-////            $oauth_callback_confirmed = $res['oauth_callback_confirmed'];
-//            $oauth_request_token = $res['oauth_token'];
-//
-//            // Store oauth_token_secret into session, we will need it in step 3
-////            $this->sessions->setToSession('oauth_token_secret', $res['oauth_token_secret']);
-////            $this->sessions->setToSession('oauth_token', $oauth_request_token);
-//
-//            // STEP 2 - REDIRECTING THE USER TO TWITTER LOGIN
-//            header('HTTP/1.1 302 Found');
-//            header('Location: https://api.twitter.com/oauth/authenticate?oauth_token=' . urlencode($oauth_request_token));
-//        }
-//
-//        // STEP 3 - CONVERTING THE REQUEST TOKEN TO AN ACCESS TOKEN
-//        $url = 'https://api.twitter.com/oauth/access_token';
-//        $oauth_token = $_GET['oauth_token'];
-//        $oauth_verifier = $_GET['oauth_verifier'];
-//
-//        // Data we will send
-//        $data = [
-//            'oauth_consumer_key' => $consumerKey,
-//            'oauth_nonce' => $token->generate(3),
-//            'oauth_signature_method' => $oauth_signature_method,
-//            'oauth_timestamp' => time(),
-//            'oauth_token' => $oauth_token,
-//            'oauth_version' => '1.0',
-//        ];
-//
-//        // Sort data alphabetically, because Twitter requires that
-//        ksort($data);
-//
-//        // Generate signature and add it to data array
-//        $signData = 'POST&' . urlencode($url) . '&' . urlencode(http_build_query($data));
-//        $secret = '';
-//        $signKey = urlencode($consumerSecret) . '&' . urlencode($secret);
-//        $data['oauth_signature'] = base64_encode(hash_hmac('sha1', $signData, $signKey, true));
-//
-//        // Prepare http headers from data
-//        $httpHeaders = [];
-//        foreach ($data as $key => $value) {
-//            $httpHeaders[] = urlencode($key) . '="' . urlencode($value) . '"';
-//        }
-//
-//        // Add OAuth header with all data
-//        $httpHeaders = ['Authorization: OAuth ' . implode(', ', $httpHeaders)];
-//        $httpHeaders[] = 'Content-Length: ' . strlen('oauth_verifier=' . urlencode($oauth_verifier));
-//        $httpHeaders[] = 'Content-Type: application/x-www-form-urlencoded';
-//
-//        // Add oauth_verifier to POST data
-//        $postData = ['oauth_verifier' => $oauth_verifier];
-//
-//        // Send post request to Twitter API with http headers and data
-//        $res = $http->post($url, ['httpHeaders' => $httpHeaders], $postData);
-//
-//        // If we got some error, show error message and stop
-//        if ($res['status'] != 200) {
-//            print_r($res);
-//            exit;
-//        }
-//
-//        print_r($res);
+        return $referrer;
     }
 }
