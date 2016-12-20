@@ -337,7 +337,7 @@ class Sessions
             $this->setToSession('ip', $_SERVER['REMOTE_ADDR']);
         }
 
-        if (!$this->getFromSession('agent')) {
+        if (!$this->getFromSession('agent') && isset($_SERVER['HTTP_USER_AGENT'])) {
             $this->setToSession('agent', $_SERVER['HTTP_USER_AGENT']);
         }
     }
@@ -353,7 +353,9 @@ class Sessions
             return true;
         }
 
-        if ($this->getFromSession('agent') != $_SERVER['HTTP_USER_AGENT']) {
+        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+
+        if ($this->getFromSession('agent') != $agent) {
             return true;
         }
 
