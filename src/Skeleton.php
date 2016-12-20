@@ -78,11 +78,6 @@ class Skeleton extends Core
             return new Conversion();
         });
 
-        // Add Filesystem
-        $this->addService('Webiik\Filesystem', function ($c) {
-            return new Filesystem();
-        });
-
         // Add Connection
         $this->addService('Webiik\Connection', function ($c) {
             $connection = new Connection($c['config']['error']['debug']);
