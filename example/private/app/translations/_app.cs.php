@@ -17,4 +17,5 @@ return [
         'account' => ['Můj účet', 2],
         'admin' => ['Admin', 2],
     ],
+    'msgUnauthorised' => 'Pro zobrazení této stránky nemáte oprávnění.',
 ];

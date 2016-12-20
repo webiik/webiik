@@ -8,12 +8,18 @@ return [
     // Special key 'routes' - here you write URI translations of routes.
     // Only routes with translated URIs will be active.
     'routes' => [
-        'home' => '/',
-        'login' => '/login',
-        'login-oauth1' => '/login-oauth1',
+        // Todo: _app.php shared translation file across translations
+        // User account service routes
         'signup' => '/signup',
-        'forgot' => '/forgot-password',
+        'login' => '/login',
+        'activate' => '/activate',
+        'forgot-request' => '/password-renewal-request',
+        'forgot-confirm' => '/password-renewal-confirmation',
+        'activate-request' => '/activation-request',
+        'activate-confirm' => '/activation-confirmation',
         'logout' => '/logout',
+        // Website routes
+        'home' => '/',
         'account' => '/account',
         'admin' => '/admin',
     ],
@@ -29,4 +35,5 @@ return [
         'admin' => ['Admin', 2],
         'logout' => ['Logout', 2],
     ],
+    'msgUnauthorised' => 'You don\'t have permissions to view this site.',
 ];

@@ -1,60 +1,55 @@
 <?php
 /**
  * Route definitions for all languages
- * Signature: 'routeName' => ['methods' => array, 'controller' => string]
+ * Signature: 'routeName' => ['methods' => array, 'controller' => string, (optional)'middlewares' => array]
  * You can also define routes for specific language in /routes/routes.{lang}.php
  * To make routes working properly you also need to add translations of these routes in /translations/_app.{lang}.php
  */
 return [
-    'home' => [
-        'methods' => ['GET'],
-        'controller' => 'Webiik\Controller:run',
-//        'middlewares' => [
-//            'Webiik\AuthMw' => [],
-//        ],
+    // User account service routes
+    'signup' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\Signup:run',
     ],
     'login' => [
         'methods' => ['GET', 'POST'],
         'controller' => 'Webiik\Login:run',
-        'middlewares' => [
-            'Webiik\AuthMw:redirectLoggedUser' => ['account'],
-        ],
     ],
-    'login-oauth1' => [
+    'forgot-request' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\ForgotRequest:run',
+    ],
+    'forgot-confirm' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\ForgotConfirm:run',
+    ],
+    'activate' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\Activate:run',
+    ],
+    'activate-request' => [
         'methods' => ['GET'],
-        'controller' => 'Webiik\LoginOauth:run',
-        // Todo: Don't provide this route when user is logged in
+        'controller' => 'Webiik\ActivateRequest:run',
     ],
-    'signup' => [
+    'activate-confirm' => [
         'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Signup:run',
-        'middlewares' => [
-            'Webiik\AuthMw:redirectLoggedUser' => ['account'],
-        ],
-    ],
-    'forgot' => [
-        'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Forgot:run',
-        'middlewares' => [
-            'Webiik\AuthMw:redirectLoggedUser' => ['account'],
-        ],
+        'controller' => 'Webiik\ActivateConfirm:run',
     ],
     'logout' => [
-        'methods' => ['GET'],
+        'methods' => ['GET', 'POST'],
         'controller' => 'Webiik\Logout:run',
     ],
-    'account' => [
+    // Website routes
+    'home' => [
         'methods' => ['GET'],
-        'controller' => 'Webiik\Controller:run',
-        'middlewares' => [
-            'Webiik\AuthMw:redirectUnloggedUser' => [],
-        ],
+        'controller' => 'Webiik\Page:run',
+    ],
+    'account' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\Account:run',
     ],
     'admin' => [
-        'methods' => ['GET'],
-        'controller' => 'Webiik\Controller:run',
-        'middlewares' => [
-            'Webiik\AuthMw:userCan' => ['access-admin'],
-        ],
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\Admin:run',
     ],
 ];
