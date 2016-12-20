@@ -33,7 +33,7 @@ class Flash
     }
 
     /**
-     * Set HTML wrap
+     * Set HTML wrap eg. <div class='msg'>{{ msg }}</div>
      * @param $type
      * @param $wrap
      */
@@ -60,7 +60,7 @@ class Flash
     public function addFlashNext($type, $message)
     {
         $this->messagesNext[$type][] = $message;
-        $this->sessions->addToSession('messages.' . $type, $message);
+        $this->sessions->addToSession('messages.' . $type, [$message]);
     }
 
     /**
@@ -70,18 +70,18 @@ class Flash
      */
     public function getFlashes($type = null)
     {
-        $messages = $this->sessions->getFromSession('messages');
+        // Get all messages from session
+        $sessionMessages = $this->sessions->getFromSession('messages');
+        if (!is_array($sessionMessages)) $sessionMessages = [];
 
-        if ($messages) {
+        // Get next messages only for current request
+        $nextMessages = $this->arr->diffMultiAB($sessionMessages, $this->messagesNext);
 
-            $messages = $this->arr->diffMulti($messages, $this->messagesNext);
-            $this->unsetFromSession($messages);
-            $messages = array_merge_recursive($messages, $this->messages);
+        // Unset next messages from previous request
+        $this->unsetFromSession($nextMessages);
 
-        } else {
-
-            $messages = $this->messages;
-        }
+        // Get all current messages
+        $messages = array_merge_recursive($nextMessages, $this->messages);
 
         if ($type) {
             return isset($messages[$type]) ? [$type => $messages[$type]] : [];
@@ -120,29 +120,14 @@ class Flash
     }
 
     /**
-     * Unset all displayed 'next' messages from session
-     * @param $array
-     * @param string $type
+     * Unset given messages from session
+     * @param array $messages
      */
-    private function unsetFromSession($array, $type = '')
+    private function unsetFromSession($messages)
     {
-        foreach ($array as $key => $val) {
-            if (is_array($val)) {
-                if (empty($val)) {
-                    $this->sessions->delFromSession('messages.' . $key);
-                } else {
-                    $this->unsetFromSession($val, $key);
-
-                }
-            } else {
-                $this->sessions->delFromSession('messages.' . $type . $key);
-
-                if (empty($this->sessions->getFromSession('messages.' . $type))) {
-                    $this->sessions->delFromSession('messages.' . $type);
-                }
-            }
-            if (empty($this->sessions->getFromSession('messages'))) {
-                $this->sessions->delFromSession('messages');
+        foreach ($messages as $type => $arr) {
+            foreach ($arr as $index => $val) {
+                $this->sessions->delFromSession('messages.' . $type . '.' . $index);
             }
         }
     }
