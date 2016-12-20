@@ -65,22 +65,49 @@ class Request
      * @param $headerName
      * @return bool|string
      */
-    public function getHeader($headerName)
+    public function getHeader($headerName, $extened = true)
     {
-        if (isset($_SERVER[$headerName])) {
-            return $_SERVER[$headerName];
-        }
+        $prefixes = [
+            '',
+            'x-',
+            'http-',
+            'http-x-',
+        ];
 
-        if (isset($_SERVER[strtolower($headerName)])) {
-            return $_SERVER[strtolower($headerName)];
-        }
+        foreach ($prefixes as $prefix) {
 
-        if (isset($_SERVER[ucwords(strtolower($headerName), '-_')])) {
-            return $_SERVER[ucwords(strtolower($headerName), '-_')];
-        }
+            for ($i = 0; $i < 3; $i++) {
 
-        if (isset($_SERVER[strtoupper($headerName)])) {
-            return $_SERVER[strtoupper($headerName)];
+                $header = $prefix . $headerName;
+
+                if ($i == 1) {
+                    $header = str_replace('-', '_', $header);
+                }
+
+                if ($i == 2) {
+                    $header = str_replace('_', '-', $header);
+                }
+
+                // Original
+                if (isset($_SERVER[$header])) {
+                    return $_SERVER[$header];
+                }
+
+                // Upper case
+                if (isset($_SERVER[strtoupper($header)])) {
+                    return $_SERVER[strtoupper($header)];
+                }
+
+                // Uc words
+                if (isset($_SERVER[ucwords(strtolower($header), '-_')])) {
+                    return $_SERVER[ucwords(strtolower($header), '-_')];
+                }
+
+                // Lower case
+                if (isset($_SERVER[strtolower($header)])) {
+                    return $_SERVER[strtolower($header)];
+                }
+            }
         }
 
         return false;
