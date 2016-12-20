@@ -13,6 +13,7 @@ class SecurityMw
     public function __invoke(Request $request, \Closure $next, $csp = false)
     {
         header('X-Frame-Options: sameorigin');
+        header('X-Powered-By: PHP');
         header('X-XSS-Protection: 1; mode=block');
         header('X-Content-Type-Options: nosniff');
 
