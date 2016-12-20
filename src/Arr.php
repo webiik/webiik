@@ -95,18 +95,18 @@ class Arr
     }
 
     /**
-     * Multidimensional array_diff
+     * Return keys that are different in $array1 from $array2
      * @param $array1
      * @param $array2
      * @return array
      */
-    public function diffMulti($array1, $array2)
+    public function diffMultiABKeys($array1, $array2)
     {
-        $result = array();
+        $result = [];
         foreach ($array1 as $key => $val) {
             if (array_key_exists($key, $array2)) {
                 if (is_array($val) && is_array($array2[$key]) && !empty($val)) {
-                    $temRes = $this->diffMulti($val, $array2[$key]);
+                    $temRes = $this->diffMultiABKeys($val, $array2[$key]);
                     if (count($temRes) > 0) {
                         $result[$key] = $temRes;
                     }
@@ -116,5 +116,106 @@ class Arr
             }
         }
         return $result;
+    }
+
+    /**
+     * Return values that are different in $array1 from $array2
+     * @param $array1
+     * @param $array2
+     * @return array
+     */
+    public function diffMultiAB($array1, $array2)
+    {
+        $result = [];
+
+        foreach ($array1 as $key => $val) {
+
+            if (array_key_exists($key, $array2)) {
+
+                if (is_array($val) && is_array($array2[$key])) {
+
+                    $temRes = $this->diffMultiAB($val, $array2[$key]);
+
+                    if (count($temRes) > 0) {
+                        $result[$key] = $temRes;
+                    }
+
+                } else {
+
+                    if (is_array($val) && !is_array($array2[$key])) {
+                        $result[$key] = $val;
+                    } else if (!is_array($val) && is_array($array2[$key])) {
+                        $result[$key] = $val;
+                    } else if ($array2[$key] != $val) {
+                        $result[$key] = $val;
+                    }
+
+                }
+
+            } else {
+
+                $result[$key] = $val;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Return keys that are different across $array1 and $array2
+     * @param $array1
+     * @param $array2
+     * @return array
+     */
+    public function diffMultiKeys($array1, $array2)
+    {
+        $diffAB = $this->diffMultiABKeys($array1, $array2);
+        $diffBA = $this->diffMultiABKeys($array2, $array1);
+        return array_merge_recursive($diffAB, $diffBA);
+    }
+
+    /**
+     * Return values that are different across $array1 and $array2
+     * @param $array1
+     * @param $array2
+     * @return array
+     */
+    public function diffMulti($array1, $array2)
+    {
+        $diffAB = $this->diffMultiAB($array1, $array2);
+        $diffBA = $this->diffMultiAB($array2, $array1);
+        return array_merge_recursive($diffAB, $diffBA);
+    }
+
+    /**
+     * Todo: Get result array affected by callback
+     * Iterate multidimensional array and call callback on every key iteration
+     * @param $array
+     * @param \Closure $callback
+     * @param int $deep
+     * @param string $path
+     * @return mixed
+     */
+    public function forEachMulti($array, \Closure $callback, $deep = 0, $path = '')
+    {
+        $deep++;
+
+        foreach ($array as $key => $value) {
+
+            if ($path == '') {
+                $newPath = $key;
+            } else {
+                $newPath = $path . '.' . $key;
+            }
+
+            if (is_array($value)) {
+                $callback($array, $key, $value, $newPath, $deep);
+                $array = $this->forEachMulti($value, $callback, $deep, $newPath);
+            } else {
+                $callback($array, $key, $value, $newPath, $deep);
+            }
+        }
+
+        return $array;
     }
 }
