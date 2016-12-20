@@ -85,8 +85,8 @@ class Skeleton extends Core
 
         // Add Connection
         $this->addService('Webiik\Connection', function ($c) {
-            $connection = new Connection($c['config']['internal']['debug']);
-            foreach ($c['config']['database'] as $name => $p) {
+            $connection = new Connection($c['config']['error']['debug']);
+            foreach ($c['config']['connection'] as $name => $p) {
                 $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4], 'utf8', date('e'));
             }
             return $connection;
@@ -107,15 +107,15 @@ class Skeleton extends Core
         // Add Auth
         $this->addService('Webiik\Auth', function ($c) {
             $auth = new Auth($c['Webiik\Sessions'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
-            $auth->setCookieName($c['config']['auth']['permanentLoginCookieName']);
-            $auth->setWithActivation($c['config']['auth']['withActivation']);
+            $auth->confCookieName($c['config']['auth']['permanentLoginCookieName']);
+            $auth->confWithActivation($c['config']['auth']['withActivation']);
             return $auth;
         });
 
         // Add Auth middleware
         $this->addService('Webiik\AuthMw', function ($c) {
-            $authMw = new AuthMw($c['Webiik\Auth'], $c['Webiik\Router']);
-            $authMw->setLoginRouteName($c['config']['auth']['loginRouteName']);
+            $authMw = new AuthMw($c['Webiik\Auth'], $c['Webiik\Router'], $c['Webiik\Flash'], $c['Webiik\Translation']);
+            $authMw->confLoginRouteName($c['config']['authMw']['loginRouteName']);
             return $authMw;
         });
 
@@ -127,7 +127,7 @@ class Skeleton extends Core
         $this->setFallbackLangs();
 
         // Set time zone according to current lang
-        date_default_timezone_set($config['language'][$this->lang][0]);
+        date_default_timezone_set($config['skeleton']['languages'][$this->lang][0]);
 
         // Set internal encoding
         mb_internal_encoding('utf-8');
@@ -188,7 +188,7 @@ class Skeleton extends Core
      */
     private function setLang()
     {
-        $langs = $this->container['config']['language'];
+        $langs = $this->container['config']['skeleton']['languages'];
 
         // Get web root URI
         $uri = str_replace($this->getScriptDir(), '', $_SERVER['REQUEST_URI']);
@@ -206,9 +206,9 @@ class Skeleton extends Core
 
         // If we didn't find any language, it can be still ok, if default language
         // doesn't need to be in URI, otherwise page doesn't exist.
-        if (!isset($lang) && !$this->container['config']['dlInUri']) {
+        if (!isset($lang) && !$this->container['config']['skeleton']['dlInUri']) {
             $lang = key($langs);
-        } elseif (!isset($lang) && !$this->container['config']['dlInUri']) {
+        } elseif (!isset($lang) && !$this->container['config']['skeleton']['dlInUri']) {
             $this->error(404);
         }
 
@@ -220,7 +220,7 @@ class Skeleton extends Core
      */
     private function setFallbackLangs()
     {
-        $langs = $this->container['config']['language'];
+        $langs = $this->container['config']['skeleton']['languages'];
         foreach ($langs as $lang => $p) {
             if (isset($p[1][0])) {
                 $this->trans()->setFallbacks($lang, $p[1]);
@@ -235,7 +235,7 @@ class Skeleton extends Core
      */
     private function getFallbackLangs($lang)
     {
-        $langs = $this->container['config']['language'];
+        $langs = $this->container['config']['skeleton']['languages'];
 
         if (isset($langs[$lang][1]) && is_array($langs[$lang][1])) {
             $fallbackLangs = $langs[$lang][1];
@@ -257,11 +257,11 @@ class Skeleton extends Core
     {
         // Get route definitions
         $routes = [];
-        $file = $this->container['config']['folder']['private'] . '/app/routes/routes.' . $lang . '.php';
+        $file = $this->container['config']['skeleton']['privateDir'] . '/app/routes/routes.' . $lang . '.php';
         if (file_exists($file)) {
             $routes = require $file;
         } else {
-            $file = $this->container['config']['folder']['private'] . '/app/routes/routes.php';
+            $file = $this->container['config']['skeleton']['privateDir'] . '/app/routes/routes.php';
             $routes = require $file;
         }
 
@@ -327,7 +327,7 @@ class Skeleton extends Core
      */
     private function mapRoutesEmptyTranslated()
     {
-        foreach ($this->container['config']['language'] as $lang => $prop) {
+        foreach ($this->container['config']['skeleton']['languages'] as $lang => $prop) {
 
             // Iterate all langs except current lang, because routes for current lang are already loaded
             if ($lang != $this->lang) {
@@ -351,7 +351,7 @@ class Skeleton extends Core
      */
     private function loadTranslations($lang, $fileName, $addOnlyDiffTranslation = true, $key = false)
     {
-        $file = $this->container['config']['folder']['private'] . '/app/translations/' . $fileName . '.' . $lang . '.php';
+        $file = $this->container['config']['skeleton']['privateDir'] . '/app/translations/' . $fileName . '.' . $lang . '.php';
 
         // Add translation for current lang
         if (file_exists($file)) {
@@ -366,7 +366,7 @@ class Skeleton extends Core
 
         foreach ($fl as $flLang) {
 
-            $file = $this->container['config']['folder']['private'] . '/app/translations/' . $fileName . '.' . $flLang . '.php';
+            $file = $this->container['config']['skeleton']['privateDir'] . '/app/translations/' . $fileName . '.' . $flLang . '.php';
 
             // Load fallback translations
             if (file_exists($file)) {
@@ -388,7 +388,7 @@ class Skeleton extends Core
                 }
 
                 // Find keys that missing in current lang translation
-                $missingTranslations = $this->arr()->diffMulti($translation, $currentLangTranslation);
+                $missingTranslations = $this->arr()->diffMultiABKeys($translation, $currentLangTranslation);
 
                 // Add this missing translation
                 foreach ($missingTranslations as $key => $val) {
@@ -404,7 +404,7 @@ class Skeleton extends Core
      */
     private function loadConversions($file)
     {
-        $dir = $this->container['config']['folder']['private'] . '/app/translations/conversions';
+        $dir = $this->container['config']['skeleton']['privateDir'] . '/app/translations/conversions';
 
         if (file_exists($dir . '/' . $file . '.php')) {
 
@@ -423,7 +423,7 @@ class Skeleton extends Core
      */
     private function loadFormats($lang)
     {
-        $dir = $this->container['config']['folder']['private'] . '/app/translations/formats';
+        $dir = $this->container['config']['skeleton']['privateDir'] . '/app/translations/formats';
 
         if (file_exists($dir . '/' . $lang . '.php')) {
 
