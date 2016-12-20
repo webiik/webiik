@@ -1,13 +1,14 @@
 <?php
-// Load config
+// Load app configuration file
 $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 
-// Setup the Webiik logging
+// Setup the Log class
+// Log class is used by Translation, Router and Error for logging errors and sending email notices.
 \Webiik\Log::setup(
-    $config['folder']['private'] . '/app/logs',
-    $config['internal']['logEmail'],
-    $config['internal']['name'] . ' error notice',
-    $config['internal']['timeZone'],
+    $config['skeleton']['privateDir'] . '/app/logs',
+    $config['log']['logEmail'],
+    $config['log']['logEmailSubject'],
+    $config['log']['timeZone'],
     2,
     10
 );
@@ -15,8 +16,9 @@ $config = \Webiik\Config::loadConfig(__DIR__ . '/config');
 \Webiik\Log::addLogger('translation', 'trans.log');
 \Webiik\Log::addLogger('app', 'error.log');
 
-// Init improved error handling
-$err = new \Webiik\Error(!$config['internal']['debug'], $config['internal']['log']);
+// Set improved error handling
+$err = new \Webiik\Error(!$config['error']['debug'], $config['log']['log']);
 unset($err);
 
+// Load main application file
 require __DIR__ . '/app.php';
