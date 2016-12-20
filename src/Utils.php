@@ -51,16 +51,4 @@ class Utils
 
         return isset($match[1]) ? $match[1] : false;
     }
-
-    /**
-     * Capitalize string (multi byte)
-     * @param $str
-     * @return string
-     */
-    public function capitalize($str)
-    {
-        $str = mb_strtolower($str, 'utf-8');
-        $fc = mb_strtoupper(mb_substr($str, 0, 1, 'utf-8'), 'utf-8');
-        return $fc . mb_substr($str, 1, null, 'utf-8');
-    }
 }
