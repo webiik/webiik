@@ -4,75 +4,70 @@ namespace Webiik;
 class Format
 {
     /**
-     * Return validated and formatted email on success, otherwise false
-     * @param $email
-     * @return bool|string
-     */
-    public function email($email)
-    {
-        $pattern = '/^[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*\@[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~]*\.[^\\\@\!\#\$\%\&\"\'\*\+\/\=\?\^\_\`\{\|\}\(\)\,\:\;\<\>\@\[\]\s\~\.]{2,63}$/';
-
-        preg_match($pattern, $email, $match);
-
-        if (empty($match)) {
-            return false;
-        }
-
-        return $email;
-    }
-
-    /**
-     * Return array with validated and formatted firstname and lastname(s) on success, otherwise false
+     * On success return array with formatted fullname, firstname and lastname
+     * On error return array with name filled with original data
      * @param $name
-     * @return bool|string
+     * @return array
      */
-    public function name($name, $maxNamePartLength = 10, $maxNameParts = 5)
+    public function nameArr($name)
     {
-        $name = explode(' ', trim($name, ' '));
-        $validName = [];
+        $validName['fullname'] = $name;
+        $validName['firstname'] = '';
+        $validName['lastname'] = '';
 
-        if (!isset($name[1])) {
-            return false;
-        }
+        $name = explode(' ', trim($name));
 
         $i = 0;
-        foreach ($name as $npart) {
-            if (!preg_match("/^[\p{L}\p{Mn}\p{Pd}'\x{2019}]+$/u", $npart)) {
-                return false;
-            }
+        foreach ($name as $namePart) {
 
-            if (mb_strlen($npart, 'utf-8') > $maxNamePartLength) {
-                return false;
-            }
-
-            if ($i > $maxNameParts) {
-                return false;
-            } elseif ($i == 0) {
-                $validName['firstname'] = $this->capitalize($npart);
+            if ($i == 0) {
+                $validName['firstname'] = $this->capitalize($namePart);
             } elseif ($i == 1) {
-                $validName['lastname'] = $this->capitalize($npart);
+                $validName['lastname'] = $this->capitalize($namePart);
             } else {
-                $validName['lastname'] .= ' ' . $this->capitalize($npart);
+
+                if (mb_strlen($namePart) < 3) {
+                    $validName['lastname'] .= ' ' . mb_strtolower($namePart);
+                } else {
+                    $validName['lastname'] .= ' ' . $this->capitalize($namePart);
+                }
             }
 
             $i++;
+        }
+
+        if ($i > 0) {
+            $validName['fullname'] = $validName['firstname'] . ' ' . $validName['lastname'];
         }
 
         return $validName;
     }
 
     /**
+     * On success return formatted name
+     * On error return original data
+     * @param $name
+     * @return mixed
+     */
+    public function name($name)
+    {
+        $nameArr = $this->nameArr($name);
+        return $nameArr['fullname'];
+    }
+
+    /**
      * On success return formatted $url
-     * On error return false  
+     * On error return original data
      * @param $url
      * @return bool|string
      */
     public function url($url)
     {
         $pu = parse_url($url);
-        $url = false;
 
         if ($pu) {
+
+            $url = false;
 
             if (isset($pu['scheme'])) {
                 $url .= strtolower($pu['scheme']) . '://';
