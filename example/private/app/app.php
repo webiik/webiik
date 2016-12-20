@@ -1,14 +1,15 @@
 <?php
+// Create configured Skeleton instance
 $app = new \Webiik\Skeleton($config);
 
-// Add template engine
+// Add template engine service
 $app->addService('Twig_Environment', function ($c){
 
     // Set Twig basic settings
     $loader = new Twig_Loader_Filesystem(__DIR__ . '/views');
     $twig = new Twig_Environment($loader, array(
         'cache' => __DIR__ . '/tmp/cache/views',
-        'debug' => $c['config']['internal']['debug'],
+        'debug' => $c['config']['error']['debug'],
     ));
 
     // Add Twig extension(s)
@@ -82,6 +83,42 @@ $app->addService('Twig_Environment', function ($c){
     });
     $twig->addFunction($function);
 
+    // Add flash functions
+
+    /* @var $flash \Webiik\Flash */
+    $flash = $c['Webiik\Flash'];
+
+    // Return flash messages for current request
+    $function = new \Twig_SimpleFunction('messages', function () use ($flash) {
+        return $flash->getFlashes();
+    });
+    $twig->addFunction($function);
+
+    // Add CSRF functions
+
+    /* @var $csrf \Webiik\Csrf */
+    $csrf = $c['Webiik\Csrf'];
+
+    // Return csrf hidden input field
+    $function = new \Twig_SimpleFunction('csrfInput', function () use ($csrf) {
+        return $csrf->getHiddenInput();
+    }, [
+        'is_safe' => ['html']
+    ]);
+    $twig->addFunction($function);
+
+    // Return csrf token
+    $function = new \Twig_SimpleFunction('csrfToken', function () use ($csrf) {
+        return $csrf->getToken();
+    });
+    $twig->addFunction($function);
+
+    // Return csrf token
+    $function = new \Twig_SimpleFunction('csrfTokenName', function () use ($csrf) {
+        return $csrf->getTokenName();
+    });
+    $twig->addFunction($function);
+
     // Return configured template engine
     return $twig;
 });
@@ -90,5 +127,5 @@ $app->addService('Twig_Environment', function ($c){
 $app->error404('Webiik\Error404:run');
 $app->error405('Webiik\Error405:run');
 
-// Run app
+// Run Skeleton
 $app->run();
