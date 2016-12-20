@@ -168,7 +168,7 @@ class Core
     /**
      * Inject dependencies from Container to $object using @inject doc comment
      */
-    public static function commentDI($object, Container $container)
+    public static function DIcomment($object, Container $container)
     {
         $reflection = new \ReflectionClass(get_class($object));
         $properties = $reflection->getProperties();
@@ -191,7 +191,7 @@ class Core
     /**
      * Inject dependencies from Container to $object using object constructor method
      */
-    public static function constructorDI($className, Container $container)
+    public static function DIconstructor($className, Container $container)
     {
         return self::prepareMethodParameters($className, '__construct', $container);
     }
@@ -199,7 +199,7 @@ class Core
     /**
      * Inject dependencies from Container to $object using object methods with inject prefix
      */
-    public static function methodDI($object, Container $container)
+    public static function DImethod($object, Container $container)
     {
         $methods = get_class_methods($object);
         foreach ($methods as $method) {
@@ -255,6 +255,9 @@ class Core
      */
     protected function error($error)
     {
+        if ($error == 404) header('HTTP/1.1 404 Not Found');
+        if ($error == 405) header('HTTP/1.1 405 Method Not Allowed');
+
         if (is_numeric($error) && isset($this->container['error' . $error])) {
 
             $handlerStr = $this->container['error' . $error];
@@ -268,8 +271,6 @@ class Core
 
         } else {
 
-            if ($error == 404) header('HTTP/1.1 404 Not Found');
-            if ($error == 405) header('HTTP/1.1 405 Method Not Allowed');
             echo '<h1>' . $error . '</h1>';
         }
 
