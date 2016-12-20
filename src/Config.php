@@ -22,10 +22,10 @@ class Config
         $configServer = $dir . '/config.php';
         $configLocal = $dir . '/config.local.php';
 
-        $config = require $configServer;
-
         if (file_exists($configLocal)) {
             $config = require $configLocal;
+        } else {
+            $config = require $configServer;
         }
 
         return $config;
