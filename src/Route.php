@@ -1,6 +1,5 @@
 <?php
 namespace Webiik;
-use Pimple\Container;
 
 /**
  * Class Route
