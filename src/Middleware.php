@@ -162,14 +162,14 @@ class Middleware
 
                 // Instantiate that class
                 if (method_exists($class, '__construct')) {
-                    $mw = new $class(...Core::constructorDI($class, $this->container));
+                    $mw = new $class(...Core::DIconstructor($class, $this->container));
                 } else {
                     $mw = new $class();
                 }
 
                 // Inject dependencies
-                Core::commentDI($mw, $this->container);
-                Core::methodDI($mw, $this->container);
+                Core::DIcomment($mw, $this->container);
+                Core::DImethod($mw, $this->container);
             }
         }
 
@@ -241,10 +241,10 @@ class Middleware
 
                 $class = $handler[0];
                 $method = isset($handler[1]) ? $handler[1] : false;
-                $handler = new $class(...Core::constructorDI($class, $this->container));
+                $handler = new $class(...Core::DIconstructor($class, $this->container));
 
-                Core::commentDI($handler, $this->container);
-                Core::methodDI($handler, $this->container);
+                Core::DIcomment($handler, $this->container);
+                Core::DImethod($handler, $this->container);
             }
         }
 
