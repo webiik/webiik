@@ -46,14 +46,14 @@ CREATE TABLE `auth_roles_actions`(
 # Users
 # Status:
 # 0 - inactive
-# 1 - active
+# 1 - activated
 # 2 - expired
-# 3 - forbidden
+# 3 - user requested deletion
 CREATE TABLE `auth_users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_id` TINYINT UNSIGNED NOT NULL,
   `email` VARCHAR(60) NOT NULL,
-  `pswd` CHAR(64) NOT NULL,
+  `pswd` CHAR(64) NULL,
   `signup_ts` INT,
   `status` TINYINT UNSIGNED,
   PRIMARY KEY (`id`),
@@ -65,28 +65,27 @@ CREATE TABLE `auth_users` (
 CREATE TABLE `auth_users_social` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
-  `provider_key` VARCHAR(128) NULL,
   `provider` VARCHAR(15) NOT NULL,
   UNIQUE INDEX `u_user` (`user_id`, `provider`),
   PRIMARY KEY (`id`),
-  CONSTRAINT `fks_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`),
+  CONSTRAINT `fkus_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`),
   INDEX `i_user_id` (`user_id`),
   INDEX `i_provider` (`provider`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `auth_users_suspended` (
+CREATE TABLE `auth_users_ban` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NULL,
+  `ip_v4` VARCHAR(15) NULL,
   `till_ts` INT,
   PRIMARY KEY (`id`),
   INDEX `i_user_id` (`user_id`),
+  INDEX `i_ip_v4` (`ip_v4`),
   INDEX `i_till_ts` (`till_ts`),
-  CONSTRAINT `fkss_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  CONSTRAINT `fkub_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-# Steps:
-# -> User receives email with activation link
-# -> User confirms activation by clicking the activation link
+# https://paragonie.com/blog/2015/04/secure-authentication-php-with-long-term-persistence#title.2
 CREATE TABLE `auth_tokens_activation` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
@@ -98,10 +97,107 @@ CREATE TABLE `auth_tokens_activation` (
   INDEX `i_user_id` (`user_id`),
   INDEX `i_selector` (`selector`),
   INDEX `i_expires` (`expires`),
-  CONSTRAINT `fka_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  CONSTRAINT `fkta_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-# https://paragonie.com/blog/2015/04/secure-authentication-php-with-long-term-persistence#title.2
+CREATE TABLE `auth_tokens_re_activation` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktra_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_pairing_google` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktpg_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_re_pairing_google` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktrg_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_pairing_facebook` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktpf_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_re_pairing_facebook` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktrf_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_pairing_twitter` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktpt_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_re_pairing_twitter` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktrt_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 CREATE TABLE `auth_tokens_permanent` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
@@ -113,14 +209,10 @@ CREATE TABLE `auth_tokens_permanent` (
   INDEX `i_user_id` (`user_id`),
   INDEX `i_selector` (`selector`),
   INDEX `i_expires` (`expires`),
-  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  CONSTRAINT `fkatp_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-# Steps:
-# -> User sends password request by submitting the email address
-# -> User receives email with link to password change page
-# -> User sets new password on that page
-CREATE TABLE `auth_tokens_password` (
+CREATE TABLE `auth_tokens_pswd_renewal` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
   `selector` CHAR(12),
@@ -131,13 +223,26 @@ CREATE TABLE `auth_tokens_password` (
   INDEX `i_user_id` (`user_id`),
   INDEX `i_selector` (`selector`),
   INDEX `i_expires` (`expires`),
-  CONSTRAINT `fkpswd_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  CONSTRAINT `fktpr_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `auth_tokens_deletion` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `selector` CHAR(12),
+  `token` CHAR(64),
+  `expires` INT,
+  UNIQUE (`selector`),
+  PRIMARY KEY (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_selector` (`selector`),
+  INDEX `i_expires` (`expires`),
+  CONSTRAINT `fktd_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # Inserts
 INSERT INTO `auth_roles` (role) VALUES ('user');
 INSERT INTO `auth_actions` (action) VALUES ('access-account');
 INSERT INTO `auth_roles_actions` (`role_id`, `action_id`) VALUES (1, 1);
-#INSERT INTO auth_users (role_id, email, pswd, signup_ts) VALUES (1, 'jiri@mihal.me', '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', UNIX_TIMESTAMP());
-#INSERT INTO auth_users_activated (user_id) VALUES (1);
-#INSERT INTO auth_tokens_activation (user_id, selector, token, expires) VALUES (1, )
+
+INSERT INTO auth_users (role_id, email, pswd, signup_ts) VALUES (1, 'jiri@mihal.me', '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08', UNIX_TIMESTAMP());

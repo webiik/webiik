@@ -3,53 +3,38 @@ namespace Webiik;
 
 class AuthMw
 {
-    /**
-     * @var Auth
-     */
     private $auth;
-
-    /**
-     * @var Router
-     */
+    private $csrf;
     private $router;
+    private $translation;
+    private $render;
+    private $flash;
 
-    /**
-     * Auth configuration
-     * @var $config
-     */
-    private $config = [
-        // Login route name
-        'loginRouteName' => false,
-    ];
+    // Todo: Do not hard-code texts of flashes and messages
 
     /**
      * AuthMw constructor.
      * @param Auth $auth
      * @param Router $router
      */
-    public function __construct(Auth $auth, Router $router)
+    public function __construct(Auth $auth, Csrf $csrf, Router $router, Translation $translation, Render $render, Flash $flash)
     {
         $this->auth = $auth;
+        $this->csrf = $csrf;
         $this->router = $router;
-    }
-
-    /**
-     * @param string $string
-     */
-    public function confLoginRouteName($string)
-    {
-        $this->config['loginRouteName'] = $string;
+        $this->translation = $translation;
+        $this->render = $render;
+        $this->flash = $flash;
     }
 
     /**
      * Check if user is logged in and create logged session if it's necessary
-     * If user is logged in, add uid into Request and run next middleware
-     * If user is logged out redirect user to 'routeName' page or home page
+     * If user is logged, add uid to Request and run next middleware
+     * If user isn't logged, show login page
      * @param Request $request
      * @param \Closure $next
-     * @param bool $backRef
      */
-    public function redirectUnloggedUser(Request $request, \Closure $next, $backRef = true)
+    public function isLogged(Request $request, \Closure $next)
     {
         $uid = $this->auth->isUserLogged();
 
@@ -60,64 +45,42 @@ class AuthMw
 
         } else {
 
-            if ($backRef) {
-                $url = $this->getLoginUrl() . '?ref=' . $request->getUrl();
-            } else {
-                $url = $this->getLoginUrl();
+            if (!$_POST) {
+                $this->flash->addFlashNow('err', 'Log in to view this site.');
             }
 
-            $this->auth->redirect($url);
+            $this->showLoginPage();
         }
     }
 
     /**
-     * Check if user is logged in and create logged session if it's necessary
-     * If user is logged in redirect user to 'routeName' page or home page
-     * If user is logged out run next middleware
+     * Check if user isn't logged in and create logged session if it's necessary
+     * If user isn't logged, run next middleware
+     * If user is logged, redirect user to $routeName
      * @param Request $request
      * @param \Closure $next
-     * @param bool $routeName
      */
-    public function redirectLoggedUser(Request $request, \Closure $next, $routeName = false)
+    public function isNotLogged(Request $request, \Closure $next, $routeName)
     {
         $uid = $this->auth->isUserLogged();
 
-        if (!$uid) {
-
-            $next($request);
-
+        if ($uid) {
+            $request->set('uid', $uid);
+            $this->auth->redirect($this->router->getUrlFor($routeName));
         } else {
-
-            // If there is valid referrer, redirect user to that referrer
-            $url = $this->getReferrer();
-            $this->auth->redirect($url);
-
-            // If there is no valid referrer, the redirect automatically fails,
-            // so redirect the user to routeName page or home page
-            $url = false;
-
-            if ($routeName) {
-                $url = $request->getRootUrl() . $this->router->getUriFor($routeName);
-            }
-
-            if (!$url) {
-                $url = $request->getRootUrl() . $this->router->getBasePath();
-            }
-
-            $this->auth->redirect($url);
+            $next($request);
         }
     }
 
     /**
      * Check if user can perform the action
      * On success add uid to Request and run next middleware
-     * On fail redirect to login page
+     * On fail show login page
      * @param Request $request
      * @param \Closure $next
      * @param string $action
-     * @param bool $backRef
      */
-    public function userCan(Request $request, \Closure $next, $action, $backRef = true)
+    public function can(Request $request, \Closure $next, $action)
     {
         $uid = $this->auth->userCan($action);
 
@@ -128,69 +91,29 @@ class AuthMw
 
         } else {
 
-            $uid = $this->auth->isUserLogged();
+            if (!$_POST) {
 
-            if ($uid) {
-                // User does not have permissions to view this site
-                // Redirect user to home page
-                $this->auth->redirect($request->getRootUrl() . $this->router->getBasePath());
+                $uid = $this->auth->isUserLogged();
+
+                if ($uid) {
+                    $msg = 'You don\'t have permissions to view this site.';
+                } else {
+                    $msg = 'Log in to view this site.';
+                }
+
+                $this->flash->addFlashNow('err', $msg);
             }
 
-            if ($backRef) {
-                $url = $this->getLoginUrl() . '?ref=' . $request->getUrl();
-            } else {
-                $url = $this->getLoginUrl();
-            }
-
-            $this->auth->redirect($url);
+            $this->showLoginPage();
         }
     }
 
     /**
-     * Get login URL
-     * On success return login URL
-     * On error throw exception
-     * @return bool|string
-     * @throws \Exception
+     * Run login page controller
      */
-    private function getLoginUrl()
+    private function showLoginPage()
     {
-        if (!$this->config['loginRouteName']) {
-            throw new \Exception('Login route name is not set.');
-        }
-
-        $url = $this->router->getUrlFor($this->config['loginRouteName']);
-
-        if (!$url) {
-            throw new \Exception('Login route name does not exist.');
-        }
-
-        return $url;
-    }
-
-    /**
-     * Return referrer from $_GET or $_POST
-     * @return mixed
-     */
-    private function getReferrer()
-    {
-        $referrer = false;
-
-        // If we have both, get and post must be same
-        if (isset($_GET['ref']) && isset($_POST['ref'])) {
-            if ($_GET['ref'] != $_POST['ref']) {
-                return false;
-            }
-        }
-
-        if (isset($_GET['ref'])) {
-            $referrer = $_GET['ref'];
-        }
-
-        if (isset($_POST['ref'])) {
-            $referrer = $_POST['ref'];
-        }
-
-        return $referrer;
+        $loginController = new AuthLogin($this->flash, $this->render, $this->auth, $this->csrf, $this->router, $this->translation);
+        $loginController->run(true);
     }
 }

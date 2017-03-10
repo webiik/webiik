@@ -6,6 +6,7 @@
     "psr-4": {
       "Webiik\\": [
         "app/controllers",
+        "app/middlewares",
         "app/traits",
         "app/models"
       ]

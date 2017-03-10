@@ -7,37 +7,46 @@
  */
 return [
     // User account service routes
+    // Todo: All auth ajax routes and its controllers
     'signup' => [
         'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Signup:run',
+        'controller' => 'Webiik\AuthSignup:run',
     ],
     'login' => [
         'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Login:run',
+        'controller' => 'Webiik\AuthLogin:run',
     ],
-    'forgot-request' => [
-        'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\ForgotRequest:run',
-    ],
-    'forgot-confirm' => [
-        'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\ForgotConfirm:run',
-    ],
-    'activate' => [
-        'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Activate:run',
-    ],
-    'activate-request' => [
+    'social-facebook' => [
         'methods' => ['GET'],
-        'controller' => 'Webiik\ActivateRequest:run',
+        'controller' => 'Webiik\AuthSocialFacebook:run',
     ],
-    'activate-confirm' => [
+    'password-renewal' => [
         'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\ActivateConfirm:run',
+        'controller' => 'Webiik\AuthPasswordRenewal:run',
+    ],
+    'password-update' => [
+        'methods' => ['GET', 'POST'],
+        'controller' => 'Webiik\AuthPasswordUpdate:run',
+    ],
+    'activation-send' => [
+        'methods' => ['GET'],
+        'controller' => 'Webiik\AuthActivationSend:run',
+    ],
+    'activation-confirm' => [
+        'methods' => ['GET'],
+        'controller' => 'Webiik\AuthActivationConfirm:run',
+    ],
+    'social-pairing-send' => [
+        'methods' => ['GET'],
+        'controller' => 'Webiik\AuthSocialPairingSend:run',
+    ],
+    'social-pairing-confirm' => [
+        'methods' => ['GET'],
+        'controller' => 'Webiik\AuthSocialPairingConfirm:run',
     ],
     'logout' => [
-        'methods' => ['GET', 'POST'],
-        'controller' => 'Webiik\Logout:run',
+        'methods' => ['GET'],
+        'controller' => 'Webiik\AuthLogout:run',
     ],
     // Website routes
     'home' => [
@@ -47,6 +56,9 @@ return [
     'account' => [
         'methods' => ['GET', 'POST'],
         'controller' => 'Webiik\Account:run',
+        'middlewares' => [
+            'Webiik\AuthMw:can' => ['access-account'],
+        ],
     ],
     'admin' => [
         'methods' => ['GET', 'POST'],

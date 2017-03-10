@@ -1,32 +1,25 @@
 <?php
 namespace Webiik;
 
-class Account extends LoginLauncher
+class Account
 {
-    public function __construct(
-        Translation $translation,
-        \Twig_Environment $twig,
-        Auth $auth,
-        Flash $flash,
-        Csrf $csrf,
-        Router $router,
-        Sessions $sessions
-    )
+    private $translation;
+    private $render;
+
+    /**
+     * Controller constructor.
+     */
+    public function __construct(Translation $translation, Render $render)
     {
-        parent::__construct($translation, $twig, $auth, $flash, $csrf, $router);
-        $this->sessions = $sessions;
+        $this->translation = $translation;
+        $this->render = $render;
     }
 
     public function run()
     {
-        // If user can't perform given action, run login controller instead of current controller.
-        // It is better than redirecting user to login route. But if want to use redirection then
-        // remove LoginLauncher and this row and add route middleware AuthMw:userCan in /routes/routes.php
-        $this->userCan('access-account');
-
         // Get merged translations
         // We always get all shared translations and translations only for current page,
-        // Skeleton is smart and save resources, so adds only these data to Translation class
+        // because Skeleton save resources and adds only these data to Translation class
         $translations = $this->translation->_tAll(false);
 
         // Parse some values
@@ -34,6 +27,6 @@ class Account extends LoginLauncher
         $translations['t2'] = $this->translation->_p('t2', ['numCats' => 1]);
 
         // Render page
-        echo $this->twig->render('home.twig', $translations);
+        echo $this->render->render(['home.twig', $translations]);
     }
 }

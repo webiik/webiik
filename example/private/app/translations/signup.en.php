@@ -10,6 +10,6 @@ return [
         'desc' => 'Welcome to Webiik sign up page.',
         'kw' => 'webiik, php, platform',
     ],
-    'msgActivateP1' => 'Activate your account within {timeStamp, time}.',
+    'msgActivateP1' => 'Activate your account till {timeStamp, date}, {timeStamp, time}.',
     'msgActivateP2' => 'Resend activation email?',
 ];

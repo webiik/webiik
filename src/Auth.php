@@ -28,31 +28,42 @@ class Auth
      * @var $config
      */
     private $config = [
-        // How many days can be the user logged in
+        // How many hours can be the user logged in
         'permanent' => 0,
         // Require account activation or not
         'withActivation' => false,
-        // Allow 60 login attempts per 1 hour from same ip
-        'login' => [60, 3600],
-        // Allow 120 is logged attempts per 60s from same ip
-        'is-logged' => [120, 60],
-        // Allow 30 sign-up attempts per 1 hour from same ip
-        'signup' => [30, 3600],
-        // Allow 8 activation requests/confirmations per 1 hour from same ip
-        'activation-request' => [8, 3600],
-        'activation-confirmation' => [8, 3600],
-        // Allow 4 password renewal requests/confirmations per 24 hours from same ip
-        'password-request' => [4, 86400],
-        'password-confirmation' => [4, 86400],
-        // Allow activate account or confirm password renewal within 24 hours
-        // older records will be deleted
+        // Number of attempt to login, sign-up, token actions
+        // Allow 60 attempts per 1 hour from same ip
+        'attemptsLimit' => [60, 3600],
+        // Automatically delete expired tokens and attempts
+        'autoDelete' => true,
+        // Allow validate token within 24 hours
         'confirmationTime' => 86400,
         // Permanent login cookie name
-        'cookieName' => 'PC',
+        'loginSessionName' => 'logged',
+        // Permanent login cookie name
+        'permanentCookieName' => 'PC',
         // Password salt
         'salt' => 'r489cjd3Xhed',
-        // Account service URIs
-        'uri' => [],
+        // Distinguish languages
+        'lang' => '',
+    ];
+
+    /**
+     * @var array
+     */
+    private $allowedAuthTokenTableNames = [
+        'auth_tokens_activation',
+        'auth_tokens_re_activation',
+        'auth_tokens_pairing_google',
+        'auth_tokens_re_pairing_google',
+        'auth_tokens_pairing_facebook',
+        'auth_tokens_re_pairing_facebook',
+        'auth_tokens_pairing_twitter',
+        'auth_tokens_re_pairing_twitter',
+        'auth_tokens_deletion',
+        'auth_tokens_permanent',
+        'auth_tokens_pswd_renewal',
     ];
 
     /**
@@ -80,21 +91,41 @@ class Auth
     }
 
     /**
+     * Configure salt
+     * @param string $string
+     */
+    public function confLang($string)
+    {
+        $this->config['lang'] = $string;
+        $this->config['loginSessionName'] .= $string;
+        $this->config['permanentCookieName'] .= $string;
+    }
+
+    /**
+     * Configure login session name
+     * @param string $string
+     */
+    public function confLoginSessionName($string)
+    {
+        $this->config['loginSessionName'] = $string . $this->config['lang'];
+    }
+
+    /**
      * Configure permanent cookie name
      * @param string $string
      */
     public function confCookieName($string)
     {
-        $this->config['cookieName'] = $string;
+        $this->config['permanentCookieName'] = $string . $this->config['lang'];
     }
 
     /**
      * Configure how many days can permanently logged user be logged in
-     * @param int $days
+     * @param int $hours
      */
-    public function confPermanent($days)
+    public function confPermanent($hours)
     {
-        $this->config['permanent'] = $days;
+        $this->config['permanent'] = $hours;
     }
 
     /**
@@ -107,62 +138,13 @@ class Auth
     }
 
     /**
-     * Configure account service URIs
-     * If you want to use redirection by referrer in login, signup etc., you will configure this
-     * If URIs are set, then user will not be redirected to referrer equal to account service URIs
-     * Very helpful to preventing redirects like login->logout, login->signup etc.
-     * URI is URL without scheme eg. 'webiik.com/login/'
-     * @param array $uris
-     */
-    public function confURIs(array $uris)
-    {
-        $this->config['uri'] = $uris;
-    }
-
-    /**
-     * Configure get user from DB (login) attempts count per time period from same IP
+     * Configure attempts limit per time period from same IP
      * @param int $count
      * @param int $sec
      */
-    public function confUserGetAttempts($count, $sec)
+    public function confAttemptsLimit($count, $sec)
     {
-        $this->config['login'] = [$count, $sec];
-    }
-
-    /**
-     * Configure set user to DB (sign-up) attempts count per time period from same IP
-     * @param int $count
-     * @param int $sec
-     */
-    public function confUserSetAttempts($count, $sec)
-    {
-        $this->config['signup'] = [$count, $sec];
-    }
-
-    /**
-     * Configure password renewal attempts count per time period from same IP
-     * @param int $count
-     * @param int $sec
-     */
-    public function confUserPswdAttempts($count, $sec)
-    {
-        // Attempts for password change request and password change confirmation
-        $this->config['password-request'] = [$count, $sec];
-        $this->config['password-confirmation'] = [$count, $sec];
-
-    }
-
-    /**
-     * Configure activation attempts count per time period from same IP
-     * @param int $count
-     * @param int $sec
-     */
-    public function confUserActivationAttempts($count, $sec)
-    {
-        // Attempts for account activation
-        $this->config['activation-request'] = [$count, $sec];
-        $this->config['activation-confirmation'] = [$count, $sec];
-
+        $this->config['attemptsLimit'] = [$count, $sec];
     }
 
     /**
@@ -177,25 +159,17 @@ class Auth
     /**
      * Create logged session with given user id, eventually do steps necessary for permanent login
      * @param int $uid
+     * @param bool $permanent
      */
-    public function userLogin($uid)
+    public function userLogin($uid, $permanent = false)
     {
         $this->sessions->sessionRegenerateId();
-        $this->sessions->setToSession('logged', $uid);
+        $this->sessions->setToSession($this->config['loginSessionName'], $uid);
 
-        if ($this->config['permanent'] > 0) {
-            $this->userLoginPermanent($uid);
+        if ($permanent && $this->config['permanent'] > 0) {
+            $expirationTs = time() + $this->config['permanent'] * 60 * 60;
+            $this->authCookieCreate($uid, $this->config['permanentCookieName'], $expirationTs, 'auth_tokens_permanent');
         }
-    }
-
-    /**
-     *  Delete all logged indicators and for sure destroy session
-     */
-    public function userLogout()
-    {
-        $this->userLogoutPermanent();
-        $this->sessions->delFromSession('logged');
-        $this->sessions->sessionDestroy();
     }
 
     /**
@@ -205,14 +179,14 @@ class Auth
      */
     public function isUserLogged()
     {
-        $uid = $this->sessions->getFromSession('logged');
+        $uid = $this->sessions->getFromSession($this->config['loginSessionName']);
 
         if ($uid) {
             return $uid;
         }
 
         if ($this->config['permanent'] > 0) {
-            $uid = $this->isUserPermanentlyLogged();
+            $uid = $this->authCookieCheck($this->config['permanentCookieName'], 'auth_tokens_permanent');
         }
 
         if ($uid) {
@@ -220,6 +194,16 @@ class Auth
         }
 
         return $uid;
+    }
+
+    /**
+     *  Delete all logged indicators and for sure destroy session
+     */
+    public function userLogout()
+    {
+        $this->authCookieDelete($this->config['permanentCookieName'], 'auth_tokens_permanent');
+        $this->sessions->delFromSession($this->config['loginSessionName']);
+        $this->sessions->sessionDestroy();
     }
 
     /**
@@ -241,41 +225,14 @@ class Auth
 
     /**
      * Redirect user to specified $url
-     * If referrer is allowed and exists, redirect user to referrer instead of $url
      * @param string $url
-     * @param bool $allowReferrer
+     * @param bool $safe - Redirect only to URLs from current domain
+     * @return bool
      */
-    public function redirect($url, $allowReferrer = false)
+    public function redirect($url, $safe = true)
     {
-        if ($allowReferrer) {
-
-            // Do we have some referrer?
-            $referrer = $this->getReferrer();
-
-            if ($referrer) {
-
-                // Re-format referrer URL
-                $parsedReferrerUrl = parse_url($referrer);
-
-                $scheme = isset($parsedReferrerUrl['scheme']) ? $parsedReferrerUrl['scheme'] : false;
-                $host = isset($parsedReferrerUrl['host']) ? $parsedReferrerUrl['host'] : false;
-                $path = isset($parsedReferrerUrl['path']) ? $parsedReferrerUrl['path'] : '';
-
-                // Is referrer from current domain?
-                if ($scheme && $host == $_SERVER['SERVER_NAME']) {
-
-                    $referrerUri = $host . $path;
-
-                    // Is referrer different than account service pages?
-                    foreach ($this->config['uri'] as $uri) {
-
-                        if ($uri != $referrerUri) {
-                            $url = $referrer;
-                            break;
-                        }
-                    }
-                }
-            }
+        if ($safe && !$this->isUrlFromCurrentDomain($url)) {
+            return false;
         }
 
         header('HTTP/1.1 302 Found');
@@ -297,7 +254,6 @@ class Auth
         }
 
         // Check if user can do the action
-
         $pdo = $this->connection->connect();
 
         // Get available user actions
@@ -324,8 +280,15 @@ class Auth
      * Set user in to database
      *
      * On success return array:
-     * without activation ['err' => false, 'uid' => int, 'msg' => string]
-     * with activation ['err' => false, 'uid' => int, 'msg' => string, 'selector' => int, 'token' => int, 'expires' => timestamp]
+     * ['err' => false, 'uid' => int, 'msg' => string]
+     *
+     * On success with activation will add:
+     * 'tokens' =>
+     *      ['activation' => ['selector' => int, 'token' => int, 'expires' => timestamp]
+     *      ['re-activation' => ['selector' => int, 'token' => int, 'expires' => timestamp]
+     *
+     * On success with social will add:
+     * ['provider' => string, 'providerKey' => mixed]
      *
      * On error return array:
      * ['err' => int, 'uid' => bool|int, 'msg' => string]
@@ -335,18 +298,17 @@ class Auth
      * 2 - Too many attempts
      * 3 - User already exists
      * 4 - Unexpected error, it is unable to store user in database
-     * 5 - User was forbidden
-     * 6 - Unexpected error, can't create activation token
-     * 7 - Unexpected error, it is unable to store user in social database
+     * 5 - Unexpected error, can't generate token
+     * 6 - Unexpected error, it is unable to store user in social database
+     * 7 - IP is banned
      *
      * @param string $email
      * @param string $pswd
      * @param int $roleId
-     * @param bool $provider
-     * @param bool $providerKey
+     * @param bool|string $provider
      * @return array
      */
-    public function userSet($email, $pswd, $roleId, $provider = false, $providerKey = false)
+    public function userSet($email, $pswd, $roleId, $provider = false)
     {
         // Default return data
         $data = [
@@ -355,39 +317,45 @@ class Auth
             'msg' => 'Unexpected error.',
         ];
 
-        // Check if user does not exceeded allowed attempts count and if not store new attempt
-        if (!$this->attempts('signup', 10)) {
+        // Is IP banned?
+        if ($banned = $this->userIsBanned()) {
+            // Err: User is banned
+            $data['err'] = 7;
+            $data['ts'] = $banned['till_ts'];
+            $data['msg'] = 'User is banned.';
+        }
 
+        // Check if user does not exceeded allowed attempts count and if not store new attempt
+        if (!$this->attempts()) {
             // Err: Too many attempts
             $data['err'] = 2;
-            $data['msg'] = 'Too many signup attempts.';
+            $data['msg'] = 'Too many attempts.';
             return $data;
         }
 
         // Get database connection
         $db = $this->connection->connect();
 
-        // Check if activated or forbidden user already exists
-        $q = $db->prepare('SELECT id, status FROM auth_users WHERE email = ? AND status = 1 OR status = 3');
+        // Check if activated user already exists
+        $q = $db->prepare('SELECT id, status FROM auth_users WHERE email = ? AND status = 1');
         $q->execute([$email]);
         $r = $q->fetch();
 
         if ($r) {
-            // Email address was forbidden
-            if ($r['status'] == 3) {
-                $data['err'] = 5;
-                $data['msg'] = 'User was forbidden.';
-                return $data;
-            }
-
             // User already exists
             $data['err'] = 3;
             $data['msg'] = 'User already exists.';
             return $data;
         }
 
-        // Do following only when activation is required
+        // Set default user status to active
+        $status = 1;
+
+        // Do following only when account activation is required
         if ($this->config['withActivation']) {
+
+            // Set default user status to inactive
+            $status = 0;
 
             // Check if there is some user with same email and pending activation
             $q = $db->prepare('
@@ -396,7 +364,7 @@ class Auth
                 LEFT JOIN auth_tokens_activation ata
                 ON ata.user_id = au.id                
                 WHERE au.email = ?
-                AND au.status < 2
+                AND au.status = 0
                 AND ata.expires > UNIX_TIMESTAMP()
             ');
             $q->execute([$email]);
@@ -405,8 +373,34 @@ class Auth
             // We found user with same email and pending activation
             // Err: User already exists
             if ($r) {
+
+                // Get re-activation token
+                // Every user with pending activation should have re-activation token too
+                $token = $this->tokenUserHasValid($r['id'], 'auth_tokens_re_activation');
+
+                // Err: Unable to get any re-activation token
+                if ($token['err']) {
+                    $data['err'] = 5;
+                    $data['msg'] = $token['msg'];
+                    return $data;
+                }
+
+                // Generate new re-activation token
+                $token = $this->tokenGenerate($r['id'], 'auth_tokens_re_activation', $token['expires']);
+
+                // Err: Unable to generate re-activation token
+                if ($token['err']) {
+                    $data['err'] = 5;
+                    $data['msg'] = $token['msg'];
+                    return $data;
+                }
+
+                // Err: User with pending activation exists
+                $data['tokens']['re-activation']['token'] = $token['token'];
+                $data['tokens']['re-activation']['selector'] = $token['selector'];
+                $data['tokens']['re-activation']['expires'] = $token['expires'];
                 $data['err'] = 3;
-                $data['msg'] = 'User already exists.';
+                $data['msg'] = 'User with pending activation exists.';
                 return $data;
             }
 
@@ -416,12 +410,16 @@ class Auth
             $q->execute([$email]);
         }
 
-        // Determine user status based on activation
-        $status = $this->config['withActivation'] ? 0 : 1;
+        // Set empty password if user is signed up via social
+        if ($provider) {
+            $pswd = '';
+        } else {
+            $pswd = hash_hmac('sha256', $pswd, $this->config['salt']);
+        }
 
-        // Store user in database
+        // Add user in to table auth_users
         $q = $db->prepare('INSERT INTO auth_users (role_id, email, pswd, signup_ts, status) VALUES (?, ?, ?, UNIX_TIMESTAMP(), ?)');
-        $q->execute([$roleId, $email, hash_hmac('sha256', $pswd, $this->config['salt']), $status]);
+        $q->execute([$roleId, $email, $pswd, $status]);
 
         // Try to get user id
         $uid = $q->rowCount() > 0 ? $db->lastInsertId() : false;
@@ -433,38 +431,55 @@ class Auth
             return $data;
         }
 
-        // Update user id value
+        // Set response data user id value
         $data['uid'] = $uid;
 
-        // Generate activation token when activation is required
-        if ($this->config['withActivation']) {
-
-            $res = $this->generateToken($uid, 'auth_tokens_activation', time() + $this->config['confirmationTime']);
-
-            if ($res['err']) {
-                $data['err'] = 6;
-                $data['msg'] = $res['msg'];
-            }
-
-            $data['token'] = $res['token'];
-            $data['selector'] = $res['selector'];
-            $data['expires'] = $res['expires'];
-        }
-
         // If it's social sign-up, add user also to table auth_users_social
-        if ($provider && $providerKey) {
-            $q = $db->prepare('INSERT INTO auth_users_social (provider, provider_key, user_id) VALUES (?, ?, ?)');
-            $q->execute([$provider, $providerKey, $uid]);
+        if ($provider) {
+            $q = $db->prepare('INSERT INTO auth_users_social (provider, user_id) VALUES (?, ?)');
+            $q->execute([$provider, $uid]);
 
             if ($q->rowCount() < 1) {
-                $data['err'] = 7;
+                $data['err'] = 6;
                 $data['msg'] = 'Unexpected error, it is unable to store user in social database.';
                 return $data;
             }
         }
 
+        // Generate activation and re-activation token when activation is required
+        if ($this->config['withActivation']) {
+
+            $tokenExpirationTs = time() + $this->config['confirmationTime'];
+
+            $token = $this->tokenGenerate($uid, 'auth_tokens_re_activation', $tokenExpirationTs);
+
+            // Err: Unable to generate token
+            if ($token['err']) {
+                $data['err'] = 5;
+                $data['msg'] = $token['msg'];
+                return $data;
+            }
+
+            $data['tokens']['re-activation']['token'] = $token['token'];
+            $data['tokens']['re-activation']['selector'] = $token['selector'];
+            $data['tokens']['re-activation']['expires'] = $token['expires'];
+
+            $token = $this->tokenGenerate($uid, 'auth_tokens_activation', $tokenExpirationTs);
+
+            // Err: Unable to generate token
+            if ($token['err']) {
+                $data['err'] = 5;
+                $data['msg'] = $token['msg'];
+                return $data;
+            }
+
+            $data['tokens']['activation']['token'] = $token['token'];
+            $data['tokens']['activation']['selector'] = $token['selector'];
+            $data['tokens']['activation']['expires'] = $token['expires'];
+        }
+
         $data['err'] = false;
-        $data['msg'] = 'User was successfully signed up.';
+        $data['msg'] = 'User was successfully set.';
 
         return $data;
     }
@@ -478,26 +493,33 @@ class Auth
      * On error return array:
      * ['err' => int, 'uid' => false|int, 'msg' => string]
      *
+     * On error with activation err 4 will add:
+     * ['tokens' => ['re-activation' => ['selector' => int, 'token' => int, 'expires' => timestamp]]
+     *
+     * On error with activation err 8 will add:
+     * ['providers' => arr]
+     *
+     * On error with activation err 10 will add:
+     * ['tokens' => ['re-pairing' => ['selector' => int, 'token' => int, 'expires' => timestamp]]
+     *
      * Error codes:
      * 1 - Unexpected error
      * 2 - Too many attempts
-     * 3 - Unexpected error, more users exist
-     * 4 - User does not exist
-     * 5 - User was forbidden
-     * 6 - User is suspended
-     * 7 - Password is not set
-     * 8 - Password isn't correct
-     * 9 - Inactive, pending activation
-     * 10 - Inactive, can be re-activated
-     * 11 - User does not exist in auth_users_social
+     * 3 - Can't generate token
+     * 4 - User is not activated
+     * 5 - Unexpected error, more users exist
+     * 6 - User does not exist
+     * 7 - User is banned
+     * 8 - Password is not set
+     * 9 - Password does not match
+     * 10 - Social account is not paired with main account
      *
      * @param string $email
      * @param string $pswd
-     * @param bool $social
      * @param bool|string $provider
      * @return array
      */
-    public function userGet($email, $pswd, $social = false, $provider = false)
+    public function userGet($email, $pswd, $provider = false)
     {
         // Default return data
         $data = [
@@ -507,236 +529,176 @@ class Auth
         ];
 
         // Check if user does not exceeded allowed attempts count and if not store new attempt
-        if (!$this->attempts('login', 10)) {
-
+        if (!$this->attempts()) {
             // Err: Too many attempts
             $data['err'] = 2;
-            $data['msg'] = 'Too many login attempts.';
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
+
+        // If it's not social log-in, password is required
+        if (!$provider && (!$pswd || $pswd == '')) {
+            $data['err'] = 9;
+            $data['msg'] = 'Incorrect password.';
             return $data;
         }
 
         // Get connection
         $db = $this->connection->connect();
 
-        // Get unexpired or forbidden user from database
-        $q = $db->prepare('SELECT id, pswd, status FROM auth_users WHERE email = ? AND status < 2 OR status = 3');
+        // Check if activated user exists
+        $q = $db->prepare('SELECT id, pswd, status FROM auth_users WHERE email = ? AND status <= 1');
         $q->execute([$email]);
         $r = $q->fetchAll(\PDO::FETCH_ASSOC);
-        $rowCount = count($r);
+        $validUsersCount = count($r);
 
-        // Err: Unexpected error, more users exist
-        if ($rowCount > 1) {
-            $data['err'] = 3;
+        if ($validUsersCount == 1) {
+
+            // Set user id value
+            $data['uid'] = $r[0]['id'];
+
+            // Is user banned?
+            if ($banned = $this->userIsBanned($r[0]['id'])) {
+                // Err: User is banned
+                $data['err'] = 7;
+                $data['ts'] = $banned['till_ts'];
+                $data['msg'] = 'User is banned.';
+                return $data;
+            }
+        }
+
+        if ($validUsersCount == 1 && $r[0]['status'] == 0) {
+
+            if (!$this->config['withActivation']) {
+
+                // We can't count user with status 0 as valid if activation is not required.
+                $validUsersCount = 0;
+
+            } else {
+
+                // Inactive user or user with pending activation exists
+                // Offer this user to get activation token again
+
+                // Try to get existing valid re-activation token by user id
+                $token = $this->tokenUserHasValid($r[0]['id'], 'auth_tokens_re_activation');
+
+                // If there is existing valid re-activation token, use expiration date of this token
+                if (!$token['err']) {
+                    $expires = $token['expires'];
+                } else {
+                    $expires = time() + $this->config['confirmationTime'];
+                }
+
+                // Generate new re-activation token
+                $token = $this->tokenGenerate($r[0]['id'], 'auth_tokens_re_activation', $expires);
+
+                // Err during generating token
+                if ($token['err']) {
+                    $data['err'] = 3;
+                    $data['msg'] = $token['msg'];
+                    return $data;
+                }
+
+                // Err: User isn't activated, but can be (re)activated
+                $data['tokens']['re-activation']['token'] = $token['token'];
+                $data['tokens']['re-activation']['selector'] = $token['selector'];
+                $data['tokens']['re-activation']['expires'] = $token['expires'];
+            }
+        }
+
+        // Err: Unexpected error, more valid users exist
+        if ($validUsersCount > 1) {
+            $data['err'] = 5;
             $data['msg'] = 'Unexpected error, more users exist.';
             return $data;
         }
 
         // Err: User does not exist
-        if ($rowCount == 0) {
-            $data['err'] = 4;
+        if ($validUsersCount == 0) {
+            $data['err'] = 6;
             $data['msg'] = 'User does not exist.';
             return $data;
         }
 
-        // Update user id value
-        $data['uid'] = $r['id'];
-
-        // Err: User was forbidden
-        if ($r['status'] == 3) {
-            $data['err'] = 5;
-            $data['msg'] = 'User was forbidden.';
-            return $data;
-        }
-
-        // Is user suspended?
-        $q = $db->prepare('
-            SELECT till_ts 
-            FROM auth_users_suspended 
-            WHERE user_id = ? 
-            AND till_ts > UNIX_TIMESTAMP()
-            ORDER BY till_ts DESC
-            LIMIT 1
-        ');
-        $q->execute([$r['id']]);
-        $row = $q->fetch();
-
-        // Err: User is suspended
-        if ($row) {
-            $data['err'] = 6;
-            $data['ts'] = $row['till_ts'];
-            $data['msg'] = 'User is suspended.';
-        }
-
         // Check password, but only if it's not social login
-        if (!$social && !$this->token->compare(hash_hmac('sha256', $pswd, $this->config['salt']), $r['pswd'])) {
+        if (!$provider && !$this->token->compare(hash_hmac('sha256', $pswd, $this->config['salt']), $r[0]['pswd'])) {
 
             // Password does not match
 
             // Does user exists in auth_users_social
-            $q = $db->prepare('SELECT COUNT(*) FROM auth_users_social WHERE user_id = ?');
-            $q->execute([$r['id']]);
+            $q = $db->prepare('SELECT provider FROM auth_users_social WHERE user_id = ?');
+            $q->execute([$r[0]['id']]);
+            $providers = $q->fetchAll(\PDO::FETCH_ASSOC);
 
             // User exists in auth_users_social
-            // Err: Password is not set
-            if ($q->fetchColumn() > 0) {
-                $data['err'] = 7;
-                $data['msg'] = 'Password is not set.';
+            // Err: User previously logged via social and did not set password for 'classic' login
+            if ($providers) {
+                $data['err'] = 8;
+                $data['msg'] = 'User previously logged in via social account and did not set password for \'classic\' login.';
+                $data['providers'] = [];
+                foreach ($providers as $key => $arr) {
+                    $data['providers'][] = ucfirst($arr['provider']);
+                }
                 return $data;
             }
 
             // Err: Password isn't correct
-            $data['err'] = 8;
-            $data['msg'] = 'Password isn\'t correct.';
+            $data['err'] = 9;
+            $data['msg'] = 'Password does not match.';
             return $data;
         }
 
-        // Is activation required and user is not activated?
-        if ($this->config['withActivation'] && $r['status'] == 0) {
-
-            // Check if user has some pending activation
-            $q = $db->prepare('
-                SELECT COUNT(*)
-                FROM auth_tokens_activation 
-                WHERE user_id = ? AND expires > UNIX_TIMESTAMP()
-            ');
-            $q->execute([$r['id']]);
-
-            // User has some pending activations
-            // Err: Pending activation
-            if ($q->fetchColumn() > 0) {
-                $data['err'] = 9;
-                $data['msg'] = 'User isn\'t activated, but has pending activation.';
-                return $data;
-            }
-
-            $data['err'] = 10;
-            $data['msg'] = 'User isn\'t activated, but can be re-activated.';
+        // Err: User isn't activated, but can be (re)activated
+        if (isset($data['tokens'])) {
+            $data['err'] = 4;
+            $data['msg'] = 'User isn\'t activated, but can be (re)activated.';
             return $data;
         }
 
-        // Check if user is stored in auth_users_social, but only if it is social login and provider is provided
-        if ($social && $provider) {
+        // Check if user is stored in auth_users_social, but only if it is social login
+        if ($provider) {
 
             // Does user exists in auth_users_social
             $q = $db->prepare('SELECT COUNT(*) FROM auth_users_social WHERE user_id = ? AND provider = ?');
-            $q->execute([$r['id'], $provider]);
+            $q->execute([$r[0]['id'], $provider]);
 
-            // User never logged in with current provider
-            // Err: User does not exist in auth_users_social
+            // User never logged in with current provider, but account with same email already exists
+            // You can offer to pair current provider with existing account
+            // Err: User already exists in auth_users but does not exist in auth_users_social
             if ($q->fetchColumn() == 0) {
-                $data['err'] = 11;
-                $data['msg'] = 'User does not exist in auth_users_social.';
+
+                // Try to get existing valid re-pairing token by user id
+                $token = $this->tokenUserHasValid($r[0]['id'], 'auth_tokens_re_pairing_' . $provider);
+
+                // If there is existing valid re-pairing token, use expiration date of this token
+                if (!$token['err']) {
+                    $expires = $token['expires'];
+                } else {
+                    $expires = time() + $this->config['confirmationTime'];
+                }
+
+                // Generate new re-pairing token
+                $token = $this->tokenGenerate($r[0]['id'], 'auth_tokens_re_pairing_' . $provider, $expires);
+
+                // Problem during generating token
+                if ($token['err']) {
+                    $data['err'] = 3;
+                    $data['msg'] = $token['msg'];
+                }
+
+                // Err: User already exists in auth_users but does not exist in auth_users_social
+                $data['tokens']['re-pairing']['provider'] = $provider;
+                $data['tokens']['re-pairing']['token'] = $token['token'];
+                $data['tokens']['re-pairing']['selector'] = $token['selector'];
+                $data['tokens']['re-pairing']['expires'] = $token['expires'];
+                $data['err'] = 10;
+                $data['msg'] = 'Social account is not paired with main account.';
                 return $data;
             }
         }
 
         $data['err'] = false;
-        $data['msg'] = 'User is correctly signed up.';
-
-        return $data;
-    }
-
-    /**
-     * Generate and store token in to table auth_tokens_permanent
-     *
-     * On success return array:
-     * ['err' => false, 'selector' => string, 'token' => string, 'expires' => timestamp, 'msg' => string, 'new' => bool]
-     *
-     * On error return array:
-     * ['err' => int, 'selector' => false, 'token' => false, 'expires' => false, 'msg' => string]
-     *
-     * Error codes:
-     * 1 - Unexpected error
-     * 2 - Unexpected error, it isn't possible to store token in to database
-     * 3 - Too many activation attempts
-     * 4 - Id does not exist
-     * 5 - User is expired
-     * 6 - User is forbidden
-     * 7 - User is suspended
-     *
-     * @param $uid
-     * @return array
-     */
-    public function userActivationGenerateToken($uid)
-    {
-        // Default return data
-        $data = [
-            'err' => 1,
-            'uid' => false,
-            'msg' => 'Unexpected error.',
-        ];
-
-        // Check if user does not exceeded allowed attempts count and if not store new attempt
-        if (!$this->attempts('activation-request', 5)) {
-
-            // Err: Too many attempts
-            $data['err'] = 3;
-            $data['msg'] = 'Too many activation attempts.';
-            return $data;
-        }
-
-        // Get connection
-        $db = $this->connection->connect();
-
-        // Check if email is in DB
-        $q = $db->prepare('SELECT status FROM auth_users WHERE id = ?');
-        $q->execute([$uid]);
-        $r = $q->fetch();
-
-        // Err: Email does not exist
-        if (!$r) {
-            $data['err'] = 4;
-            $data['msg'] = 'Id does not exist.';
-            return $data;
-        }
-
-        // Update user id value
-        $data['uid'] = $r['id'];
-
-        // Err: User is expired.
-        if ($r['status'] == 2) {
-            $data['err'] = 5;
-            $data['msg'] = 'User is expired.';
-            return $data;
-        }
-
-        // Err: User is forbidden.
-        if ($r['status'] == 3) {
-            $data['err'] = 6;
-            $data['msg'] = 'User is forbidden.';
-            return $data;
-        }
-
-        // Is user suspended?
-        $q = $db->prepare('
-            SELECT till_ts 
-            FROM auth_users_suspended 
-            WHERE user_id = ? 
-            AND till_ts > UNIX_TIMESTAMP()
-            ORDER BY till_ts DESC
-            LIMIT 1
-        ');
-        $q->execute([$uid]);
-        $r = $q->fetch();
-
-        // Err: User is suspended
-        if ($r) {
-            $data['err'] = 7;
-            $data['ts'] = $r['till_ts'];
-            $data['msg'] = 'User is suspended.';
-        }
-
-        // At first try to get existing token from DB instead of generating new token.
-        // Generating tokens is expensive.
-        $data = $this->getTokenByUid($data['uid'], 'auth_tokens_activation');
-        if (!$data['err']) {
-            $data['new'] = false;
-            return $data;
-        }
-
-        // Generate activation token
-        $data = $this->generateToken($uid, 'auth_tokens_activation', time() + $this->config['confirmationTime']);
-        $data['new'] = true;
+        $data['msg'] = 'User has been successfully signed in.';
 
         return $data;
     }
@@ -745,211 +707,427 @@ class Auth
      * Activate the user with activation token
      *
      * On success return array:
-     * ['err' => false, 'uid' => int, 'msg' => string]
+     * ['err' => false, 'msg' => string, 'uid' => int]
      *
      * On error return array:
-     * ['err' => int, 'uid' => bool|int, 'msg' => string]
+     * ['err' => int, 'msg' => string]
+     *
+     * On error with activation err 5 will add:
+     * ['ts' => timestamp]
      *
      * Error codes:
-     * 1 - Unexpected error
-     * 2 - Too many attempts
-     * 3 - Selector does not exist or is expired
-     * 4 - Tokens mismatch
-     * 5 - Unable to update user status
+     * 1 - Too many attempts
+     * 2 - Invalid token
+     * 3 - Another activated user already exists
+     * 4 - Unable to activate user
+     * 5 - IP is banned
      *
      * @param string $selector
      * @param string $token
      * @return array
      */
-    public function userActivationValidateToken($selector, $token)
+    public function userActivate($selector, $token)
     {
+        // Is IP banned?
+        if ($banned = $this->userIsBanned()) {
+            // Err: User is banned
+            $data['err'] = 5;
+            $data['ts'] = $banned['till_ts'];
+            $data['msg'] = 'User\'s IP is banned.';
+            return $data;
+        }
+
+        // Check if user does not exceeded allowed attempts count and if not store new attempt
+        if (!$this->attempts()) {
+            // Err: Too many attempts
+            $data['err'] = 1;
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
+
         // Check token
-        $data = $this->validateToken($selector, $token, 'auth_tokens_activation', 'activation-confirmation');
+        $validatedToken = $this->tokenValidate($selector, $token, 'auth_tokens_activation');
 
         // Err: Invalid token
-        if ($data['err']) return $data;
+        if ($validatedToken['err']) {
+            $data['err'] = 2;
+            $data['msg'] = $validatedToken['msg'];
+            return $data;
+        }
 
         // Get connection
         $db = $this->connection->connect();
 
-        // Insert user activation
+        // Check if there is no other activated user
+        $q = $db->prepare('
+            SELECT COUNT(*)
+            FROM auth_users 
+            WHERE status = 1 
+            AND email = (SELECT email FROM auth_users WHERE id = ?)
+        ');
+        $q->execute([$validatedToken['uid']]);
+
+        // Err: Another activated user already exists
+        if ($q->fetchColumn() > 0) {
+            $data['err'] = 3;
+            $data['msg'] = 'Another activated user already exists.';
+            return $data;
+        }
+
+        // Update user status
         $q = $db->prepare('UPDATE auth_users SET status = 1 WHERE id = ?');
-        $q->execute([$data['uid']]);
+        $q->execute([$validatedToken['uid']]);
 
         // Err: Unable to update user status
         if ($q->rowCount() < 1) {
-            $data['err'] = 5;
+            $data['err'] = 4;
             $data['msg'] = 'Unable to update user status.';
             return $data;
         }
 
-        // Delete all activation tokens of current user
-        $this->deleteTokensByUid($data['uid'], 'auth_tokens_activation');
-
-        // Delete also other expired tokens with 5% chance
-        $this->deleteExpiredTokens('auth_tokens_activation');
+        // Delete activation token
+        $this->tokenDeleteBySelector($validatedToken['selector'], 'auth_tokens_activation');
 
         // Successful response
+        $date['uid'] = $validatedToken['uid'];
         $data['err'] = false;
         $data['msg'] = 'User was successfully activated.';
         return $data;
     }
 
     /**
-     * Generate and store token in to table auth_tokens_password
+     * Update the user password
      *
      * On success return array:
-     * ['err' => false, 'selector' => string, 'token' => string, 'expires' => timestamp, 'msg' => string, 'new' => bool]
+     * ['err' => false, 'msg' => string, 'uid' => int]
      *
      * On error return array:
-     * ['err' => int, 'selector' => false, 'token' => false, 'expires' => false, 'msg' => string]
+     * ['err' => int, 'msg' => string]
+     *
+     * On error with activation err 4 will add:
+     * ['ts' => timestamp]
      *
      * Error codes:
-     * 1 - Unexpected error
-     * 2 - Unexpected error, it isn't possible to store token in to database
-     * 3 - Too many password attempts
-     * 4 - Email does not exist
-     * 5 - User is expired
-     * 6 - User is forbidden
-     * 7 - User is suspended
-     *
-     * @param $email
-     * @return array
-     */
-    public function userChangePswdGenerateToken($email)
-    {
-        // Default return data
-        $data = [
-            'err' => 1,
-            'uid' => false,
-            'msg' => 'Unexpected error.',
-        ];
-
-        // Check if user does not exceeded allowed attempts count and if not store new attempt
-        if (!$this->attempts('password-request', 5)) {
-
-            // Err: Too many attempts
-            $data['err'] = 3;
-            $data['msg'] = 'Too many password attempts.';
-            return $data;
-        }
-
-        // Get connection
-        $db = $this->connection->connect();
-
-        // Check if email is in DB
-        $q = $db->prepare('SELECT id, status FROM auth_users WHERE email = ?');
-        $q->execute([$email]);
-        $r = $q->fetch();
-
-        // Err: Email does not exist
-        if (!$r) {
-            $data['err'] = 4;
-            $data['msg'] = 'Email does not exist.';
-            return $data;
-        }
-
-        // Update user id value
-        $data['uid'] = $r['id'];
-
-        // Err: User is expired.
-        if ($r['status'] == 2) {
-            $data['err'] = 5;
-            $data['msg'] = 'User is expired.';
-            return $data;
-        }
-
-        // Err: User is forbidden.
-        if ($r['status'] == 3) {
-            $data['err'] = 6;
-            $data['msg'] = 'User is forbidden.';
-            return $data;
-        }
-
-        // Is user suspended?
-        $q = $db->prepare('
-            SELECT till_ts 
-            FROM auth_users_suspended 
-            WHERE user_id = ? 
-            AND till_ts > UNIX_TIMESTAMP()
-            ORDER BY till_ts DESC
-            LIMIT 1
-        ');
-        $q->execute([$data['uid']]);
-        $r = $q->fetch();
-
-        // Err: User is suspended
-        if ($r) {
-            $data['err'] = 7;
-            $data['ts'] = $r['till_ts'];
-            $data['msg'] = 'User is suspended.';
-        }
-
-        // At first try to get existing token from DB instead of generating new token.
-        // Generating tokens is expensive.
-        $data = $this->getTokenByUid($data['uid'], 'auth_tokens_password');
-        if (!$data['err']) {
-            $data['new'] = false;
-            return $data;
-        }
-
-        // Generate password token
-        $data = $this->generateToken($data['uid'], 'auth_tokens_password', time() + $this->config['confirmationTime']);
-        $data['new'] = true;
-
-        return $data;
-    }
-
-    /**
-     * Change the user password
-     *
-     * On success return array:
-     * ['err' => false, 'uid' => int, 'msg' => string]
-     *
-     * On error return array:
-     * ['err' => int, 'uid' => bool|int, 'msg' => string]
-     *
-     * Error codes:
-     * 1 - Unexpected error
-     * 2 - Too many attempts
-     * 3 - Selector does not exist or is expired
-     * 4 - Tokens mismatch
-     * 5 - Unable to update user password
+     * 1 - Too many attempts
+     * 2 - Invalid token
+     * 3 - Unable to update user password
+     * 4 - IP is banned
      *
      * @param string $selector
      * @param string $token
      * @param string $pswd
      * @return array
      */
-    public function userChangePswdValidateToken($selector, $token, $pswd)
+    public function userUpdatePassword($selector, $token, $pswd)
     {
+        // Is IP banned?
+        if ($banned = $this->userIsBanned()) {
+            // Err: User is banned
+            $data['err'] = 4;
+            $data['ts'] = $banned['till_ts'];
+            $data['msg'] = 'User\'s IP is banned.';
+            return $data;
+        }
+
+        // Check if user does not exceeded allowed attempts count and if not, store new attempt
+        if (!$this->attempts()) {
+            // Err: Too many attempts
+            $data['err'] = 1;
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
+
         // Check token
-        $data = $this->validateToken($selector, $token, 'auth_tokens_password', 'password-confirmation');
+        $validatedToken = $this->tokenValidate($selector, $token, 'auth_tokens_pswd_renewal');
 
         // Err: Invalid token
-        if ($data['err']) return $data;
+        if ($validatedToken['err']) {
+            $data['err'] = 2;
+            $data['msg'] = $validatedToken['msg'];
+            return $data;
+        }
 
         // Get connection
         $db = $this->connection->connect();
 
         // Update user password
         $q = $db->prepare('UPDATE auth_users SET pswd = ? WHERE id = ?');
-        $q->execute([hash_hmac('sha256', $pswd, $this->config['salt']), $data['uid']]);
+        $q->execute([hash_hmac('sha256', $pswd, $this->config['salt']), $validatedToken['uid']]);
 
         // Unable to update user password
         if ($q->rowCount() < 1) {
-            $data['err'] = 5;
+            $data['err'] = 3;
             $data['msg'] = 'Unable to update user password.';
             return $data;
         }
 
-        // Delete all password tokens of current user
-        $this->deleteTokensByUid($data['uid'], 'auth_tokens_password');
+        // Delete password renewal token
+        $this->tokenDeleteBySelector($validatedToken['selector'], 'auth_tokens_pswd_renewal');
 
         // Successful response
-        $data['msg'] = 'User password was successfully changed.';
+        $date['uid'] = $validatedToken['uid'];
+        $data['msg'] = 'User password has been changed.';
         $data['err'] = false;
         return $data;
+    }
+
+    /**
+     * Pair social account with user's account
+     *
+     * On success return array:
+     * ['err' => false, 'msg' => string, 'uid' => int]
+     *
+     * On error return array:
+     * ['err' => int, 'msg' => string]
+     *
+     * On error with activation err 4 will add:
+     * ['ts' => timestamp]
+     *
+     * Error codes:
+     * 1 - Too many attempts
+     * 2 - Invalid token
+     * 3 - Unable to store user in auth_users_social
+     * 4 - IP is banned
+     *
+     * @param string $selector
+     * @param string $token
+     * @param string $provider
+     * @param string $tableName
+     * @return array
+     */
+    public function userPairSocialAccount($selector, $token, $provider, $tableName)
+    {
+        // Is IP banned?
+        if ($banned = $this->userIsBanned()) {
+            // Err: User is banned
+            $data['err'] = 4;
+            $data['ts'] = $banned['till_ts'];
+            $data['msg'] = 'User\'s IP is banned.';
+            return $data;
+        }
+
+        // Check if user does not exceeded allowed attempts count and if not, store new attempt
+        if (!$this->attempts()) {
+            // Err: Too many attempts
+            $data['err'] = 1;
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
+
+        // Check token
+        $validatedToken = $this->tokenValidate($selector, $token, $tableName);
+
+        // Err: Invalid token
+        if ($validatedToken['err']) {
+            $data['err'] = 2;
+            $data['msg'] = $validatedToken['msg'];
+            return $data;
+        }
+
+        // Get connection
+        $db = $this->connection->connect();
+
+        // Insert user
+        $q = $db->prepare('INSERT INTO auth_users_social (provider, user_id) VALUES (?, ?)');
+        $q->execute([$provider, $validatedToken['uid']]);
+
+        // Err: Unable to store user in auth_users_social
+        if ($q->rowCount() < 1) {
+            $data['err'] = 3;
+            $data['msg'] = 'Unable to store user in auth_users_social.';
+            return $data;
+        }
+
+        // Delete password renewal token
+        $this->tokenDeleteBySelector($validatedToken['selector'], $tableName);
+
+        // Successful response
+        $date['uid'] = $validatedToken['uid'];
+        $data['msg'] = 'User password has been changed.';
+        $data['err'] = false;
+        return $data;
+    }
+
+    /**
+     * Update the user status to 3 (marked for deletion)
+     *
+     * On success return array:
+     * ['err' => false, 'msg' => string, 'uid' => int]
+     *
+     * On error return array:
+     * ['err' => int, 'msg' => string]
+     *
+     * Error codes:
+     * 1 - Too many attempts
+     * 2 - Invalid token
+     * 3 - Unable to update user status
+     *
+     * @param string $selector
+     * @param string $token
+     * @return array
+     */
+    public function userDelete($selector, $token)
+    {
+        // Check if user does not exceeded allowed attempts count and if not, store new attempt
+        if (!$this->attempts()) {
+            // Err: Too many attempts
+            $data['err'] = 1;
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
+
+        // Check token
+        $validatedToken = $this->tokenValidate($selector, $token, 'auth_tokens_deletion');
+
+        // Err: Invalid token
+        if ($validatedToken['err']) {
+            $data['err'] = 2;
+            $data['msg'] = $validatedToken['msg'];
+            return $data;
+        }
+
+        // Get connection
+        $db = $this->connection->connect();
+
+        // Update user password
+        $q = $db->prepare('UPDATE auth_users SET status = 3 WHERE id = ?');
+        $q->execute([$validatedToken['uid']]);
+
+        // Unable to update user status
+        if ($q->rowCount() < 1) {
+            $data['err'] = 3;
+            $data['msg'] = 'Unable to update user status.';
+            return $data;
+        }
+
+        // Delete password renewal token
+        $this->tokenDeleteBySelector($validatedToken['selector'], 'auth_tokens_deletion');
+
+        // Successful response
+        $date['uid'] = $validatedToken['uid'];
+        $data['msg'] = 'User was marked for deletion.';
+        $data['err'] = false;
+        return $data;
+    }
+
+    /**
+     * Return true if user does not exceeded allowed attempts count and store new attempt
+     * Return false if user exceeded allowed attempts count
+     * @param int $chanceDelete
+     * @return bool
+     */
+    public function attempts($chanceDelete = 1)
+    {
+        // Get individual(action, ip, agent) attempts count for specified action and date interval
+        $attemptsLimit = $this->config['attemptsLimit'][0];
+        $attemptsInterval = $this->config['attemptsLimit'][1];
+        $attemptsCount = $this->attempts->getAttemptsCount('auth', $attemptsInterval);
+
+        // Does user exceeded allowed attempts count?
+        // Err: Too many attempts
+        if ($attemptsCount >= $attemptsLimit) {
+            return false;
+        }
+
+        // Store attempt of current ip, agent
+        $this->attempts->setAttempt('auth');
+
+        // 1% chance to delete old attempts
+        if ($this->config['autoDelete'] && rand(1, 100) <= $chanceDelete) {
+            $this->attempts->deleteAttempts('auth', $attemptsInterval);
+        }
+
+        return true;
+    }
+
+    /**
+     * Create auth cookie and store associated auth token in database
+     * Return true on success otherwise false
+     * @param int $uid
+     * @param string $cookieName
+     * @param string $expirationTs
+     * @param string $tableName
+     * @return bool
+     */
+    public function authCookieCreate($uid, $cookieName, $expirationTs, $tableName)
+    {
+        $data = $this->tokenGenerate($uid, $tableName, $expirationTs);
+
+        // Err: Unable to generate token
+        if ($data['err']) return false;
+
+        // Create auth cookie
+        $this->sessions->setCookie($cookieName, $data['selector'] . ':' . $data['token'], $expirationTs);
+
+        return true;
+    }
+
+    /**
+     * If cookie is valid return user id, otherwise try to delete cookie and return false
+     * @param string $cookieName
+     * @param string $tableName
+     * @return bool|int
+     */
+    public function authCookieCheck($cookieName, $tableName)
+    {
+        $cookieVal = $this->sessions->getCookie($cookieName);
+
+        // Does auth cookie exist?
+        if (!$cookieVal) {
+            return false;
+        }
+
+        // Try to get selector and token
+        $cookie = explode(':', $cookieVal);
+        if (!isset($cookie[0]) || !isset($cookie[1])) {
+
+            // Err: Selector or token does not exist
+            // Delete invalid auth cookie
+            $this->sessions->delCookie($cookieName);
+            return false;
+        }
+
+        // Validate auth cookie against database
+        $data = $this->tokenValidate($cookie[0], $cookie[1], $tableName);
+
+        // Err: Selector or token is: invalid, expired or different
+        if ($data['err']) {
+
+            // Delete invalid auth cookie
+            $this->sessions->delCookie($cookieName);
+            return false;
+        }
+
+        return $data['user_id'];
+    }
+
+    /**
+     * Delete permanent login cookie and all auth tokens associated with current user id
+     * @param string $cookieName
+     * @param string $tableName
+     */
+    public function authCookieDelete($cookieName, $tableName)
+    {
+        $uid = $this->sessions->getFromSession($this->config['loginSessionName']);
+
+        if (!$uid) {
+            $uid = $this->authCookieCheck($cookieName, $tableName);
+        }
+
+        if ($uid) {
+            $this->sessions->delCookie($cookieName);
+            $this->tokenDeleteById($uid, $tableName);
+        }
+    }
+
+    /**
+     * Add allowed auth_tokens_... table name
+     * In case you need additional table for auth_tokens.
+     * @param $tableName
+     */
+    public function tokenAddAllowedTableName($tableName)
+    {
+        $this->allowedAuthTokenTableNames[] = $tableName;
     }
 
     /**
@@ -963,13 +1141,17 @@ class Auth
      *
      * Error codes:
      * 1 - Unexpected error
-     * 2 - Unexpected error, it isn't possible to store token in to database
+     * 2 - Table name is not allowed
+     * 3 - Too many attempts
+     * 4 - Unexpected error, it isn't possible to store token in to database
      *
      * @param int $uid
      * @param string $tableName
+     * @param int $expirationTs
+     * @param bool $cheap
      * @return array
      */
-    private function generateToken($uid, $tableName, $expirationTs)
+    public function tokenGenerate($uid, $tableName, $expirationTs, $cheap = false)
     {
         $data = [
             'err' => 1,
@@ -979,12 +1161,33 @@ class Auth
             'msg' => 'Unexpected error.',
         ];
 
-        // Generate token and selector
-        $selector = $this->token->generate(6);
-        $token = $this->token->generate();
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            // Err: Unapproved table name
+            $data['err'] = 2;
+            $data['msg'] = 'Table name is not allowed.';
+            return $data;
+        }
+
+        // Check if user does not exceeded allowed attempts count and if not store new attempt
+        if (!$this->attempts()) {
+            // Err: Too many attempts
+            $data['err'] = 3;
+            $data['msg'] = 'Too many attempts.';
+            return $data;
+        }
 
         // Get connection
         $db = $this->connection->connect();
+
+        // Generate token and selector
+        if ($cheap) {
+            $selector = $this->token->generateCheap(12);
+            $token = $this->token->generateCheap(32);
+        } else {
+            $selector = $this->token->generate(6);
+            $token = $this->token->generate(16);
+        }
 
         // Store token and selector in to database
         $q = $db->prepare('INSERT INTO ' . $tableName . ' (user_id, selector, token, expires) VALUES (?, ?, ?, ?)');
@@ -992,9 +1195,30 @@ class Auth
 
         // Err: Unable to store
         if ($q->rowCount() < 1) {
-            $data['err'] = 2;
-            $data['msg'] = 'Unexpected error, it isn\'t possible to store token in to database.';
-            return $data;
+
+            // Try regenerate selector
+
+            // Generate token and selector
+            if ($cheap) {
+                $selector = $this->token->generateCheap(12);
+            } else {
+                $selector = $this->token->generate(6);
+            }
+
+            // Store token and selector in to database
+            $q = $db->prepare('INSERT INTO ' . $tableName . ' (user_id, selector, token, expires) VALUES (?, ?, ?, ?)');
+            $q->execute([$uid, $selector, hash('sha256', $token), $expirationTs]);
+
+            if ($q->rowCount() < 1) {
+                $data['err'] = 4;
+                $data['msg'] = 'Unexpected error, it is not possible to store token in to database.';
+                return $data;
+            }
+        }
+
+        // 1% chance to delete all expired tokens
+        if ($this->config['autoDelete']) {
+            $this->tokenDeleteExpired($tableName, 1);
         }
 
         // Return successful response
@@ -1010,51 +1234,55 @@ class Auth
      * Get token and selector for given user and table
      *
      * On success return array:
-     * ['err' => false, 'token' => string, 'selector' => string, 'expires' => timestamp, 'msg' => string]
+     * ['err' => false, 'msg' => string, 'token' => string, 'selector' => string, 'expires' => timestamp]
      *
      * On error return array:
-     * ['err' => int, 'token' => false, 'selector' => false, 'expires' => false, 'msg' => string]
+     * ['err' => int, 'msg' => string, 'token' => false, 'selector' => false, 'expires' => false]
      *
      * Error codes:
      * 1 - Unexpected error
-     * 2 - Token does not exist
+     * 2 - Table name is not allowed
+     * 3 - Any valid token exists
      *
      * @param int $uid
      * @param string $tableName
      * @return array
      */
-    private function getTokenByUid($uid, $tableName)
+    public function tokenUserHasValid($uid, $tableName)
     {
         // Default return data
         $data = [
             'err' => 1,
-            'token' => false,
-            'selector' => false,
-            'expires' => false,
             'msg' => 'Unexpected error.',
         ];
+
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            // Err: Unapproved table name
+            $data['err'] = 2;
+            $data['msg'] = 'Table name is not allowed.';
+            return $data;
+        }
 
         // Get connection
         $db = $this->connection->connect();
 
-        // Get data from database
-        $q = $db->prepare('SELECT selector, token, expires FROM ' . $tableName . ' WHERE user_id = ? AND expires > UNIX_TIMESTAMP() ORDER BY expires DESC LIMIT 1');
+        // Try to get token from database
+        $q = $db->prepare('SELECT expires FROM ' . $tableName . ' WHERE user_id = ? AND expires > UNIX_TIMESTAMP() LIMIT 1');
         $q->execute([$uid]);
-        $r = $q->fetch();
+        $expires = $q->fetchColumn();
 
-        // Err: Token does not exist
-        if (!$r) {
-            $data['err'] = 2;
-            $data['msg'] = 'Token does not exist.';
+        // Err: Any valid token exists
+        if (empty($expires)) {
+            $data['err'] = 3;
+            $data['msg'] = 'Any valid token exists.';
             return $data;
         }
 
         // Return successful response
-        $data['token'] = $r['token'];
-        $data['selector'] = $r['selector'];
-        $data['expires'] = $r['expires'];
         $data['err'] = false;
-        $data['msg'] = 'Valid token was found.';
+        $data['expires'] = $expires;
+        $data['msg'] = 'Valid tokens has been found.';
         return $data;
     }
 
@@ -1063,38 +1291,39 @@ class Auth
      * Only then check if selector and token are valid.
      *
      * On success return array:
-     * ['err' => false, 'uid' => int, 'msg' => string]
+     * ['err' => false, 'msg' => string, 'uid' => int, 'token' => string, 'selector' => string, 'expires' => int]
      *
      * On error return array:
-     * ['err' => int, 'uid' => false, 'msg' => string]
+     * ['err' => int, 'msg' => string]
+     *
+     * On err 3+ add:
+     * ['uid' => int, 'selector' => string, 'expires' => int]
      *
      * Error codes:
      * 1 - Unexpected error
-     * 2 - Too many attempts
-     * 3 - Selector does not exist or is expired
-     * 4 - Tokens mismatch
+     * 2 - Table name is not allowed
+     * 3 - Selector does not exist
+     * 4 - Token is expired
+     * 5 - Tokens mismatch
      *
      * @param string $selector
      * @param string $token
      * @param string $tableName
-     * @param string $attemptName
      * @return array
      */
-    private function validateToken($selector, $token, $tableName, $attemptName)
+    public function tokenValidate($selector, $token, $tableName)
     {
         // Default return data
         $data = [
             'err' => 1,
-            'uid' => false,
             'msg' => 'Unexpected error.',
         ];
 
-        // Check if user does not exceeded allowed attempts count and if not store new attempt
-        if (!$this->attempts($attemptName)) {
-
-            // Err: Too many attempts
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            // Err: Unapproved table name
             $data['err'] = 2;
-            $data['msg'] = 'Too many ' . $attemptName . ' attempts.';
+            $data['msg'] = 'Table name is not allowed.';
             return $data;
         }
 
@@ -1102,45 +1331,100 @@ class Auth
         $db = $this->connection->connect();
 
         // Search token by valid selector
-        $q = $db->prepare('
-            SELECT user_id, token
-            FROM ' . $tableName . ' 
-            WHERE selector = ? AND expires > UNIX_TIMESTAMP()            
-        ');
+        $q = $db->prepare('SELECT user_id, token, expires FROM ' . $tableName . ' WHERE selector = ?');
         $q->execute([$selector]);
-        $r = $q->fetch();
+        $dbToken = $q->fetch();
 
         // Selector does not exist or is expired
-        if (!$r) {
+        if (!$dbToken) {
             $data['err'] = 3;
-            $data['msg'] = 'Selector does not exist or is expired.';
+            $data['msg'] = 'Selector does not exist.';
+            return $data;
+        }
+
+        // Set response data
+        $data['uid'] = $dbToken['user_id'];
+        $data['selector'] = $selector;
+        $data['expires'] = $dbToken['expires'];
+
+        // Check if token is not expired
+        if ($dbToken['expires'] < time()) {
+            $data['err'] = 4;
+            $data['msg'] = 'Token is expired.';
             return $data;
         }
 
         // Are tokens equal?
-        $token = hash('sha256', $token);
-        if (!$this->token->compare($token, $r['token'])) {
-            $data['err'] = 4;
+        if (!$this->token->compare(hash('sha256', $token), $dbToken['token'])) {
+            $data['err'] = 5;
             $data['msg'] = 'Tokens mismatch.';
             return $data;
         }
 
-        // Update user id value
-        $data['uid'] = $r['user_id'];
-
-        // Return successful response
+        // Set response data
         $data['err'] = false;
+        $data['token'] = $token;
         $data['msg'] = 'Token is valid.';
         return $data;
     }
 
     /**
-     * Delete all expired tokens from given table with given percent chance
-     * @param $tableName
-     * @param int $chanceDelete
+     * Delete token by selector
+     * @param string $selector
+     * @param string $tableName
+     * @return bool
      */
-    private function deleteExpiredTokens($tableName, $chanceDelete = 5)
+    public function tokenDeleteBySelector($selector, $tableName)
     {
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            return false;
+        }
+
+        // Get connection
+        $db = $this->connection->connect();
+
+        // Delete expired tokens
+        $q = $db->prepare('DELETE FROM ' . $tableName . ' WHERE selector = ?');
+        $q->execute([$selector]);
+        return true;
+    }
+
+    /**
+     * Delete token by selector
+     * @param string $uid
+     * @param string $tableName
+     * @return bool
+     */
+    public function tokenDeleteById($uid, $tableName)
+    {
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            return false;
+        }
+
+        // Get connection
+        $db = $this->connection->connect();
+
+        // Delete expired tokens
+        $q = $db->prepare('DELETE FROM ' . $tableName . ' WHERE user_id = ?');
+        $q->execute([$uid]);
+        return true;
+    }
+
+    /**
+     * Delete all expired tokens from given table with given percent chance
+     * @param string $tableName
+     * @param int $chanceDelete
+     * @return bool
+     */
+    private function tokenDeleteExpired($tableName, $chanceDelete = 100)
+    {
+        // Check table name
+        if (!$this->tokenIsTableNameAllowed($tableName)) {
+            return false;
+        }
+
         if (rand(1, 100) <= $chanceDelete) {
 
             // Get connection
@@ -1149,131 +1433,69 @@ class Auth
             // Delete expired tokens
             $q = $db->prepare('DELETE FROM ' . $tableName . ' WHERE expires <= UNIX_TIMESTAMP()');
             $q->execute();
+            return true;
         }
+
+        return false;
     }
 
     /**
-     * Delete all tokens from given table for given user id
-     * @param $uid
-     * @param $tableName
+     * @param string $tableName
+     * @return bool
      */
-    private function deleteTokensByUid($uid, $tableName)
+    private function tokenIsTableNameAllowed($tableName)
     {
+        return in_array($tableName, $this->allowedAuthTokenTableNames);
+    }
+
+    /**
+     * Check if IP or user's ID is banned
+     * @param $uid
+     * @return bool
+     */
+    private function userIsBanned($uid = 0)
+    {
+        // Get IP of connected device
+        $ip = $_SERVER['REMOTE_ADDR'];
+
         // Get connection
         $db = $this->connection->connect();
 
-        // Delete expired tokens
-        $q = $db->prepare('DELETE FROM ' . $tableName . ' WHERE user_id = ?');
-        $q->execute([$uid]);
+        // Is user banned?
+        $q = $db->prepare('
+            SELECT till_ts 
+            FROM auth_users_ban 
+            WHERE (user_id = ? OR ip_v4 = ?) 
+            AND till_ts > UNIX_TIMESTAMP()
+            ORDER BY till_ts DESC
+            LIMIT 1
+        ');
+        $q->execute([$uid, $ip]);
+        $r = $q->fetch();
+
+        if ($r) {
+            return $r['till_ts'];
+        }
+
+        return false;
     }
 
     /**
-     * Return true if user does not exceeded allowed attempts count and store new attempt
-     * Return false if user exceeded allowed attempts count
-     * @param $attemptName
-     * @param int $chanceDelete
+     * Check if url comes from current domain or not
+     * @param $url
      * @return bool
      */
-    private function attempts($attemptName, $chanceDelete = 5)
+    private function isUrlFromCurrentDomain($url)
     {
-        // Get individual(action, ip, agent) attempts count for specified action and date interval
-        $attemptsLimit = $this->config[$attemptName][0];
-        $attemptsInterval = $this->config[$attemptName][1];
-        $attemptsCount = $this->attempts->getAttemptsCount($attemptName, $attemptsInterval);
+        $parsedReferrerUrl = parse_url($url);
 
-        // Does user exceeded allowed attempts count?
-        // Err: Too many attempts
-        if ($attemptsCount >= $attemptsLimit) {
-            return false;
+        $scheme = isset($parsedReferrerUrl['scheme']) ? $parsedReferrerUrl['scheme'] : false;
+        $host = isset($parsedReferrerUrl['host']) ? $parsedReferrerUrl['host'] : false;
+
+        if ($scheme && $host == $_SERVER['SERVER_NAME']) {
+            return true;
         }
 
-        // Store attempt of current ip, agent
-        $this->attempts->setAttempt($attemptName);
-
-        // 5% chance to delete old attempts
-        if (rand(1, 100) <= $chanceDelete) {
-            $this->attempts->deleteAttempts($attemptName, $attemptsInterval);
-        }
-
-        return true;
-    }
-
-    /**
-     * Store auth credentials for permanent login
-     * Return true on success otherwise false
-     * @param int $uid
-     * @return bool
-     */
-    private function userLoginPermanent($uid)
-    {
-        // 5% chance to delete old expired permanent login tokens
-        $this->deleteExpiredTokens('auth_tokens_permanent', 5);
-
-        // Generate and store permanent login token
-        $expirationTs = time() + $this->config['permanent'] * 60 * 60;
-        $data = $this->generateToken($uid, 'auth_tokens_permanent', $expirationTs);
-
-        // Err: Unable to generate or store permanent login token
-        if ($data['err']) return false;
-
-        // Create auth cookie
-        $this->sessions->setCookie($this->config['cookieName'], $data['selector'] . ':' . $data['token'], $this->config['permanent'] . ' days');
-
-        return true;
-    }
-
-    /**
-     * Delete permanent login cookie and all tokens in table auth_permanent associated with current user id
-     * It logs out the user on all devices.
-     */
-    private function userLogoutPermanent()
-    {
-        $uid = $this->sessions->getFromSession('logged');
-
-        if (!$uid) {
-            $uid = $this->isUserPermanentlyLogged();
-        }
-
-        if ($uid) {
-            $this->sessions->delCookie($this->config['cookieName']);
-            $this->deleteTokensByUid($uid, 'auth_tokens_permanent');
-        }
-    }
-
-    /**
-     * Return user id when user is permanently logged, otherwise false
-     * @return bool|int
-     */
-    private function isUserPermanentlyLogged()
-    {
-        $permanentLoginCookieVal = $this->sessions->getCookie($this->config['cookieName']);
-
-        // Does permanent login cookie exist?
-        if (!$permanentLoginCookieVal) {
-            return false;
-        }
-
-        // Try to get selector and token
-        $cookie = explode(':', $permanentLoginCookieVal);
-        if (!isset($cookie[0]) || !isset($cookie[1])) {
-
-            // Err: Selector or token does not exist
-            // Delete invalid login cookie
-            $this->sessions->delCookie($this->config['cookieName']);
-            return false;
-        }
-
-        // Validate login cookie against database
-        $data = $this->validateToken($cookie[0], $cookie[1], 'auth_tokens_permanent', 'is-logged');
-
-        // Err: Selector or token is: invalid, expired or different
-        if ($data['err']) {
-
-            // Delete invalid login cookie
-            $this->sessions->delCookie($this->config['cookieName']);
-            return false;
-        }
-
-        return $data['user_id'];
+        return false;
     }
 }

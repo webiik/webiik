@@ -10,7 +10,7 @@ return [
         'log' => true,
         'logEmail' => 'void@webiik.com',
         'logEmailSubject' => 'Webiik error notice',
-        'timeZone' => 'America/Los_Angeles',
+        'timeZone' => 'America/New_York',
     ],
 
     // Skeleton class settings
@@ -19,16 +19,19 @@ return [
         // First language is default
         // Signature is: [language in ISO 639-1, timezone, [array of fallback languages in ISO 639-1]]
         'languages' => [
-            'en' => ['America/Los_Angeles'],
+            'en' => ['America/New_York'],
             'cs' => ['Europe/Prague', ['en']],
         ],
 
-        // Show default lang in URI? If true then home page for default language will be: webiik.com/en/
-        'dlInUri' => false, // Todo: Fix when set to true: http://localhost/skeletons/webiik/example/
-
         // Folder structure
-        'publicDir' => __DIR__ . '/../../../',
-        'privateDir' => __DIR__ . '/../../',
+        'publicDir' => __DIR__ . '/../../..',
+        'privateDir' => __DIR__ . '/../..',
+    ],
+
+    // Router class settings
+    'router' => [
+        // Use default lang in URI? If it set to true, home page for default language will be: /en/
+        'dlInUri' => true,
     ],
 
     // Connection class settings
@@ -60,38 +63,33 @@ return [
 
     // Auth class settings
     'auth' => [
+        'distinguishLanguages' => false,
+        'loginSessionName' => 'logged',
         'permanentLoginCookieName' => 'PC',
+        'permanentLoginHours' => 1,
         'withActivation' => true,
     ],
 
-    // AuthMw class settings
-    'authMw' => [
+    // AuthMwRedirect class settings
+    'authMwRedirect' => [
         'loginRouteName' => 'login',
+    ],
+
+    // Email class settings
+    // Todo: Email class
+    'email' => [
+        'fromName' => 'Webiik',
+        'fromEmail' => 'no-reply@webiik.com',
+        'isSMPT' => false,
+        'host' => '',
+        'port' => '',
+        'SMTPsecure' => 'tls',
+        'SMTPAuth' => false,
+        'SMTPAuthUserName' => '',
+        'SMTPAuthPswd' => '',
+        'SMTPOptions' => [],
     ],
 
     // Separate application parts settings
     // These parts are built on top of Skeleton. Normally controllers, middlewares etc.
-
-    // Accounts service routes settings
-    'accounts' => [
-
-        // We will send authorisation messages with these credential
-        'email' => 'no-reply@webiik.com',
-        'name' => 'Webiik',
-
-        // Accounts service routes
-        'routes' => [
-            'loginRouteName' => 'login',
-            'signupRouteName' => 'signup',
-            'passwordRenewalRequestRouteName' => 'forgot-request',
-            'passwordRenewalConfirmationRouteName' => 'forgot-confirm',
-            'activationRequestRouteName' => 'activate-request',
-            'activationConfirmationRouteName' => 'activate-confirm',
-            'logoutRouteName' => 'logout',
-        ],
-
-        // Default actions
-        'defaultAfterLoginRouteName' => 'account',
-        'defaultAfterLogoutRouteName' => 'login',
-    ],
 ];

@@ -4,15 +4,15 @@ namespace Webiik;
 class Page
 {
     private $translation;
-    private $twig;
+    private $render;
 
     /**
      * Controller constructor.
      */
-    public function __construct(Translation $translation, \Twig_Environment $twig)
+    public function __construct(Translation $translation, Render $render)
     {
         $this->translation = $translation;
-        $this->twig = $twig;
+        $this->render = $render;
     }
 
     public function run()
@@ -27,6 +27,6 @@ class Page
         $translations['t2'] = $this->translation->_p('t2', ['numCats' => 1]);
 
         // Render page
-        echo $this->twig->render('home.twig', $translations);
+        echo $this->render->render(['home.twig', $translations]);
     }
 }

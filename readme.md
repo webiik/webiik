@@ -8,19 +8,6 @@ From [indie hacker](https://mihal.me) for [indie hackers](https://www.indiehacke
 [Create website]()
 Create your first [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)!
 
-<!--## Comparison-->
-<!--Webiik is ultra minimalistic, but powerful.-->
-<!--<!--Todo: Fill table with benchmark results. -->-->
-<!--|   |Webiik Core|Lumen|Webiik Skeleton|Laravel|-->
-<!--|---|---|---|---|---|-->
-<!--|requests per second|---|---|---|---|-->
-<!--|memory usage|---|---|---|---|-->
-<!--|data weight|---|---|---|---|-->
-<!--|count of provided methods|---|---|---|---|-->
-<!--|lines of code|---|---|---|---|-->
-
-<!--Less lines of code and less provided methods mean quick orientation in the framework.-->
-
 ## Webiik Core
 If you want to stay tiny use Core as foundation of your web project and connect only [services](#available-services) you really need. Perfect for APIs.
 

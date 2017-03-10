@@ -74,11 +74,7 @@ class Class
 ```
 
 ## Dependency injection
-Core uses [Pimple](https://github.com/silexphp/Pimple) as dependency injection container. Webiik provides automatic dependency injection from container into __middlewares__ and __route controllers__. So you don't need to write dependencies manually. There are three types of automatic injection: 
-
-1. constructor injection
-2. comments injection
-3. method injection
+Core uses [Pimple](https://github.com/silexphp/Pimple) as dependency injection container. Webiik provides automatic dependency injection from container into __middlewares__ and __route controllers__. So you don't need to write dependencies manually.
 
 #### How to inject?
 1. At first add service(s) and value(s) you want to inject into Pimple container. Webiik provides the following methods for working with Pimple container: `addService(string $name, closure $factory)`, `addServiceFactory(string $name, closure $factory)`, `addParam(string $name, mixed $val)`, `addFunction(string $name, closure $function)` and `get(string $name)`. These methods reflects Pimple's basic functionality.

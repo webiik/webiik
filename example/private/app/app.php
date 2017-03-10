@@ -2,7 +2,7 @@
 // Create configured Skeleton instance
 $app = new \Webiik\Skeleton($config);
 
-// Add template engine service
+// Add Twig template engine service
 $app->addService('Twig_Environment', function ($c){
 
     // Set Twig basic settings
@@ -121,6 +121,27 @@ $app->addService('Twig_Environment', function ($c){
 
     // Return configured template engine
     return $twig;
+});
+
+$app->add('Webiik\TestMw:run');
+
+// Add Twig's render method as Webiik's render handler
+$app->addService('Webiik\Render', function ($c) {
+    $renderHandler = function ($template, $arr) use ($c){
+        return $c['Twig_Environment']->render($template, $arr);
+    };
+    $render = new \Webiik\Render();
+    $render->addRenderHandler($renderHandler);
+    return $render;
+});
+
+// There are two possibilities how to display login page. First one is redirect user to login page.
+// Second one is display login page at URL of protected content. Webiik uses first way as default.
+// If you prefer second way, uncomment the following lines. If you use second way, don't forget to
+// move translations for auth routes to _app... translation file.
+// Add Auth middleware
+$app->addService('Webiik\AuthMw', function ($c) use ($app) {
+    return new \Webiik\AuthMw(...$app::DIconstructor('Webiik\AuthMw', $c));
 });
 
 // Add own error routes handlers

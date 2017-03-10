@@ -35,8 +35,10 @@ class Skeleton extends Core
 
         // Add params shared inside app
         $this->addParam('config', $config);
-        $this->addParam('HOST', $this->getHostRoot());
         $this->addParam('ROOT', $this->getWebRoot());
+
+        // Configure router
+        $this->router()->setConfig(['defaultLangInUri' => $config['router']['dlInUri']]);
 
         // Add basic app services
 
@@ -102,23 +104,37 @@ class Skeleton extends Core
         // Add Auth
         $this->addService('Webiik\Auth', function ($c) {
             $auth = new Auth($c['Webiik\Sessions'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
+            if ($c['config']['auth']['distinguishLanguages']) {
+                $auth->confLang($this->lang);
+            }
+            $auth->confLoginSessionName($c['config']['auth']['loginSessionName']);
             $auth->confCookieName($c['config']['auth']['permanentLoginCookieName']);
+            $auth->confPermanent($c['config']['auth']['permanentLoginHours']);
             $auth->confWithActivation($c['config']['auth']['withActivation']);
             return $auth;
         });
 
-        // Add Auth middleware
+        // Add AuthMwRedirect
         $this->addService('Webiik\AuthMw', function ($c) {
-            $authMw = new AuthMw($c['Webiik\Auth'], $c['Webiik\Router'], $c['Webiik\Flash'], $c['Webiik\Translation']);
-            $authMw->confLoginRouteName($c['config']['authMw']['loginRouteName']);
-            return $authMw;
+            $authMwRedirect = new \Webiik\AuthMwRedirect(...$this::DIconstructor('Webiik\AuthMwRedirect', $c));
+            $authMwRedirect->confLoginRouteName($c['config']['authMwRedirect']['loginRouteName']);
+            return $authMwRedirect;
+        });
+
+        // Add Render
+        $this->addService('Webiik\Render', function ($c) {
+            $render = new \Webiik\Render();
+            $render->addFileRenderHandler($c['config']['skeleton']['privateDir'] . '/app/views/');
+            return $render;
         });
 
         // Set app main lang (can return 404)
         $this->setLang();
+
+        // Set translation main lang
         $this->trans()->setLang($this->lang);
 
-        // Set fallback languages
+        // Set translation fallback languages
         $this->setFallbackLangs();
 
         // Set time zone according to current lang
@@ -146,6 +162,7 @@ class Skeleton extends Core
         // Store route info into container
         $this->addParam('routeInfo', $routeInfo);
 
+        // Todo: Consider to move loading of translations, formats and conversions to middleware.
         // Load app and current page translations in to Translation
         $this->loadTranslations($this->lang, $routeInfo['name']);
 
@@ -176,35 +193,51 @@ class Skeleton extends Core
     }
 
     /**
-     * Try to find lang in URI and compare that lang with available languages.
-     * If language in URI is valid lang, set that lang as current lang.
-     * If there is no language in URI and dlInUri is false, use default lang as current lang.
-     * If there is no language in URI and dlInUri is true return 404 error page.
+     * Try to find lang in URI and if there is no valid lang, use default lang.
+     * Redirect access from '/' to '/dl/' when default lang has to be in URI.
      */
     private function setLang()
     {
+        $lang = false;
         $langs = $this->container['config']['skeleton']['languages'];
 
         // Get web root URI
         $uri = str_replace($this->getScriptDir(), '', $_SERVER['REQUEST_URI']);
 
-        // Get lang from web root URI
-        preg_match('/^\/([\w]{2})\/|^\/([\w]{2})$/', $uri, $matches);
-
         // Did we find some language in web root URI?
+        preg_match('/^\/([\w]{2})\/?$/', $uri, $matches);
         if (count($matches) > 0) {
-            // Yes we do. So check if the lang is valid lang.
-            foreach ($langs as $lang => $prop) {
-                if ($lang == $matches[1]) break;
+
+            // Yes we do...
+            foreach ($langs as $ilang => $prop) {
+
+                // Check if the lang is valid lang...
+                if ($ilang == $matches[1]) {
+                    $lang = $matches[1];
+                    break;
+                }
             }
         }
 
-        // If we didn't find any language, it can be still ok, if default language
-        // doesn't need to be in URI, otherwise page doesn't exist.
-        if (!isset($lang) && !$this->container['config']['skeleton']['dlInUri']) {
+        if ($uri == '/') {
+
+            // It's root URI, so we always set the default lang as main lang
             $lang = key($langs);
-        } elseif (!isset($lang) && !$this->container['config']['skeleton']['dlInUri']) {
-            $this->error(404);
+
+            // If default lang has to be in URI, redirect to URL with default lang
+            if ($this->container['config']['router']['dlInUri']) {
+                header('HTTP/1.1 301 Moved Permanently');
+                header('Location:' . $this->getWebRoot() . '/' . $lang . '/');
+                exit;
+            }
+
+        } else {
+
+            // It's not root URI...
+
+            if (!$lang) {
+                $lang = key($langs);
+            }
         }
 
         $this->lang = $lang;

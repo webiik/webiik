@@ -66,13 +66,13 @@ class Response
         'atom' => 'Content-Type: application/atom+xml',
         'rss' => 'Content-Type: application/rss+xml; charset=ISO-8859-1',
         'pdf' => 'Content-Type: application/pdf',
+        'html' => 'Content-Type: text/html',
         'xml' => 'Content-Type: text/xml',
         'txt' => 'Content-Type: text/plain',
         'css' => 'Content-Type: text/css',
         'js' => 'Content-Type: text/javascript',
         'jpeg' => 'Content-Type: image/jpeg',
         'png' => 'Content-Type: image/png',
-
     ];
 
     private $contentType = false;

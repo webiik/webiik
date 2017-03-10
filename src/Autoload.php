@@ -2,8 +2,8 @@
 namespace Webiik;
 
 /**
- * Register/add new spl atoloader
  * Class Autoload
+ * Register/add new spl autoloader
  * @package Webiik
  */
 class Autoload

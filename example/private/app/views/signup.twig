@@ -2,12 +2,16 @@
 {% block content %}
     <h1>{{ seo.title }}</h1>
     <p>{{ seo.desc }}</p>
+    {% for key, messages in messages() %}
+        {% for message in messages %}
+            {{ message|raw }}
+        {% endfor %}
+    {% endfor %}
     <form action="" method="post">
-    {% for message in messages().err %}{{ message }}{% endfor %}
-    <input type="text" name="email" placeholder="email" value="{{ form.email }}">
-    {{ form.err.email.0 }}
-    <input type="password" name="pswd" placeholder="password" value="{{ form.pswd }}">
-    {{ form.err.pswd.0 }}
+    <input type="text" name="email" placeholder="email" value="{{ form.data.email }}">
+    {{ form.msg.err.email.0 }}
+    <input type="password" name="pswd" placeholder="password" value="{{ form.data.pswd }}">
+    {{ form.msg.err.pswd.0 }}
     {{ csrfInput() }}
     {% if referrer %}
     <input type="hidden" name="ref" value="{{ referrer }}">
