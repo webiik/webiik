@@ -16,7 +16,7 @@ $app->run();
 
 ###### Installation:
 ```bash
-php composer.phar require webiik/webiik
+composer require webiik/webiik
 ```
 
 [Documentation [to be done]]()
