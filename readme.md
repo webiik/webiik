@@ -1,64 +1,37 @@
-## UNDER DEVELOPMENT, DON'T USE IT!
+> Please note that Webiik is in version 0.1, it means under development.
 
-# Webiik
-From [indie hacker](https://mihal.me) for [indie hackers](https://www.indiehackers.com), [KISS](https://en.wikipedia.org/wiki/KISS_principle) framework for quick creation of websites and web apps. Stop learning over bloated frameworks and start creating now.
+## What is Webiik?
+Webiik is set of 25+ standalone PHP classes. Webiik is also MVC PHP micro-framework and framework.
 
-## Tutorials
-[Create API]()
-[Create website]()
-Create your first [MVP](https://en.wikipedia.org/wiki/Minimum_viable_product)!
+###### Micro-framework minimal setup example:
+```php
+$app = new \Webiik\Webiik();
 
-## Webiik Core
-If you want to stay tiny use Core as foundation of your web project and connect only [services](#available-services) you really need. Perfect for APIs.
+$app->router()->map(['GET'], '/', function() {
+    echo 'Hello World!';
+}, 'home');
 
-[Core documentation](core.md)
+$app->run();
+```
 
-## Webiik Skeleton
-Everything what modern website or web app needs. You can focus just on your project.
+###### Installation:
+```bash
+php composer.phar require webiik/webiik
+```
 
-[Skeleton documentation]()
+[Documentation [to be done]]()
+[Live example [to be done]]()
 
-_Did you start with Core and you realised that you need more? There is no problem. Skeleton inherits from Core, so what works in Core, works in Skeleton too._
+## Why other PHP framework?
+Because author of Webiik wanted simple framework that he would know through and through. Framework by his specific needs. Webiik is suited for:
 
-## Available services
-List of available services that come with Webiik. Sorted by usage in Core and Skeleton.
+  - multilingual websites
+  - secured and advanced user accounts
+  - easy customisation
 
-Core
-[Core]()
-[Middleware]()
-[Request]()
-[Route]()
-[Router]()
+## Security vulnerabilities
+If you discover a security vulnerability within Webiik, please send me an email at jiri@mihal.me.
 
-Skeleton
-[Arr]()
-[Attempts]()
-[Auth](auth.md)
-[AuthMw](authMw.md)
-[Config]()
-[Connection]()
-[Conversion]()
-[Csrf]()
-[Error]()
-[Flash]()
-[Log]()
-[SecurityMw]()
-[Sessions]()
-[Skeleton]()
-[Token]()
-[Translation]()
-
-Unused
-[Autoload]()
-[Download]()
-[Filesystem]()
-[Format](format.md)
-[Http]()
-[Mail]()
-[OAuth1Client](oauth1client.md)
-[OAuth2Client](oauth2client.md)
-[Render]()
-[Response]()
-[Utils]()
-[Validator]()
-[ValidatorData]()
+## License
+Copyright (c) 2017 Jiri Mihal
+[MIT license](http://opensource.org/licenses/MIT)

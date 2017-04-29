@@ -1,6 +1,2 @@
-.idea
 composer.lock
-config.local.php
 vendor
-*.log
-tmp/
