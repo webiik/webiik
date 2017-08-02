@@ -13,12 +13,6 @@ __Is it secure?__<br/>
 I hope so, but if you discover some vulnerability within Webiik, please send me an email at jiri@mihal.me.
 
 [~~Read the docs~~]() ...but later<br/>
-[~~Try to hack live example!~~]() ...but later
-
-__Do you have some boring feautures list?__
-- multi-lingual from its core<br/>
-- ready for advanced user accounts<br/>
-- MVC by your rules<br/>
-- automatic DI<br/>
+[~~Try to hack live example!~~]() ...ehm you know
 
 Made by [Jiri Mihal](https://github.com/Jiri-Mihal) and provided under [MIT license](http://opensource.org/licenses/MIT).
