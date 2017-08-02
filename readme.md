@@ -1,4 +1,4 @@
-> Please note that Webiik is in version 0.1, it means under development.
+> Please note that Webiik is in version 0.x, it means under development.
 
 ## What is Webiik?
 Webiik is set of 25+ standalone PHP classes. Webiik is also MVC PHP micro-framework and framework.
