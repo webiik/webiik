@@ -1,37 +1,33 @@
-> Please note that Webiik is in version 0.x, it means under development.
+# Webiik
 
-## What is Webiik?
-Webiik is set of 25+ standalone PHP classes. Webiik is also MVC PHP micro-framework and framework.
+> Webiik is in version 0.x, it means under development.
 
-###### Micro-framework minimal setup example:
-```php
-$app = new \Webiik\Webiik();
+#### What?
+Just another PHP micro-framework and framework.
 
-$app->router()->map(['GET'], '/', function() {
-    echo 'Hello World!';
-}, 'home');
+#### Is it the best?
+Probably not, but for me definitely is.
 
-$app->run();
-```
+#### Why?
+Because it fits my needs and always will be.
 
-###### Installation:
-```bash
-composer require webiik/webiik
-```
+#### Why open source?
+I’m nice person and my clients can use my work even with other developers.
 
-[Documentation [to be done]]()
-[Live example [to be done]]()
+#### Is it secure?
+I hope so, but if you discover some vulnerability within Webiik, please send me an email at jiri@mihal.me.
 
-## Why other PHP framework?
-Because author of Webiik wanted simple framework that he would know through and through. Framework by his specific needs. Webiik is suited for:
+#### Is there a docs?
+[~~Yes it is!~~]() ...ehm will be
 
-  - multilingual websites
-  - secured and advanced user accounts
-  - easy customisation
+#### Is there a live example I can hack?
+[~~Try it!~~]() ...but later
 
-## Security vulnerabilities
-If you discover a security vulnerability within Webiik, please send me an email at jiri@mihal.me.
+#### Do you have some boring arguments?
+- multi-lingual from its core
+- ready for advanced user accounts
+- MVC by your rules
+- automatic DI
 
-## License
-Copyright (c) 2017 Jiri Mihal
-[MIT license](http://opensource.org/licenses/MIT)
+---
+Made by [Jiri Mihal](https://github.com/Jiri-Mihal) and provided under [MIT license](http://opensource.org/licenses/MIT).
