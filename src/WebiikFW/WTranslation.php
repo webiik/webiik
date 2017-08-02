@@ -117,7 +117,8 @@ class WTranslation extends Translation
         $uri = str_replace($this->request->getWebRootPath(), '', $_SERVER['REQUEST_URI']);
 
         // Did we find some language in web root URI?
-        preg_match('/^\/([\w]{2})\/?$/', $uri, $matches);
+        preg_match('/^\/([\w]{2})\/?$|^\/([\w]{2})\//', $uri, $matches);
+
         if (count($matches) > 0) {
 
             // Yes we do...
@@ -126,6 +127,11 @@ class WTranslation extends Translation
                 // Check if the lang is valid lang...
                 if ($ilang == $matches[1]) {
                     $lang = $matches[1];
+                    break;
+                }
+
+                if (isset($matches[2]) && $ilang == $matches[2]) {
+                    $lang = $matches[2];
                     break;
                 }
             }
@@ -153,6 +159,7 @@ class WTranslation extends Translation
         }
 
         $this->lang = $lang;
+
     }
 
     /**
