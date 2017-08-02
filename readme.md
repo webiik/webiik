@@ -2,10 +2,10 @@
 
 > Webiik is in version 0.x, it means under development.
 
-__What?__
+__What?__<br/>
 Just another PHP micro-framework and framework.
 
-__Is it the best?__
+__Is it the best?__<br/>
 Probably not, but for me definitely is.
 
 - __Why?__ Because it fits my needs and always will be.
