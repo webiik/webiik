@@ -38,6 +38,6 @@ class WRouter extends Router
      */
     public function getRouteInfo()
     {
-        $this->routeInfo;
+        return $this->routeInfo;
     }
 }
