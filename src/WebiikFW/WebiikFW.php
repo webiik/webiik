@@ -57,14 +57,8 @@ class WebiikFW extends Webiik
 
         // Add Translation
         $this->container()->addService('Webiik\WTranslation', function ($c) {
-
             $translation = new WTranslation($c['Webiik\Request'], $c['Webiik\Arr'], $c['WConfig']);
-
-            // Determine if enable logging of missing translations
-            if (isset($c['WConfig']['Translation']['logWarnings'])) {
-                $translation->activateLogWarnings($c['WConfig']['Translation']['logWarnings']);
-            }
-
+            $translation->activateLogWarnings($c['WConfig']['Translation']['logWarnings']);
             return $translation;
         });
 
@@ -96,14 +90,37 @@ class WebiikFW extends Webiik
 
         // Add Auth
         $this->container()->addService('Webiik\Auth', function ($c) {
-            $auth = new Auth($c['Webiik\Cookie'], $c['Webiik\Session'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
-            if ($c['WConfig']['Auth']['distinguishLanguages']) {
-                $auth->confLang($this->trans()->getLang());
+            $auth = new Auth($c['Webiik\Cookie'], $c['Webiik\Session'], $c['Webiik\Token']);
+            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0 ) {
+                $auth->setAuthSuffix($this->trans()->getLang());
             }
-            $auth->confLoginSessionName($c['WConfig']['Auth']['loginSessionName']);
-            $auth->confCookieName($c['WConfig']['Auth']['permanentLoginCookieName']);
-            $auth->confPermanent($c['WConfig']['Auth']['permanentLoginHours']);
-            $auth->confWithActivation($c['WConfig']['Auth']['withActivation']);
+            $auth->setSessionName($c['WConfig']['Auth']['loginSessionName']);
+            $auth->setAutoLogoutTime($c['WConfig']['Auth']['autoLogoutTime']);
+            $auth->setPermanentCookieName($c['WConfig']['Auth']['permanentCookieName']);
+            $auth->setPermanentCookieExpirationTime($c['WConfig']['Auth']['permanentCookieExpirationTime']);
+            $auth->setPermanentFilesDir($c['WConfig']['Auth']['permanentLoginFilesDir']);
+            $auth->setAutoDeleteExpiredPermanentRecords($c['WConfig']['Auth']['autoDeleteExpiredPermanentRecords']);
+            return $auth;
+        });
+
+        // Add AuthExtended
+        $this->container()->addService('Webiik\AuthExtended', function ($c) {
+            $auth = new AuthExtended($c['Webiik\Cookie'], $c['Webiik\Session'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
+            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0 ) {
+                $auth->setAuthSuffix($this->trans()->getLang());
+            }
+            $auth->setSessionName($c['WConfig']['Auth']['loginSessionName']);
+            $auth->setAutoLogoutTime($c['WConfig']['Auth']['autoLogoutTime']);
+            $auth->setPermanentCookieName($c['WConfig']['Auth']['permanentCookieName']);
+            $auth->setPermanentCookieExpirationTime($c['WConfig']['Auth']['permanentCookieExpirationTime']);
+            $auth->setPermanentFilesDir($c['WConfig']['Auth']['permanentLoginFilesDir']);
+            $auth->setAutoDeleteExpiredPermanentRecords($c['WConfig']['Auth']['autoDeleteExpiredPermanentRecords']);
+            $auth->setWithActivation($c['WConfig']['AuthExtended']['withActivation']);
+            $auth->setSalt($c['WConfig']['AuthExtended']['salt']);
+            $auth->setSuffix($this->trans()->getLang());
+            $auth->setAttemptsLimit($c['WConfig']['AuthExtended']['attemptsLimit'][0], $c['WConfig']['AuthExtended']['attemptsLimit'][1]);
+            $auth->setConfirmationTime($c['WConfig']['AuthExtended']['confirmationTime']);
+            $auth->setUserAccountResolution($c['WConfig']['Auth']['accountResolutionMode']);
             return $auth;
         });
 
@@ -122,10 +139,9 @@ class WebiikFW extends Webiik
         });
 
         // Add PHPMailer service
+        // Todo: Move PHPMailer out of there, it should be in boilerplate
         $this->container()->addService('PHPMailer', function ($c) {
-
             $mail = new \PHPMailer();
-
             if ($c['WConfig']['PHPMailer']['SMTP']['isSMPT']) {
                 $mail->isSMTP();
                 $mail->Host = $c['WConfig']['PHPMailer']['SMTP']['host'];
@@ -139,21 +155,19 @@ class WebiikFW extends Webiik
                     $mail->Password = $c['WConfig']['PHPMailer']['SMTP']['SMTPAuthPswd'];
                 }
             }
-
             $mail->setFrom($c['WConfig']['PHPMailer']['fromEmail'], $c['WConfig']['PHPMailer']['fromName']);
-
             return $mail;
         });
 
         // Add function to add PHPMailer handler to LogHandlerEmail
-        $this->container()->addFunction('getLogHandlerEmailCustomHandler', function () {
+        $this->container()->addFunction('getCustomEmailLogHandler', function () {
 
             $sendMailHandler = function ($from, $to, $subject, $message) {
-                $this->mail()->isHTML();
-                $this->mail()->addAddress($to);
-                $this->mail()->Subject = $subject;
-                $this->mail()->Body = $message;
-                $this->mail()->send();
+                $this->phpMailer()->isHTML();
+                $this->phpMailer()->addAddress($to);
+                $this->phpMailer()->Subject = $subject;
+                $this->phpMailer()->Body = $message;
+                $this->phpMailer()->send();
             };
 
             return $sendMailHandler;
@@ -172,9 +186,9 @@ class WebiikFW extends Webiik
     public function run()
     {
         // Add loggers
-        $this->error()->setLogger($this->c['getLogger']('error', Log::$ERROR, $this->c['getLogHandlerEmailCustomHandler']()));
-        $this->router()->setLogger($this->c['getLogger']('router', Log::$WARNING, $this->c['getLogHandlerEmailCustomHandler']()));
-        $this->trans()->setLogger($this->c['getLogger']('translation', Log::$WARNING, $this->c['getLogHandlerEmailCustomHandler']()));
+        $this->error()->setLogger($this->c['getLogger']('error', Log::$ERROR, $this->c['getCustomEmailLogHandler']()));
+        $this->router()->setLogger($this->c['getLogger']('router', Log::$WARNING, $this->c['getCustomEmailLogHandler']()));
+        $this->trans()->setLogger($this->c['getLogger']('translation', Log::$WARNING, $this->c['getCustomEmailLogHandler']()));
 
         // Load translations of routes for current lang with all fallbacks
         $this->trans()->loadTranslations('_app', '', false, 'routes');
@@ -239,7 +253,7 @@ class WebiikFW extends Webiik
     /**
      * @return \PHPMailer
      */
-    public function mail()
+    public function phpMailer()
     {
         return $this->c['PHPMailer'];
     }

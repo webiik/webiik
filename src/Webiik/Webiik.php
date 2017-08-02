@@ -97,6 +97,11 @@ class Webiik
             // Configure router...
             $router->setBasePath($this->request()->getWebRootPath());
 
+            if (isset($c['WConfig']['Translation']['languages']) && is_array($c['WConfig']['Translation']['languages'])) {
+                $defaultLang = array_keys($c['WConfig']['Translation']['languages'])[0];
+                $router->setDefaultLang($defaultLang);
+            }
+
             if (isset($c['WConfig']['Router']['dlInUri'])) {
                 $router->setConfig(['defaultLangInUri' => $c['WConfig']['Router']['dlInUri']]);
             }

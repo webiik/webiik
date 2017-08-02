@@ -62,6 +62,16 @@ CREATE TABLE `auth_users` (
   INDEX `i_pswd` (`pswd`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+CREATE TABLE `auth_users_suffix` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `suffix` CHAR(2) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fkul_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`),
+  INDEX `i_user_id` (`user_id`),
+  INDEX `i_suffix` (`suffix`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
 CREATE TABLE `auth_users_social` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` INT UNSIGNED NOT NULL,
@@ -82,7 +92,7 @@ CREATE TABLE `auth_users_ban` (
   INDEX `i_user_id` (`user_id`),
   INDEX `i_ip_v4` (`ip_v4`),
   INDEX `i_till_ts` (`till_ts`),
-  CONSTRAINT `fkub_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
+  CONSTRAINT `fkub_user_uid` FOREIGN KEY (`user_id`) REFERENCES `auth_users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 # https://paragonie.com/blog/2015/04/secure-authentication-php-with-long-term-persistence#title.2

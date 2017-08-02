@@ -22,10 +22,10 @@ class MwAuthRedirect
 
     /**
      * AuthMw constructor.
-     * @param Auth $auth
+     * @param AuthExtended $auth
      * @param Router $router
      */
-    public function __construct(Auth $auth, Flash $flash, WRouter $router, WTranslation $translation)
+    public function __construct(AuthExtended $auth, Flash $flash, WRouter $router, WTranslation $translation)
     {
         $this->auth = $auth;
         $this->flash = $flash;
@@ -51,7 +51,7 @@ class MwAuthRedirect
      */
     public function isLogged(Request $request, \Closure $next, $referrer = true)
     {
-        $uid = $this->auth->isUserLogged();
+        $uid = $this->auth->isLogged();
 
         if ($uid) {
 
@@ -82,7 +82,7 @@ class MwAuthRedirect
      */
     public function isNotLogged(Request $request, \Closure $next, $routeName)
     {
-        $uid = $this->auth->isUserLogged();
+        $uid = $this->auth->isLogged();
 
         if ($uid) {
             $this->auth->redirect($this->router->getUrlFor($routeName));
@@ -110,7 +110,7 @@ class MwAuthRedirect
 
         } else {
 
-            $uid = $this->auth->isUserLogged();
+            $uid = $this->auth->isLogged();
 
             if ($uid) {
                 // Err: User doesn't have sufficient permissions to view this site

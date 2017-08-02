@@ -20,14 +20,14 @@ class MwAuth
 
     /**
      * MwAuth constructor.
-     * @param Auth $auth
+     * @param AuthExtended $auth
      * @param Csrf $csrf
      * @param WRouter $router
      * @param WTranslation $translation
      * @param WRender $render
      * @param Flash $flash
      */
-    public function __construct(Auth $auth, Csrf $csrf, WRouter $router, WTranslation $translation, WRender $render, Flash $flash)
+    public function __construct(AuthExtended $auth, Csrf $csrf, WRouter $router, WTranslation $translation, WRender $render, Flash $flash)
     {
         $this->auth = $auth;
         $this->csrf = $csrf;
@@ -46,7 +46,7 @@ class MwAuth
      */
     public function isLogged(Request $request, \Closure $next)
     {
-        $uid = $this->auth->isUserLogged();
+        $uid = $this->auth->isLogged();
 
         if ($uid) {
 
@@ -72,7 +72,7 @@ class MwAuth
      */
     public function isNotLogged(Request $request, \Closure $next, $routeName)
     {
-        $uid = $this->auth->isUserLogged();
+        $uid = $this->auth->isLogged();
 
         if ($uid) {
             $this->auth->redirect($this->router->getUrlFor($routeName));
@@ -101,7 +101,7 @@ class MwAuth
 
             if (!$_POST) {
 
-                $uid = $this->auth->isUserLogged();
+                $uid = $this->auth->isLogged();
 
                 if ($uid) {
                     // Err: User doesn't have sufficient permissions to view this site
