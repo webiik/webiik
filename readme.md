@@ -23,7 +23,7 @@ __Is there a docs?__<br/>
 __Is there a live example I can hack?__<br/>
 [~~Try it!~~]() ...but later
 
-__Do you have some boring arguments?__<br/>
+__Do you have some boring arguments?__
 - multi-lingual from its core<br/>
 - ready for advanced user accounts<br/>
 - MVC by your rules<br/>
