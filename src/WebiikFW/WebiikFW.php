@@ -69,7 +69,7 @@ class WebiikFW extends Webiik
 
         // Add Connection
         $this->container()->addService('Webiik\Connection', function ($c) {
-            $connection = new Connection($c['WConfig']['Error']['silent']);
+            $connection = new Connection(!$c['WConfig']['Error']['silent']);
             foreach ($c['WConfig']['Connection'] as $name => $p) {
                 $connection->add($name, $p[0], $p[1], $p[2], $p[3], $p[4], 'utf8', date('e'));
             }
@@ -91,7 +91,7 @@ class WebiikFW extends Webiik
         // Add Auth
         $this->container()->addService('Webiik\Auth', function ($c) {
             $auth = new Auth($c['Webiik\Cookie'], $c['Webiik\Session'], $c['Webiik\Token']);
-            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0 ) {
+            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0) {
                 $auth->setAuthSuffix($this->trans()->getLang());
             }
             $auth->setSessionName($c['WConfig']['Auth']['loginSessionName']);
@@ -106,7 +106,7 @@ class WebiikFW extends Webiik
         // Add AuthExtended
         $this->container()->addService('Webiik\AuthExtended', function ($c) {
             $auth = new AuthExtended($c['Webiik\Cookie'], $c['Webiik\Session'], $c['Webiik\Connection'], $c['Webiik\Token'], $c['Webiik\Attempts']);
-            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0 ) {
+            if ($c['WConfig']['Auth']['accountResolutionMode'] > 0) {
                 $auth->setAuthSuffix($this->trans()->getLang());
             }
             $auth->setSessionName($c['WConfig']['Auth']['loginSessionName']);
@@ -126,8 +126,7 @@ class WebiikFW extends Webiik
 
         // Add MwAuth
         $this->container()->addService('Webiik\MwAuth', function ($c) {
-            $authMwRedirect = new \Webiik\MwAuthRedirect(...WContainer::DIconstructor('Webiik\MwAuthRedirect', $this->container()));
-            $authMwRedirect->confLoginRouteName($c['WConfig']['AuthMwRedirect']['loginRouteName']);
+            $authMwRedirect = new \Webiik\MwAuth(...WContainer::DIconstructor('Webiik\MwAuth', $this->container()));
             return $authMwRedirect;
         });
 
@@ -151,6 +150,7 @@ class WebiikFW extends Webiik
                 $mail->SMTPOptions = $c['WConfig']['PHPMailer']['SMTP']['SMTPOptions'];
 
                 if ($c['WConfig']['PHPMailer']['SMTP']['SMTPAuth']) {
+                    $mail->SMTPAuth = true;
                     $mail->Username = $c['WConfig']['PHPMailer']['SMTP']['SMTPAuthUserName'];
                     $mail->Password = $c['WConfig']['PHPMailer']['SMTP']['SMTPAuthPswd'];
                 }
@@ -190,8 +190,12 @@ class WebiikFW extends Webiik
         $this->router()->setLogger($this->c['getLogger']('router', Log::$WARNING, $this->c['getCustomEmailLogHandler']()));
         $this->trans()->setLogger($this->c['getLogger']('translation', Log::$WARNING, $this->c['getCustomEmailLogHandler']()));
 
-        // Load translations of routes for current lang with all fallbacks
-        $this->trans()->loadTranslations('_app', '', false, 'routes');
+        // Load route translations for all langs
+        $langs = null;
+        if (isset($this->c['WConfig']['Translation']['languages'])) {
+            $langs = array_keys($this->c['WConfig']['Translation']['languages']);
+        }
+        $this->trans()->loadTranslations('_app', '', false, 'routes', $langs);
 
         // Map routes for current lang and fallbacks routes of missing current lang routes
         $lang = $this->trans()->getLang();
@@ -209,6 +213,7 @@ class WebiikFW extends Webiik
 
         // Todo: Consider to move loading of translations, formats and conversions to standalone middleware(s).
         // Load app and current page translations in to Translation
+        $this->trans()->loadTranslations('_app', '', true, false, $lang);
         $this->trans()->loadTranslations($routeInfo['name'], '', true, false, $lang);
 
         // Load translation formats in to Translation
