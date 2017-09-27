@@ -9,7 +9,7 @@ namespace Webiik;
  * @link        https://github.com/webiik/webiik
  * @license     MIT
  */
-class MwAuth
+class MwAuthDirect
 {
     private $auth;
     private $csrf;

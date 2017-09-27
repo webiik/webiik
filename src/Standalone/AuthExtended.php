@@ -341,6 +341,8 @@ class AuthExtended extends Auth
                 $data['msg'] = 'Unexpected error, it is unable to store user in social database.';
                 return $data;
             }
+
+            $data['provider'] = $provider;
         }
 
         // Generate activation and re-activation token when activation is required

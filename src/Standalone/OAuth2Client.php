@@ -146,23 +146,30 @@ class OAuth2Client
     }
 
     /**
-     * @param $username
-     * @param $password
+     * @param $client_id
+     * @param $client_secret
      * @param $method
      * @return array
      */
-    public function getAccessTokenByCredentials($username, $password, $method = 'POST')
+    public function getAccessTokenByCredentials($client_id, $client_secret, $method = 'POST')
     {
         $data = [
+            'client_id' => $client_id,
+            'client_secret' => $client_secret,
             'grant_type' => 'client_credentials',
         ];
 
-        $options = [
-            CURLOPT_HTTPAUTH => CURLAUTH_ANY,
-            CURLOPT_USERPWD => $username . ':' . $password,
-        ];
+        if ($method == 'POST') {
+            $res = $this->http->post($this->oauth_access_token_url, [], $data);
+        } else {
+            $res = $this->http->get($this->oauth_access_token_url . '?' . http_build_query($data), []);
+        }
 
-        return $this->getAccessToken($data, $options, $method);
+        if ($this->isResOk($res)) {
+            return json_decode($res['body'], true);
+        }
+
+        return $res;
     }
 
     /**
@@ -190,14 +197,31 @@ class OAuth2Client
      */
     public function getTokenInfo($inputToken, $accessToken, $method = 'POST')
     {
+//        $dataTwo = [
+//            'client_id' => '454449588261867',
+//            'client_secret' => '3f5bc09ccc773361d383b484a1cd004d',
+//            'grant_type' => 'client_credentials',
+//            //'redirect_uri' => 'http://localhost/mms-soutez.cz/cs/prihlaseni-facebook/'
+//        ];
+//        $res = $this->http->get('https://graph.facebook.com/v2.10/oauth/access_token' . '?' . http_build_query($dataTwo), []);
+//        echo '<h1>App access token:</h1><br/>';
+//        print_r($res);
+//        echo '<br/>';
+
+//        $body = json_decode($res['body'], true);
+//        print_r($body);
         $data = [
             'input_token' => $inputToken,
             'access_token' => $accessToken,
         ];
 
+
         if ($method == 'POST') {
             $res = $this->http->post($this->oauth_validate_token_url, [], $data);
         } else {
+//            echo '<br/>';
+//            echo $this->oauth_validate_token_url . '?' . http_build_query($data) . '<br/>';
+//            echo '<br/>';
             $res = $this->http->get($this->oauth_validate_token_url . '?' . http_build_query($data), []);
         }
 

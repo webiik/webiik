@@ -221,12 +221,11 @@ class Auth
         }
 
         // If user is logged in, check if user wasn't inactive for too long
-        if (
-            $uid
-            && $this->config['autoLogoutTime'] > 0
-            && $lastLoginCheckTs = $this->session->getFromSession($this->config['sessionName'] . 'Ts')
-        ) {
-            if ($lastLoginCheckTs + $this->config['autoLogoutTime'] < $_SERVER['REQUEST_TIME']) {
+        if ($uid && $this->config['autoLogoutTime'] > 0) {
+
+            $lastLoginCheckTs = $this->session->getFromSession($this->config['sessionName'] . 'Ts');
+
+            if (!$lastLoginCheckTs || ($lastLoginCheckTs + $this->config['autoLogoutTime'] < $_SERVER['REQUEST_TIME'])) {
                 $this->logout();
                 return -1;
             }

@@ -9,16 +9,15 @@ namespace Webiik;
  * @link        https://github.com/webiik/webiik
  * @license     MIT
  */
-class MwAuthRedirect
+class MwAuth
 {
     private $auth;
     private $flash;
     private $router;
     private $translation;
-    private $config = [
-        // Login route name
-        'loginRouteName' => false,
-    ];
+
+    // Login route name
+    private $loginRouteName;
 
     /**
      * AuthMw constructor.
@@ -34,23 +33,13 @@ class MwAuthRedirect
     }
 
     /**
-     * @param string $string
-     */
-    public function confLoginRouteName($string)
-    {
-        $this->config['loginRouteName'] = $string;
-    }
-
-    /**
-     * Check if user is logged in and create logged session if it's necessary
-     * If user is logged, add uid to Request and run next middleware
-     * If user isn't logged, redirect user to login page
+     * If user isn't logged redirect him to login page/routeName, otherwise run next middleware.
      * @param Request $request
      * @param \Closure $next
      * @param string|bool $routeName
      * @param bool $referrer - Adds ref param to login URL, useful for redirection
      */
-    public function isLogged(Request $request, \Closure $next, $routeName = false, $referrer = true)
+    public function isNotLogged(Request $request, \Closure $next, $routeName = false, $referrer = true)
     {
         $uid = $this->auth->isLogged();
 
@@ -78,14 +67,12 @@ class MwAuthRedirect
     }
 
     /**
-     * Check if user is logged in and create logged session if it's necessary
-     * If user isn't logged, run next middleware
-     * If user is logged, redirect user to $routeName
+     * If user is logged redirect him to routeName otherwise run next middleware.
      * @param Request $request
      * @param \Closure $next
      * @param string $routeName
      */
-    public function isNotLogged(Request $request, \Closure $next, $routeName)
+    public function isLogged(Request $request, \Closure $next, $routeName)
     {
         $uid = $this->auth->isLogged();
 
@@ -97,16 +84,44 @@ class MwAuthRedirect
     }
 
     /**
-     * Check if user can perform the action
-     * On success add uid to Request and run next middleware
-     * On fail redirect to login page
+     * If user can perform the action redirect him to routeName, otherwise run next middleware.
      * @param Request $request
      * @param \Closure $next
      * @param string $action
      * @param string|bool $routeName
      * @param bool $referrer
      */
-    public function can(Request $request, \Closure $next, $action, $routeName = false, $referrer = true)
+    public function can(Request $request, \Closure $next, $action, $routeName, $referrer = true)
+    {
+        $uid = $this->auth->userCan($action);
+
+        if (!$uid) {
+
+            $next($request);
+
+        } else {
+
+            $this->confLoginRouteName($routeName);
+
+            if ($referrer) {
+                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl());
+            } else {
+                $url = $this->getLoginUrl();
+            }
+
+            $this->auth->redirect($url);
+        }
+    }
+
+    /**
+     * If user can't perform the action redirect him to login page/routeName, otherwise run next middleware.
+     * @param Request $request
+     * @param \Closure $next
+     * @param string $action
+     * @param string|bool $routeName
+     * @param bool $referrer
+     */
+    public function cant(Request $request, \Closure $next, $action, $routeName = false, $referrer = true)
     {
         $uid = $this->auth->userCan($action);
 
@@ -144,6 +159,14 @@ class MwAuthRedirect
     }
 
     /**
+     * @param string $string
+     */
+    private function confLoginRouteName($string)
+    {
+        $this->loginRouteName = $string;
+    }
+
+    /**
      * Get login URL
      * On success return login URL
      * On error throw exception
@@ -152,11 +175,11 @@ class MwAuthRedirect
      */
     private function getLoginUrl()
     {
-        if (!$this->config['loginRouteName']) {
+        if (!$this->loginRouteName) {
             throw new \Exception('Login route name is not set.');
         }
 
-        $url = $this->router->getUrlFor($this->config['loginRouteName']);
+        $url = $this->router->getUrlFor($this->loginRouteName);
 
         if (!$url) {
             throw new \Exception('Login route name does not exist.');
