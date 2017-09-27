@@ -54,22 +54,35 @@ class WTranslation extends Translation
      * @param string $dir - Dir inside /app/translations/
      * @param bool $addOnlyDiffTranslation - Add only missing translations in current lang
      * @param bool $key - When $addOnlyDiffTranslation is false, you can specify what part of translation will be added
-     * @param null|string $lang
+     * @param null|string|array $lang
      */
     public function loadTranslations($fileName, $dir = '', $addOnlyDiffTranslation = true, $key = false, $lang = null)
     {
+        if (is_array($lang)) {
+            $fl = $lang;
+            $lang = array_shift($fl);
+        }
         $lang = $lang ? $lang : $this->lang;
+
         $dir = $dir == '' ? '' : trim($dir, '/') . '/';
 
         // Add translation for required lang
         $file = $this->WConfig['WebiikFW']['privateDir'] . '/app/translations/' . $dir . $fileName . '.' . $lang . '.php';
         if (file_exists($file)) {
             $translation = require $file;
-            $this->addTrans($lang, $translation);
+            if ($key) {
+                $this->addTrans($lang, $translation[$key], $key);
+            } else {
+                $this->addTrans($lang, $translation);
+            }
         }
 
         // Get fallback languages and iterate them
-        $fl = $this->getFallbackLangs($this->lang);
+        if (isset($fl)) {
+            $fl = array_merge($this->getFallbackLangs($this->lang), $fl);
+        } else {
+            $fl = $this->getFallbackLangs($this->lang);
+        }
         foreach ($fl as $flLang) {
 
             $file = $this->WConfig['WebiikFW']['privateDir'] . '/app/translations/' . $dir . $fileName . '.' . $flLang . '.php';
@@ -94,7 +107,7 @@ class WTranslation extends Translation
                 }
 
                 // Find keys that missing in current lang translation
-                $missingTranslations = $this->arr->diffMultiABKeys($translation, $currentLangTranslation);
+                $missingTranslations = $this->arr->diffMultiABKeys($currentLangTranslation, $translation);
 
                 // Add this missing translation
                 foreach ($missingTranslations as $key => $val) {
