@@ -133,7 +133,7 @@ class WebiikFW extends Webiik
         // Add Render
         $this->container()->addService('Webiik\WRender', function ($c) {
             $render = new \Webiik\WRender($c['Webiik\WTranslation']);
-            $render->addFileRenderHandler($c['WConfig']['Webiik']['privateDir'] . '/app/views/');
+            $render->addFileRenderHandler($c['WConfig']['WebiikFW']['privateDir'] . '/app/views/');
             return $render;
         });
 
