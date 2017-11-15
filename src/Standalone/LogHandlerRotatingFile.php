@@ -62,7 +62,7 @@ class LogHandlerRotatingFile implements LogHandlerInterface
     {
         $file = $this->getFilePath();
 
-        file_put_contents($file, json_encode($data) . "\r\n", FILE_APPEND);
+        file_put_contents($file, json_encode($data) . "\r\n", FILE_APPEND | LOCK_EX);
 
         if ($this->rotate()) {
             $this->deleteOldestLogFile();
