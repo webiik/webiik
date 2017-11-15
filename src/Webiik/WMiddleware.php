@@ -235,8 +235,8 @@ class WMiddleware
     private function next()
     {
         $next = function ($request) {
-            $nextMw = isset($this->middlewares[$this->iteration]) ? $this->middlewares[$this->iteration] : false;
             $this->iteration++;
+            $nextMw = isset($this->middlewares[$this->iteration]) ? $this->middlewares[$this->iteration] : false;
 
             if ($nextMw) {
                 $mw = $nextMw['mw'];
