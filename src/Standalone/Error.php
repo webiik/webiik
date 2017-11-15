@@ -85,7 +85,8 @@ class Error
      */
     private function exceptionHandler()
     {
-        $exceptionHandler = function (\Exception $e) {
+        /** @param \Error|\Exception $e */
+        $exceptionHandler = function ($e) {
             $trace = explode('#', $e->getTraceAsString());
             unset($trace[0]);
             $this->outputError('Exception', $e->getMessage(), $e->getFile(), $e->getLine(), $trace);
