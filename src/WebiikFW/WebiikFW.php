@@ -41,7 +41,8 @@ class WebiikFW extends Webiik
             $sessions = new Session($c['Webiik\Arr'], $c['Webiik\Cookie']);
             $sessions->setSessionName($c['WConfig']['Session']['name']);
             $sessions->setSessionDir($c['WConfig']['Session']['dir']);
-            $sessions->setSessionSystemLifetime($c['WConfig']['Session']['lifetime']);
+            $sessions->setSessionCookieLifetime($c['WConfig']['Session']['cookieLifetime']);
+            $sessions->setSessionGcLifetime($c['WConfig']['Session']['gcLifetime']);
             return $sessions;
         });
 
