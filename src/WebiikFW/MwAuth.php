@@ -1,4 +1,5 @@
 <?php
+
 namespace Webiik;
 
 /**
@@ -22,7 +23,9 @@ class MwAuth
     /**
      * AuthMw constructor.
      * @param AuthExtended $auth
-     * @param Router $router
+     * @param Flash $flash
+     * @param WRouter $router
+     * @param WTranslation $translation
      */
     public function __construct(AuthExtended $auth, Flash $flash, WRouter $router, WTranslation $translation)
     {
@@ -36,10 +39,12 @@ class MwAuth
      * If user isn't logged redirect him to login page/routeName, otherwise run next middleware.
      * @param Request $request
      * @param \Closure $next
-     * @param string|bool $routeName
-     * @param bool $referrer - Adds ref param to login URL, useful for redirection
+     * @param bool|string $routeName
+     * @param bool $referrer
+     * @param string $hashtag
+     * @throws \Exception
      */
-    public function isNotLogged(Request $request, \Closure $next, $routeName = false, $referrer = true)
+    public function isNotLogged(Request $request, \Closure $next, $routeName = false, $referrer = true, $hashtag = '')
     {
         $uid = $this->auth->isLogged();
 
@@ -52,14 +57,14 @@ class MwAuth
             // Err: User is not logged
             $this->flash->addFlashNext('err', $this->translation->_t('auth.msg.user-not-logged'));
 
-            if($routeName) {
+            if ($routeName) {
                 $this->confLoginRouteName($routeName);
             }
 
             if ($referrer) {
-                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl());
+                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl()) . $hashtag;
             } else {
-                $url = $this->getLoginUrl();
+                $url = $this->getLoginUrl() . $hashtag;
             }
 
             $this->auth->redirect($url);
@@ -71,6 +76,7 @@ class MwAuth
      * @param Request $request
      * @param \Closure $next
      * @param string $routeName
+     * @throws \Exception
      */
     public function isLogged(Request $request, \Closure $next, $routeName)
     {
@@ -88,10 +94,12 @@ class MwAuth
      * @param Request $request
      * @param \Closure $next
      * @param string $action
-     * @param string|bool $routeName
+     * @param bool|string $routeName
      * @param bool $referrer
+     * @param string $hashtag
+     * @throws \Exception
      */
-    public function can(Request $request, \Closure $next, $action, $routeName, $referrer = true)
+    public function can(Request $request, \Closure $next, $action, $routeName, $referrer = true, $hashtag = '')
     {
         $uid = $this->auth->userCan($action);
 
@@ -104,9 +112,9 @@ class MwAuth
             $this->confLoginRouteName($routeName);
 
             if ($referrer) {
-                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl());
+                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl()) . $hashtag;
             } else {
-                $url = $this->getLoginUrl();
+                $url = $this->getLoginUrl() . $hashtag;
             }
 
             $this->auth->redirect($url);
@@ -118,10 +126,12 @@ class MwAuth
      * @param Request $request
      * @param \Closure $next
      * @param string $action
-     * @param string|bool $routeName
+     * @param bool|string $routeName
      * @param bool $referrer
+     * @param string $hashtag
+     * @throws \Exception
      */
-    public function cant(Request $request, \Closure $next, $action, $routeName = false, $referrer = true)
+    public function cant(Request $request, \Closure $next, $action, $routeName = false, $referrer = true, $hashtag = '')
     {
         $uid = $this->auth->userCan($action);
 
@@ -144,14 +154,14 @@ class MwAuth
             $this->flash->getFlashes(); // clear flashes
             $this->flash->addFlashNext('err', $msg);
 
-            if($routeName) {
+            if ($routeName) {
                 $this->confLoginRouteName($routeName);
             }
 
             if ($referrer) {
-                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl());
+                $url = $this->getLoginUrl() . '?ref=' . urlencode($request->getUrl()) . $hashtag;
             } else {
-                $url = $this->getLoginUrl();
+                $url = $this->getLoginUrl() . $hashtag;
             }
 
             $this->auth->redirect($url);
