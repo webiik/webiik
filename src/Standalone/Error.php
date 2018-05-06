@@ -101,7 +101,9 @@ class Error
     private function errorHandler()
     {
         $errorHandler = function ($errno, $errstr, $errfile, $errline) {
-            $this->outputError($this->parseErrorType($errno), $errstr, $errfile, $errline);
+            if ($errno && error_reporting()) {
+                $this->outputError($this->parseErrorType($errno), $errstr, $errfile, $errline);
+            }
         };
         return $errorHandler;
     }
@@ -252,7 +254,7 @@ class Error
         if (is_callable($logger)) {
             $logger($data);
         } else {
-            error_log(json_encode($data). '\r\n');
+            error_log(json_encode($data) . '\r\n');
         }
     }
 }
