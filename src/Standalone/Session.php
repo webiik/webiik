@@ -21,7 +21,8 @@ class Session
 
     private $sessionName = 'PHPSESSID';
     private $sessionDir = '';
-    private $sessionLifetime = 0;
+    private $sessionCookieLifetime = 0;
+    private $sessionGcLifetime = 1440;
 
     /**
      * Sessions constructor.
@@ -52,13 +53,23 @@ class Session
     }
 
     /**
-     * Set max time in sec how long will be session stored on the server and session cookie in the browser
-     * Default value is set to 0, it means till session is valid
+     * Set max time on how long will be session stored in the browser
+     * Default value is set to 0, it means till browser is closed
      * @param $sec
      */
-    public function setSessionSystemLifetime($sec)
+    public function setSessionCookieLifetime($sec)
     {
-        $this->sessionLifetime = $sec;
+        $this->sessionCookieLifetime = $sec;
+    }
+
+    /**
+     * Set max time on how long will be an unused PHP session kept alive
+     * Default value is set to 1440
+     * @param $sec
+     */
+    public function setSessionGcLifetime($sec)
+    {
+        $this->sessionGcLifetime = $sec;
     }
 
     /**
@@ -146,31 +157,24 @@ class Session
     /**
      * Start session if is not started and set session parameters and add basic values
      * Delete session if is expired or if is suspicious
-     * @param int $lifetime
-     * @param null $uri
-     * @param null $domain
-     * @param null $secure
-     * @param null $httponly
      * @return bool
      */
-    private function sessionStart($lifetime = 0, $uri = null, $domain = null, $secure = null, $httponly = null)
+    private function sessionStart()
     {
         if (session_status() == PHP_SESSION_NONE) {
 
-            $lifetime = $this->lifetime($lifetime);
-
-            ini_set('session.gc_maxlifetime', $lifetime);
+            ini_set('session.gc_maxlifetime', $this->sessionGcLifetime);
 
             if ($this->sessionDir) session_save_path($this->sessionDir);
 
             session_name($this->sessionName);
 
             session_set_cookie_params(
-                $lifetime,
-                $uri ? $uri : $this->cookie->getUri(),
-                $domain ? $domain : $this->cookie->getDomain(),
-                $secure ? $secure : $this->cookie->getSecure(),
-                $httponly ? $httponly : $this->cookie->getHttponly()
+                $this->sessionCookieLifetime,
+                $this->cookie->getUri(),
+                $this->cookie->getDomain(),
+                $this->cookie->getSecure(),
+                $this->cookie->getHttponly()
             );
 
             session_start();
@@ -184,15 +188,6 @@ class Session
         }
 
         return true;
-    }
-
-    /**
-     * @param $lifetime
-     * @return null
-     */
-    private function lifetime($lifetime)
-    {
-        return $lifetime ? $lifetime : $this->sessionLifetime;
     }
 
     /**
