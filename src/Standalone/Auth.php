@@ -227,8 +227,10 @@ class Auth
 
             if (!$lastLoginCheckTs || ($lastLoginCheckTs + $this->config['autoLogoutTime'] < $_SERVER['REQUEST_TIME'])) {
                 $this->logout();
-                return -1;
+                return false;
             }
+
+            $this->session->setToSession($this->config['sessionName'] . 'Ts', $_SERVER['REQUEST_TIME']);
         }
 
         return $uid;
