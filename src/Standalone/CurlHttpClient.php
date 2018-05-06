@@ -27,6 +27,9 @@ class CurlHttpClient
      * Set response timeout
      * 'timeout' => 300,
      *
+     * Set encoding, equivalent of: curl --compressed
+     * 'encoding' => '',
+     *
      * Set request http headers
      * 'httpHeaders' => [],
      *
@@ -45,6 +48,7 @@ class CurlHttpClient
      *
      * Send request via proxy
      * 'proxy' => false,
+     * 'proxyPort' => false,
      * 'proxyAuth' => false,
      *
      * Set cookies
@@ -238,6 +242,12 @@ class CurlHttpClient
             CURLOPT_VERBOSE => 1,
         ];
 
+        // Set encoding
+        if (isset($options['encoding']) && $options['encoding']) {
+            $opt[CURLOPT_ENCODING] = $options['encoding'];
+            unset($options['encoding']);
+        }
+
         // VerifySSL
         if (isset($options['verifySSL']) && is_bool($options['verifySSL'])) {
             $opt[CURLOPT_SSL_VERIFYHOST] = $options['verifySSL'];
@@ -249,6 +259,12 @@ class CurlHttpClient
         if (isset($options['proxy']) && is_string($options['proxy'])) {
             $opt[CURLOPT_PROXY] = $options['proxy'];
             unset($options['proxy']);
+        }
+
+        // Set proxy port
+        if (isset($options['proxyPort']) && is_numeric($options['proxyPort'])) {
+            $opt[CURLOPT_PROXYPORT] = $options['proxyPort'];
+            unset($options['proxyPort']);
         }
 
         // Set proxy auth credentials
@@ -390,6 +406,16 @@ class CurlHttpClient
         $data['err'] = curl_error($curl);
         $data['info'] = curl_getinfo($curl);
         $data['status'] = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $response, $matches);
+        $cookies = [];
+        if (isset($matches[1])) {
+            foreach ($matches[1] as $item) {
+                parse_str($item, $cookie);
+                $cookies = array_merge($cookies, $cookie);
+            }
+        }
+        $data['cookies'] = $cookies;
 
         if ($withHeader && !$withBody) {
             $data['header'] = $this->processCurlHeaders($response);
