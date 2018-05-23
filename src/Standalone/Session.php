@@ -5,6 +5,7 @@
  * @link        https://github.com/webiik/webiik
  * @license     MIT
  */
+
 namespace Webiik;
 
 /**
@@ -163,9 +164,13 @@ class Session
     {
         if (session_status() == PHP_SESSION_NONE) {
 
-            ini_set('session.gc_maxlifetime', $this->sessionGcLifetime);
-
-            if ($this->sessionDir) session_save_path($this->sessionDir);
+            if ($this->sessionDir) {
+                session_save_path($this->sessionDir);
+                $this->autoDeleteExpiredSessionFiles();
+            } else {
+                // Built-in garbage collector works only for standard path
+                ini_set('session.gc_maxlifetime', $this->sessionGcLifetime);
+            }
 
             session_name($this->sessionName);
 
@@ -188,6 +193,23 @@ class Session
         }
 
         return true;
+    }
+
+    /**
+     * Auto delete expired sessions with specified probability
+     */
+    private function autoDeleteExpiredSessionFiles()
+    {
+        if (rand(1, 100) <= 5) {
+            foreach (new \DirectoryIterator($this->sessionDir) as $item) {
+                if ($item->isFile()) {
+                    $fileExpirationTime = $_SERVER['REQUEST_TIME'] - $this->sessionGcLifetime;
+                    if ($fileExpirationTime > $item->getMTime()) {
+                        unlink($item->getPathname());
+                    }
+                }
+            }
+        }
     }
 
     /**
