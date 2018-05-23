@@ -109,7 +109,6 @@ class Cookie
      */
     public function setCookie($name, $value = null, $expire = null, $uri = null, $domain = null, $secure = null, $httponly = null)
     {
-        if ($expire) $expire = strtotime($expire);
         setcookie(
             $name,
             $value,
