@@ -80,10 +80,10 @@ class CurlHttpClient
     /**
      * @param $url
      * @param array $options
-     * @param array $postData
+     * @param array|string|bool $postData
      * @return array|string
      */
-    public function post($url, $options = [], $postData = [])
+    public function post($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
         $options = $this->prepareOptions($options, $postData);
@@ -94,10 +94,10 @@ class CurlHttpClient
     /**
      * @param $url
      * @param array $options
-     * @param array $postData
+     * @param array|string|bool $postData
      * @return array|string
      */
-    public function put($url, $options = [], $postData = [])
+    public function put($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
         $options = $this->prepareOptions($options, $postData);
@@ -109,10 +109,10 @@ class CurlHttpClient
     /**
      * @param $url
      * @param array $options
-     * @param array $postData
+     * @param array|string|bool $postData
      * @return array|string
      */
-    public function delete($url, $options = [], $postData = [])
+    public function delete($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
         $options = $this->prepareOptions($options, $postData);
@@ -243,7 +243,7 @@ class CurlHttpClient
         ];
 
         // Set encoding
-        if (isset($options['encoding']) && $options['encoding']) {
+        if (isset($options['encoding'])) {
             $opt[CURLOPT_ENCODING] = $options['encoding'];
             unset($options['encoding']);
         }
@@ -359,12 +359,15 @@ class CurlHttpClient
         }
 
         // Set post data
-        if (is_array($postData)) {
+        if ($postData) {
             $opt[CURLOPT_POST] = 1;
-        }
-
-        if (is_array($postData) && count($postData) > 0) {
-            $opt[CURLOPT_POSTFIELDS] = http_build_query($postData);
+            if (is_array($postData)) {
+                if (count($postData) > 0) {
+                    $opt[CURLOPT_POSTFIELDS] = http_build_query($postData);
+                }
+            } else {
+                $opt[CURLOPT_POSTFIELDS] = $postData;
+            }
         }
 
         // Set user agent
