@@ -22,7 +22,6 @@ class Auth
      */
     private $session;
 
-
     /**
      * Closure MUST have the following parameters: function ($uid, $token, $expirationTs) {}
      * Closure MUST save these parameters as serialised array.
@@ -345,15 +344,15 @@ class Auth
 
         // Get info array from permanent file
         $data = unserialize($data);
-        if (!isset($data['uid']) || !isset($data['selector']) || !isset($data['token'])) {
+        if (!isset($data['uid']) || !isset($data['token'])) {
             // Err: Permanent file does not contain required data
             $deleteFn = $this->permanentRecordDeleteFn;
             $deleteFn($selector);
             return false;
         }
 
-        // Does selector and token measure 12 and 64 characters?
-        if (strlen($data['selector']) != 12 || strlen($data['token']) != 64) {
+        // Does token 64 characters?
+        if (strlen($data['token']) != 64) {
             // Err: Selector or token has invalid length
             $deleteFn = $this->permanentRecordDeleteFn;
             $deleteFn($selector);
