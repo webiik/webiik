@@ -204,7 +204,7 @@ class Session
             foreach (new \DirectoryIterator($this->sessionDir) as $item) {
                 if ($item->isFile()) {
                     $fileExpirationTime = $_SERVER['REQUEST_TIME'] - $this->sessionGcLifetime;
-                    if ($fileExpirationTime > $item->getMTime()) {
+                    if ($item->getFilename()[0] != '.' && $fileExpirationTime > $item->getMTime()) {
                         unlink($item->getPathname());
                     }
                 }
