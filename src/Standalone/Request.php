@@ -77,7 +77,7 @@ class Request
      */
     public function getHostName()
     {
-        return isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
+        return isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] ? $_SERVER['SERVER_NAME'] : $_SERVER['SERVER_ADDR'];
     }
 
     /**
