@@ -350,7 +350,8 @@ class Router
             if (isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
                 $scheme = 'https';
             }
-            return $scheme . '://' . $_SERVER['SERVER_NAME'] . $uri;
+            $host = isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] ? $_SERVER['SERVER_NAME'] : $_SERVER['SERVER_ADDR'];
+            return $scheme . '://' . $host . $uri;
         }
 
         return $uri;
