@@ -101,6 +101,7 @@ class CurlHttpClient
     public function put($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
+        $postData = $postData ? $postData : true;
         $options = $this->prepareOptions($options, $postData);
         $options['curl'][CURLOPT_CUSTOMREQUEST] = 'PUT';
         curl_setopt_array($curl, $options['curl']);
@@ -116,6 +117,7 @@ class CurlHttpClient
     public function delete($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
+        $postData = $postData ? $postData : true;
         $options = $this->prepareOptions($options, $postData);
         $options['curl'][CURLOPT_CUSTOMREQUEST] = 'DELETE';
         curl_setopt_array($curl, $options['curl']);
@@ -163,6 +165,7 @@ class CurlHttpClient
     public function patch($url, $options = [], $postData)
     {
         $curl = curl_init($url);
+        $postData = $postData ? $postData : true;
         $options = $this->prepareOptions($options, $postData);
         $options['curl'][CURLOPT_CUSTOMREQUEST] = 'PATCH';
         curl_setopt_array($curl, $options['curl']);
