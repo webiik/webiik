@@ -86,6 +86,7 @@ class CurlHttpClient
     public function post($url, $options = [], $postData = false)
     {
         $curl = curl_init($url);
+        $postData = $postData ? $postData : true;
         $options = $this->prepareOptions($options, $postData);
         curl_setopt_array($curl, $options['curl']);
         return $this->send($curl, $options['withHeader'], $options['withBody']);
@@ -359,13 +360,14 @@ class CurlHttpClient
         }
 
         // Set post data
+        // Set post data
         if ($postData) {
             $opt[CURLOPT_POST] = 1;
             if (is_array($postData)) {
                 if (count($postData) > 0) {
                     $opt[CURLOPT_POSTFIELDS] = http_build_query($postData);
                 }
-            } else {
+            } else if ($postData !== true) {
                 $opt[CURLOPT_POSTFIELDS] = $postData;
             }
         }
