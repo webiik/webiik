@@ -225,7 +225,7 @@ class CurlHttpClient
         $res = $this->get($url, $opt);
 
         // If request fails
-        if (count($res['err']) > 0) {
+        if ($res['err']) {
             @unlink($filePath);
         }
 
