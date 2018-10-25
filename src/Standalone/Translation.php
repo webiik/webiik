@@ -319,7 +319,7 @@ class Translation
 
         } else {
             $this->isArrAssoc($val);
-            $this->translation[$lang] = array_merge_recursive($this->translation[$lang], $val);
+            $this->translation[$lang] = $this->array_merge_recursive_distinct($this->translation[$lang], $val);
         }
     }
 
@@ -853,6 +853,26 @@ class Translation
             throw new \Exception('Set first language of translation with method setLang().');
         }
         return true;
+    }
+
+    /**
+     * @author Daniel <daniel (at) danielsmedegaardbuus (dot) dk>
+     * @author Gabriel Sobrinho <gabriel (dot) sobrinho (at) gmail (dot) com>
+     * @param array $array1
+     * @param array $array2
+     * @return array
+     */
+    private function array_merge_recursive_distinct(array &$array1, array &$array2)
+    {
+        $merged = $array1;
+        foreach ($array2 as $key => &$value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
+                $merged[$key] = $this->array_merge_recursive_distinct($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+        return $merged;
     }
 
     /**
