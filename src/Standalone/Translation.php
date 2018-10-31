@@ -536,7 +536,7 @@ class Translation
         foreach ($brackets as $bracket) {
 
             // Get bracket's paramName, type and format
-            preg_match_all('/^(\w+),?\s?(\w+)?,?\s?(.*)$/', $bracket, $matches);
+            preg_match_all('/^([^,]+),?\s?(\w+)?,?\s?(.*)$/', $bracket, $matches);
             $paramName = $matches[1][0];
             $type = $matches[2][0];
             $format = $matches[3][0];
