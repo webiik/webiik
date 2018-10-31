@@ -312,7 +312,7 @@ class Translation
 
             // Add value to prepared context
             if (is_array($context)) {
-                array_merge($context, $val);
+                $context = array_merge($context, $val);
             } else {
                 $context = $val;
             }
