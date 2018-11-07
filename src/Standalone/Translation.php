@@ -505,16 +505,6 @@ class Translation
             $paramVal = $arr[$paramName];
         } else {
             $paramVal = '{' . $paramName . '}';
-
-            // Log error
-            $msg = [
-                'Class' => 'Translation',
-                'Method' => 'getParamVal',
-                'Key' => htmlspecialchars($paramName),
-                'Language' => $this->lang,
-                'Message' => 'Missing value for param \'' . htmlspecialchars($paramName) . '\' in lang \'' . $this->lang . '\'.',
-            ];
-            $this->log($msg);
         }
 
         return $paramVal;
