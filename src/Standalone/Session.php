@@ -205,7 +205,14 @@ class Session
                 if ($item->isFile()) {
                     $fileExpirationTime = $_SERVER['REQUEST_TIME'] - $this->sessionGcLifetime;
                     if ($item->getFilename()[0] != '.' && $fileExpirationTime > $item->getMTime()) {
-                        unlink($item->getPathname());
+                        $file = $item->getPathname();
+                        // Super weired: Sometimes directory iterator returns reference
+                        // to non existing file, so we have to check if file still exist.
+                        // Probably it could happen when more than one call of this method
+                        // is initiated at the same time in different threads.
+                        if (file_exists($file)) {
+                            unlink($file);
+                        }
                     }
                 }
             }
