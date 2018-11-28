@@ -211,7 +211,7 @@ class Session
                         // Probably it could happen when more than one call of this method
                         // is initiated at the same time in different threads.
                         if (file_exists($file)) {
-                            unlink($file);
+                            @unlink($file);
                         }
                     }
                 }
