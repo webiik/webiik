@@ -790,7 +790,7 @@ class AuthExtended extends Auth
         $q->execute([hash_hmac('sha256', $pswd, $this->config['salt']), $validatedToken['uid']]);
 
         // Unable to update user password
-        if ($q->rowCount() < 1) {
+        if ($db->errorCode() != 0 && $q->rowCount() < 1) {
             $data['err'] = 3;
             $data['msg'] = 'Unable to update user password.';
             return $data;
