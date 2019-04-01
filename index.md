@@ -17,7 +17,7 @@ title: Webiik
 | Laravel | 80 271 | 2 457 | 43 | 🐌 329 |
 | Symfony | 🤯 182 807 | 5 510 | 83 | 456** |
 
-\* with predefined services Twig, PHPMailer etc., \** with Twig
+\* with Twig and PHPMailer, \** with Twig
 
 LLOC = logical lines of code incl. vendor folder. Benchmark was performed by `./hey -n 200 -c 50`. All measurements were performed on a fresh installation of each framework. Each framework was set to production mode. Development dependencies were not installed. 
 
