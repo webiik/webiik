@@ -1,6 +1,6 @@
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-minimal
+theme: minima
 highlighter: rouge
 plugins:
   - jekyll-sitemap
