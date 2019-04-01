@@ -4,14 +4,14 @@ Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines
  
 | Framework | LLOC | Classes | Dependencies | Req/s |
 | :-------- | ---: | ------: | -----------: | ----: |
-| Webiik  | 10 765 (1 717*) | 505 (54*) | 22 (18*) | 1 239** (1 781*) |
+| Webiik  | 1 717 (10 765*) | 54 (505*) | 18 (22*) | 1 781 (1 239*) |
 | Slim | 4 797 | 168 | 9 | 998 |
 | Lumen | 55 594 | 1 558 | 50 | 1 339 |
 | Silex | 88 962 | 3 029 | 45 | 736 |
 | Laravel | 80 271 | 2 457 | 43 | 🐌 329 |
 | Symfony | 🤯 182 807 | 5 510 | 83 | 456** |
 
-\* without Twig and PHPMailer library, \** with Twig rendering
+\* with predefined services Twig, PHPMailer etc., \** with Twig
 
 LLOC = logical lines of code incl. vendor folder. Benchmark was performed by `./hey -n 200 -c 50`. All measurements were performed on a fresh installation of each framework. Each framework was set to production mode. Development dependencies were not installed. 
 
