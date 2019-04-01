@@ -9,3 +9,6 @@ package-lock.json
 node_modules
 extensions
 tmp
+.sass-cache
+Gemfile.lock
+_site/
