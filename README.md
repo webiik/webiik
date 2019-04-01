@@ -1,6 +1,6 @@
 Webiik
 ======
-Webiik is the simplest PHP framework. It has only 1 062 logical lines of code without predefined services. It gives you back control over the code of your application. 
+<p style="font-size: 1.5em;">Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code.</p> 
  
 | Framework | LLOC | Classes | Dependencies | Req/s |
 | :-------- | ---: | ------: | -----------: | ----: |
