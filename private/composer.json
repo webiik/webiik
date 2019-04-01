@@ -1,0 +1,35 @@
+{
+  "homepage": "https://www.webiik.com",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jiri Mihal",
+      "email": "jiri@mihal.me"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "webiik/framework": "^1",
+    "webiik/arr": "^1",
+    "webiik/translation": "^1",
+    "webiik/error": "^1",
+    "webiik/log": "^1",
+    "webiik/database": "^1",
+    "webiik/mail": "^1",
+    "webiik/view": "^1",
+    "phpmailer/phpmailer": "~6.0",
+    "twig/twig": "^2"
+  },
+  "require-dev": {
+    "webiik/cli-analyse": "^1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Webiik\\Controller\\": "app/code/controllers",
+      "Webiik\\Middleware\\": "app/code/middleware",
+      "Webiik\\Model\\": "app/code/models",
+      "Webiik\\Component\\": "app/code/components",
+      "Webiik\\Trait\\": "app/code/traits"
+    }
+  }
+}
