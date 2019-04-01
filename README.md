@@ -23,7 +23,7 @@ Contributing
 ------------
 I appreciate everyone who considers contributing. Currently, I’m looking for: 
 
-*  [Grammar corrections and proofreading](mdfiles.md).
+*  [Grammar corrections and proofreading](grammar.md).
 
 If you decide to contribute, send pull request or contact me at jiri@mihal.me or [@JiriMihal](https://twitter.com/jirimihal).
 
