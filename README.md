@@ -1,6 +1,6 @@
 Webiik
 ======
-<p style="font-size: 1.5em;">Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code.</p> 
+Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code. 
  
 | Framework | LLOC | Classes | Dependencies | Req/s |
 | :-------- | ---: | ------: | -----------: | ----: |
@@ -23,7 +23,7 @@ Contributing
 ------------
 I appreciate everyone who considers contributing. Currently, I’m looking for: 
 
-*  Grammar corrections and proofreading of `README.md` files.
+*  Grammar corrections and proofreading of `*.md` files.
 
 If you decide to contribute, send pull request or contact me at jiri@mihal.me or [@JiriMihal](https://twitter.com/jirimihal).
 
