@@ -1,0 +1,37 @@
+<nav class="sidenav">
+    {% for item in site.data.navigation %}
+    <ul>
+        <li>
+            {% if item.link %}
+            <a href="{{ item.link }}" {% if page.url == item.link %}class="current"{% endif %}>{{ item.title }}</a>
+            {% else %}
+            {{ item.title }}
+            {% endif %}
+            {% if item.sub %}
+            <ul>
+            {% endif %}
+            {% for subitem in item.sub %}
+                <li>
+                {% if subitem.title == "separator" %}
+                    ---
+                {% else %}
+                    <a href="{{ subitem.link }}" {% if page.url == subitem.link %}class="current"{% endif %} {% if subitem.target == "_blank" %} target="_blank" {% endif %}>{{ subitem.title }}</a>
+                    {% if subitem.sub %}
+                        <ul>
+                            {% for subsubitem in subitem.sub %}
+                                <li>
+                                    <a href="{{ subsubitem.link }}" {% if page.url == subsubitem.link %}class="current"{% endif %}>{{ subsubitem.title }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endif %}
+                </li>
+            {% endfor %}
+            {% if item.sub %}
+            </ul>
+            {% endif %}
+        </li>
+    </ul>
+    {% endfor %}
+</nav>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 950 556" style="enable-background:new 0 0 950 556;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FFFFFF;stroke:#000000;stroke-miterlimit:10;}
+	.st1{fill:#D8D8D8;stroke:#000000;stroke-miterlimit:10;}
+	.st2{fill:#FFFFFF;}
+	.st3{font-family:'Helvetica';}
+	.st4{font-size:25px;}
+	.st5{fill:#D8D8D8;}
+	.st6{fill:none;stroke:#000000;stroke-miterlimit:10;}
+</style>
+<ellipse transform="matrix(0.7071 -0.7071 0.7071 0.7071 -57.4513 417.3001)" class="st0" cx="475" cy="278" rx="277.02" ry="277.02"/>
+<ellipse transform="matrix(0.7071 -0.7071 0.7071 0.7071 -57.4513 417.3001)" class="st0" cx="475" cy="278" rx="207.02" ry="207.02"/>
+<ellipse transform="matrix(0.7071 -0.7071 0.7071 0.7071 -57.4513 417.3001)" class="st1" cx="475" cy="278" rx="137.02" ry="137.02"/>
+<circle cx="475" cy="278" r="67.02"/>
+<text transform="matrix(1 0 0 1 420.8134 285.2448)" class="st2 st3 st4">Controller</text>
+<text transform="matrix(1 0 0 1 438.1718 175.8592)"><tspan x="0" y="0" class="st3 st4">Route </tspan><tspan x="-37.51" y="25" class="st3 st4">Middleware 1</tspan></text>
+<text transform="matrix(1 0 0 1 400.6595 118.8592)" class="st3 st4">Middleware 2</text>
+<text transform="matrix(1 0 0 1 400.6595 48.8592)" class="st3 st4">Middleware 1</text>
+<text transform="matrix(1 0 0 1 57.976 254.3774)" class="st3 st4">Request</text>
+<text transform="matrix(1 0 0 1 777.1084 254.3774)" class="st3 st4">Response</text>
+<g>
+	<line class="st5" x1="57.98" y1="278" x2="407.98" y2="278"/>
+	<g>
+		<line class="st6" x1="57.98" y1="278" x2="382.86" y2="278"/>
+		<g>
+			<polygon points="377.75,295.45 407.98,278 377.75,260.55 			"/>
+		</g>
+	</g>
+</g>
+<g>
+	<line class="st5" x1="542.02" y1="278" x2="892.02" y2="278"/>
+	<g>
+		<line class="st6" x1="542.02" y1="278" x2="866.91" y2="278"/>
+		<g>
+			<polygon points="861.8,295.45 892.02,278 861.8,260.55 			"/>
+		</g>
+	</g>
+</g>
+</svg>

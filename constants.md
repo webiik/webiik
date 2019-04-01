@@ -1,0 +1,27 @@
+---
+layout: default
+title: Constants
+permalink: /constants/
+---
+# Constants
+Webiik defines a few handy constants you could use.
+
+Directory path of Webiik application (directory app). Value of this constant is filled automatically:
+```php
+WEBIIK_BASE_DIR
+```
+
+Base URI of Webiik application (usually /). Value of this constant is set in [the main configuration file](/configuration):
+```php
+WEBIIK_BASE_URI
+```
+
+Base URL of Webiik application (usually http(s)://sub.domain.tld). Value of this constant comes from WEBIIK_BASE_URI:
+```php
+WEBIIK_BASE_URL
+```
+
+Current language. Value of this constant is filled automatically. It depends on current URI and language settings in [the main configuration file](/configuration):
+```php
+WEBIIK_LANG
+``` 

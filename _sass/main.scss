@@ -1,0 +1,283 @@
+$base-font-size: 17px;
+$padding: 40px;
+$sidebar-width: 280px;
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  font-size: $base-font-size;
+}
+
+.block-sidenav {
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  top: 80px;
+  border-right: solid 1px #e7e7e7;
+  width: $sidebar-width;
+  height: calc(100% - 80px);
+  overflow-y: auto;
+}
+
+.block-sidenav-content {
+  position: absolute;
+  left: $sidebar-width;
+  top: 0;
+  width: calc(100% - #{$sidebar-width} - #{$padding} * 2);
+  padding: $padding;
+}
+
+.logo {
+  position: fixed;
+  box-sizing: border-box;
+  left: 0;
+  top: 0;
+  width: $sidebar-width;
+  text-align: center;
+  border-right: solid 1px #e7e7e7;
+  border-bottom: solid 1px #e7e7e7;
+  height: 80px;
+
+  a {
+    display: block;
+    box-sizing: border-box;
+    padding: 15px 0;
+    font-size: 2em;
+    text-decoration: none;
+    color: #000000;
+  }
+
+  a:hover {
+    color: #000000;
+  }
+
+  a img {
+    position: relative;
+    top: 6px;
+    width: 45px;
+    height: auto;
+  }
+
+  a span {
+    font-size: .5em;
+  }
+}
+
+
+.sidenav {
+
+  margin: 0;
+  padding: $padding;
+
+  ul {
+    list-style: none;
+    margin: 1.5em 0 0 0;
+    padding: 0;
+    line-height: 1.6em;
+    font-size: 1.1em;
+  }
+
+  ul:first-child {
+    margin: 0;
+  }
+
+  ul ul {
+    margin: 0;
+    padding: .3em 0 0 2em;
+    font-size: $base-font-size;
+  }
+
+  ul ul ul {
+    padding: 0 0 0 2em;
+  }
+
+  .current {
+    color: #FF0000;
+  }
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.highlight code {
+  display: block;
+  padding: 10px 15px;
+  line-height: 1.5em;
+  overflow-x: auto;
+}
+
+h1:first-child {
+  margin: 0;
+}
+
+h2 {
+  margin: 1.5em 0 0 0;
+}
+
+h3 {
+  margin: 1.5em 0 0 0;
+}
+
+ul, ol {
+  line-height: 1.5em;
+}
+
+p {
+  margin: 1.5em 0 0 0;
+  line-height: 1.5em;
+}
+
+p.intro {
+  font-size: 1.5em;
+}
+
+a {
+  color: #0000FF;
+}
+
+a:hover {
+  color: #FF0000;
+}
+
+blockquote {
+  background: #f8f8f8;
+  border-left: 5px solid #ccc;
+  margin: 1.5em 0;
+  padding: .5em 10px;
+}
+
+blockquote p {
+  display: inline;
+}
+
+img.medium {
+  width: 556px;
+  height: auto;
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+@media (max-width: 1024px) {
+  img.medium {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 800px) {
+
+  .logo {
+    position: relative;
+    width: auto;
+    text-align: center;
+    height: 60px;
+
+    a {
+      position: relative;
+      left: 10px;
+      display: inline-block;
+      margin: 2px auto 0 auto;
+      text-align: center;
+      font-size: 1.8em;
+      padding: 5px;
+    }
+
+    a img {
+      width: 40px;
+    }
+  }
+
+  #bt-menu {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    width: 40px;
+    height: 40px;
+    z-index: 3;
+    cursor: hand;
+    cursor: pointer;
+    background: #FFFFFF;
+    border-radius: 20px;
+  }
+
+  #bt-menu div {
+    position: relative;
+    left: 8px;
+    top: 5px;
+    width: 25px;
+    height: 2px;
+    background: #000000;
+    margin: 6px 0;
+  }
+
+  #bt-menu.open div {
+    display: none;
+  }
+
+  #bt-menu.open div:first-child {
+    display: block;
+    transform: rotate(45deg);
+    top: 13px;
+  }
+
+  #bt-menu.open div:last-child {
+    display: block;
+    transform: rotate(-45deg);
+  }
+
+  .sidenav {
+    padding: $padding 0 $padding 50px;
+  }
+
+  .block-sidenav {
+    display: none;
+    top: 0;
+    height: 100%;
+    background: #FFFFFF;
+    z-index: 1;
+    box-shadow: 0 0 50px rgba(0, 0, 0, .4);
+  }
+
+  .block-sidenav.open {
+    display: block;
+  }
+
+  .block-sidenav-content {
+    position: relative;
+    box-sizing: border-box;
+    left: 0;
+    width: 100%;
+    padding: $padding;
+  }
+}
+
+@media (max-width: 767px) {
+  .block-sidenav-content {
+    padding: $padding - 10px;
+  }
+}
+
+@media (max-width: 500px) {
+  p.intro {
+    font-size: 1.3em;
+  }
+}
+
+@media (max-width: 350px) {
+  p.intro {
+    font-size: 1em;
+  }
+  .block-sidenav-content {
+    padding: $padding - 20px;
+  }
+}

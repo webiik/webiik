@@ -1,0 +1,18 @@
+$base-font-size: 17px;
+$padding: 40px;
+
+table {
+  width: 100%;
+  margin: 1.5em 0 0 0;
+  border-collapse: collapse;
+  border: solid 1px #e7e7e7;
+
+  td, th {
+    padding: 5px;
+    border: solid 1px #e7e7e7;
+  }
+}
+
+div.table {
+  overflow-x: auto;
+}
