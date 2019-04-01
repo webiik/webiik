@@ -33,7 +33,7 @@ Contributing
 ------------
 I appreciate everyone who considers contributing. Currently, I’m looking for: 
 
-*  Grammar corrections and proofreading of `*.md` files.
+*  [Grammar corrections and proofreading](https://github.com/webiik/webiik/blob/master/grammar.md).
 
 If you decide to contribute, please contact me at jiri@mihal.me or [@JiriMihal](https://twitter.com/jirimihal).
 
