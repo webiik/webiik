@@ -1,6 +1,6 @@
 {
   "name": "webiik/webiik",
-  "description": "Webiik is the simplest PHP framework ever.",
+  "description": "Webiik is small, yet powerful PHP framework.",
   "keywords": ["webiik", "framework", "simple"],
   "homepage": "https://www.webiik.com",
   "license": "MIT",
