@@ -1,18 +1,39 @@
-> Webiik is in version 0.x, it means under development.
+Webiik
+======
+Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code. 
+ 
+| Framework | LLOC | Classes | Dependencies | Req/s |
+| :-------- | ---: | ------: | -----------: | ----: |
+| Webiik  | 1 717 (10 765*) | 54 (505*) | 18 (22*) | 1 781 (1 239*) |
+| Slim | 4 797 | 168 | 9 | 998 |
+| Lumen | 55 594 | 1 558 | 50 | 1 339 |
+| Silex | 88 962 | 3 029 | 45 | 736 |
+| Laravel | 80 271 | 2 457 | 43 | 🐌 329 |
+| Symfony | 🤯 182 807 | 5 510 | 83 | 456** |
 
-# Webiik
-Just another PHP micro-framework and framework.
+\* with Twig and PHPMailer, \** with Twig
 
-__Why?__<br/>
-Because it fits my needs and always will be.
+LLOC = logical lines of code incl. vendor folder. Benchmark was performed by `./hey -n 200 -c 50`. All measurements were performed on a fresh installation of each framework. Each framework was set to production mode. Development dependencies were not installed. 
 
-__Why open source?__<br/>
-I’m nice person and my clients can use my work even with other developers.
+Documentation
+-------------
+Become the Webiik master within a few days, just read the straightforward [documentation][1].
 
-__Is it secure?__<br/>
-I hope so, but if you discover some vulnerability within Webiik, please send me an email at jiri@mihal.me.
+Contributing
+------------
+I appreciate everyone who considers contributing. Currently, I’m looking for: 
 
-[~~Read the docs~~]() ...but later<br/>
-[~~Try to hack live example!~~]() ...ehm you know
+*  [Grammar corrections and proofreading](grammar.md).
 
-Made by [Jiri Mihal](https://github.com/Jiri-Mihal) and provided under [MIT license](http://opensource.org/licenses/MIT).
+If you decide to contribute, send pull request or contact me at jiri@mihal.me or [@JiriMihal](https://twitter.com/jirimihal).
+
+Security Issues
+---------------
+If you discover a security vulnerability within Webiik, please send me an email with the vulnerability description to jiri@mihal.me.
+
+License
+-------
+Webiik and all its components are provided under [MIT license][2]. 
+
+[1]: https://www.webiik.com
+[2]: http://opensource.org/licenses/MIT
