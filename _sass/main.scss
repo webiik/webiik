@@ -1,11 +1,7 @@
-$base-font-size: 17px;
-$padding: 40px;
-$sidebar-width: 280px;
-
 body, html {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: $font-family;
   font-size: $base-font-size;
 }
 
@@ -13,12 +9,13 @@ body, html {
   box-sizing: border-box;
   position: fixed;
   left: 0;
-  top: 80px;
-  border-right: solid 1px #e7e7e7;
+  top: 120px;
+  //border-right: solid 1px $color-line;
   width: $sidebar-width;
-  height: calc(100% - 80px);
+  height: calc(100% - 120px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: $color-nav;
 }
 
 .block-sidenav-content {
@@ -36,14 +33,14 @@ body, html {
   top: 0;
   width: $sidebar-width;
   text-align: center;
-  border-right: solid 1px #e7e7e7;
-  border-bottom: solid 1px #e7e7e7;
-  height: 80px;
+  //border-right: solid 1px $color-line;
+  height: 120px;
+  background: $color-nav;
 
   a {
     display: block;
     box-sizing: border-box;
-    padding: 15px 0;
+    padding: 38px 0 15px 0;
     font-size: 2em;
     text-decoration: none;
     color: #000000;
@@ -55,8 +52,8 @@ body, html {
 
   a img {
     position: relative;
-    top: 6px;
-    width: 45px;
+    top: 5px;
+    width: 40px;
     height: auto;
   }
 
@@ -69,7 +66,7 @@ body, html {
 .sidenav {
 
   margin: 0;
-  padding: $padding;
+  padding: 5px $padding $padding $padding;
 
   ul {
     list-style: none;
@@ -77,6 +74,7 @@ body, html {
     padding: 0;
     line-height: 1.6em;
     font-size: 1.1em;
+    font-weight: bold;
   }
 
   ul:first-child {
@@ -84,17 +82,19 @@ body, html {
   }
 
   ul ul {
+    font-weight: normal;
     margin: 0;
-    padding: .3em 0 0 2em;
+    padding: .3em 0 0 1.5em;
     font-size: $base-font-size;
   }
 
   ul ul ul {
-    padding: 0 0 0 2em;
+    font-weight: normal;
+    padding: 0 0 0 1.5em;
   }
 
   .current {
-    color: #FF0000;
+    color: $color-a-selected;
   }
 
   a {
@@ -110,11 +110,19 @@ body, html {
   -webkit-overflow-scrolling: touch;
 }
 
+h1 {
+  font-size: 2.2em;
+  border-bottom: 1px solid $color-line;
+  padding-bottom: .3em;
+}
+
 h1:first-child {
   margin: 0;
 }
 
 h2 {
+  border-bottom: 1px solid $color-line;
+  padding-bottom: .3em;
   margin: 1.5em 0 0 0;
 }
 
@@ -127,7 +135,7 @@ ul, ol {
 }
 
 p {
-  margin: 1.5em 0 0 0;
+  //margin: 1.5em 0 0 0;
   line-height: 1.5em;
 }
 
@@ -136,11 +144,11 @@ p.intro {
 }
 
 a {
-  color: #0000FF;
+  color: $color-a;
 }
 
 a:hover {
-  color: #FF0000;
+  color: $color-a-hover;
 }
 
 blockquote {
@@ -186,6 +194,7 @@ img.medium {
 
     a {
       position: relative;
+      top: 2px;
       left: 10px;
       display: inline-block;
       margin: 2px auto 0 auto;
@@ -195,7 +204,8 @@ img.medium {
     }
 
     a img {
-      width: 40px;
+      top: 4px;
+      width: 35px;
     }
   }
 
@@ -208,17 +218,17 @@ img.medium {
     z-index: 3;
     cursor: hand;
     cursor: pointer;
-    background: #FFFFFF;
+    background: $color-a;
     border-radius: 20px;
   }
 
   #bt-menu div {
     position: relative;
-    left: 8px;
+    left: 9px;
     top: 5px;
-    width: 25px;
+    width: 22px;
     height: 2px;
-    background: #000000;
+    background: #FFFFFF;
     margin: 6px 0;
   }
 
@@ -260,6 +270,7 @@ img.medium {
     left: 0;
     width: 100%;
     padding: $padding;
+    word-break: break-word;
   }
 }
 
@@ -272,6 +283,11 @@ img.medium {
 @media (max-width: 500px) {
   p.intro {
     font-size: 1.3em;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0 0 0 $padding - 10px;
   }
 }
 

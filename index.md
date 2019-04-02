@@ -1,12 +1,12 @@
 ---
 layout: default
-title: Webiik
+title: Framework
 ---
 # Introduction
-<p class="intro">Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code.</p> 
+<p class="intro">Webiik is the simplest PHP framework. Its code base has only 1 062 logical lines of code. Use&nbsp;Webiik to regain control of your application's code.</p> 
 
 <a href="https://github.com/webiik" target="_blank"><img style="height: 30px;" src="https://img.shields.io/badge/-GitHub-black.svg?logo=github"/></a>
-<a href="https://stackoverflow.com/questions/tagged/webiik" target="_blank"><img style="height: 30px;" src="https://img.shields.io/badge/-Stackoverflow-orange.svg"/></a>
+<a href="https://stackoverflow.com/questions/tagged/webiik" target="_blank"><img style="height: 30px;" src="https://img.shields.io/badge/-Stackoverflow-black.svg"/></a>
  
 | Framework | LLOC | Classes | Dependencies | Req/s |
 | :-------- | ---: | ------: | -----------: | ----: |

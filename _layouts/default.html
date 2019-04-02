@@ -5,8 +5,29 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="keywords" content="webiik, php, framework">
         <meta name="robots" content="all,follow">
-        <title>{{ page.title }}</title>
+        <title>Webiik {{ page.title }}</title>
         <link rel="stylesheet" href="/assets/css/styles.css">
+        <!--Favicons-->
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/imgages/img/favicon/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/imgages/favicon/favicon-16x16.png">
+        <link rel="shortcut icon" href="/assets/imgages/favicon/favicon.ico">
+        <!--Apple icons-->
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="mask-icon" href="/assets/imgages/favicon/safari-pinned-tab.svg" color="#3c3c3c">
+        <!--Twitter-->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="Webiik Framework">
+        <meta name="twitter:description" content="The simplest PHP framework.">
+        <meta name="twitter:image:src" content="/assets/imgages/meta/webiik.jpg">
+        <meta name="twitter:url" content="https://www.webiik.com">
+        <!--FB-->
+        <meta property="og:title" content="Webiik Framework">
+        <meta property="og:description" content="The simplest PHP framework.">
+        <meta property="og:url" content="https://www.webiik.com">
+        <meta property="og:image:height" content="1380">
+        <meta property="og:image:width" content="2332">
+        <meta property="og:image" content="/assets/imgages/meta/webiik.jpg">
+        <meta property="og:type" content="website">
     </head>
     <body>
         <div class="block-sidenav" id="block-sidenav">
@@ -64,5 +85,13 @@
                 addClass(ele, cls);
             }
         };
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-137467190-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-137467190-1');
     </script>
 </html>

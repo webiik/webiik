@@ -1,5 +1,7 @@
 ---
 ---
+//@import "{{ site.theme }}";
+@import "theme";
 @import "main";
 @import "table";
 @import "highlight";
