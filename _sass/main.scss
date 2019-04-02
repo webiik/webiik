@@ -272,6 +272,10 @@ img.medium {
     padding: $padding;
     word-break: break-word;
   }
+
+  .block-sidenav-content table {
+    word-break: normal;
+  }
 }
 
 @media (max-width: 767px) {
