@@ -26,7 +26,7 @@ return [
 ];
 ```
 
-* **baseUri** If you place your Webiik application outside web server root, for example, `https://localhost/your-app`, then you have to update the value of baseUri to `/your-app`.
+* **baseUri** If you place your Webiik application outside web server root, for example, `https://localhost/your-app/public`, then you have to update the value of baseUri to `/your-app/public`.
 * **languages** An associative array of all languages available for current Webiik application. You have to define at least one language.
 * **defaultLanguage** Default language is the language used when no valid language is detected in URI. Default language can be a string or an array. When the array is used, the default language is determined by hostname. If current hostname doesn't match any hostname defined in the array, the first language in the array is used as default. The format of the array must be in the format: [string hostname => string lang, ...]
 
