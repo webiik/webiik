@@ -4,7 +4,7 @@ title: Configuration
 permalink: /configuration/
 ---
 # Configuration
-Fresh Webiik application has 6 configuration files inside **private/app/config** folder and associated subfolders. The main configuration file is **app.php**. Other configuration files relate to [container](/container), [middleware](/middleware), [routing](/routing) and are described under related sections.
+Fresh Webiik application has 6 configuration files inside **private/app/config** folder and associated subfolders. The main configuration file is **app.php**. Other configuration files relate to [container](/container), [middleware](/middleware) and [routing](/routing) are described under related sections.
 
 The Content of the **app.php** configuration file is pretty simple:
 ```php
