@@ -19,7 +19,7 @@ title: Framework
 
 \* with optional predefined services (incl. Twig and PHPMailer), \** with Twig
 
-LLOC = logical lines of code incl. vendor folder. Benchmark was performed by `./hey -n 200 -c 50`. All measurements were performed on a fresh installation of each framework. Each framework was set to production mode. Development dependencies were not installed. 
+LLOC = logical lines of code incl. vendor folder excl. tests. Benchmark was performed by `./hey -n 200 -c 50`. All measurements were performed on a fresh installation of each framework. Each framework was set to production mode. Development dependencies were not installed. 
 
 Highlights
 ----------
