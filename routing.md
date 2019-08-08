@@ -102,5 +102,34 @@ class Home
 }
 ```
 
+## Getting route URLs
+You can get URL or URI of any [defined route](#defining-routes). All routes are stored in service **Webiik\Router\Router**. Read more about [Router](https://github.com/webiik/components/blob/master/src/Webiik/Router/README.md). Here is an example of accessing service Webiik\Router\Router from route controller and getting URL and URI for the route home. 
+```php
+declare(strict_types=1);
+
+namespace Webiik\Controller;
+
+use Webiik\Router\Router;
+
+class Home
+{
+    private $router;
+
+    public function __construct(Router $router)
+    {
+        $this->router = $router;
+    }
+
+    public function run(\Webiik\Data\Data $data): void
+    {
+        // e.g. https://localhost
+        echo $this->router->getURL('home');
+        
+        // e.g. / 
+        echo $this->router->getURI('home');
+    }
+}
+```
+
 ## 404 and 405 routes
-Route 404 is shown when URI doesn't match any route definition. Route 405 is shown when the route doesn't support HTTP method of an HTTP request. Webiik comes with preconfigured controllers for 404 and 405 routes, look into **private/app/code/controllers** folder. You can update them according to your needs. 
+Route 404 is shown when URI doesn't match any route definition. Route 405 is shown when the route doesn't support HTTP method of an HTTP request. Webiik comes with preconfigured controllers for 404 and 405 routes, look into **private/app/code/controllers** folder. You can update them according to your needs.

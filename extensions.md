@@ -7,7 +7,7 @@ permalink: /extensions/
 Webiik allows you to use extensions. Extensions are reusable parts of Webiik application.
 
 ## Creating Extension
-1. Go to folder **private/extensions**.  
+1. Go to folder **private/extensions**. If it doesn't exist, create it. 
 2. Inside folder **private/extensions** create a new extension by executing the following command. You can change extension folder name **Extension** to the desired name of your extension. ⚠️ Extension folder name must begin with a big letter.
    ```bash
    composer create-project webiik/extension Extension
@@ -39,11 +39,15 @@ To enable the extension, you have to register it within your main application.
    ```
    The first parameter is the name of extension folder inside **private/extensions** folder, the second parameter is URI of extension within your main application.
 3. Open file **private/composer.json**.
-4. Add PSR-4 autoloading paths for your extension, for example:
+4. Add autoloading paths for your extension, for example:
    ```json
-   "WE\\Admin\\Controller\\": "extensions/Admin/code/controllers",
-   "WE\\Admin\\Middleware\\": "extensions/Admin/code/middleware",
-   "WE\\Admin\\Components\\": "extensions/Admin/code/components",
-   "WE\\Admin\\Model\\": "extensions/Admin/code/models",
-   "WE\\Admin\\Trait\\": "extensions/Admin/code/traits"
+   "autoload": {
+       "psr-4": {
+            "WE\\Admin\\Controller\\": "extensions/Admin/code/controllers",
+            "WE\\Admin\\Middleware\\": "extensions/Admin/code/middleware",
+            "WE\\Admin\\Model\\": "extensions/Admin/code/models",
+            "WE\\Admin\\Trait\\": "extensions/Admin/code/traits"
+       },
+       "classmap": ["extensions/Admin/code/components"]
+     }
    ``` 

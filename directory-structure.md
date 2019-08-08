@@ -20,7 +20,7 @@ Fresh Webiik application has the following directory structure:
 |   |   |   |       ├── LoadTranslations.php (loads translations)
 |   |   |   |       └── SetSecurityHeaders.php (sets basic security headers)
 |   |   |   ├── models (namespace Webiik\Model)
-|   |   |   ├── components (namespace Webiik\Component)
+|   |   |   ├── components
 |   |   |   └── traits (namespace Webiik\Trait)
 |   |   ├── config
 |   |   |   ├── container (definition of services)
