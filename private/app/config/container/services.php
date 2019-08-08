@@ -6,6 +6,32 @@ return [
 //        return $flash;
 //    },
 
+    'Webiik\Mail\Mail' => function (\Webiik\Container\Container $c) {
+        $mail = new \Webiik\Mail\Mail();
+
+        // Add PHPMailer
+        $mail->setMailer(function () use (&$c) {
+            $phpMailerConfig = $c->get('wsConfig')->get('services')['Mail']['PHPMailer'];
+            $phpMailer = new \PHPMailer\PHPMailer\PHPMailer();
+            if ($phpMailerConfig['isSMTP']) {
+                $phpMailer->isSMTP();
+                $phpMailer->Host = $phpMailerConfig['SMTP']['host'];
+                $phpMailer->Port = $phpMailerConfig['SMTP']['port'];
+                $phpMailer->Timeout = $phpMailerConfig['SMTP']['timeout'];
+                $phpMailer->SMTPSecure = $phpMailerConfig['SMTP']['SMTPSecure'];
+                $phpMailer->SMTPOptions = $phpMailerConfig['SMTP']['SMTPOptions'];
+                if ($phpMailerConfig['SMTP']['SMTPAuth']) {
+                    $phpMailer->SMTPAuth = true;
+                    $phpMailer->Username = $phpMailerConfig['SMTP']['SMTPAuthUserName'];
+                    $phpMailer->Password = $phpMailerConfig['SMTP']['SMTPAuthPswd'];
+                }
+            }
+            return new \Webiik\Mail\Mailer\PHPMailer(new \PHPMailer\PHPMailer\PHPMailer());
+        });
+
+        return $mail;
+    },
+
     'Webiik\Log\Log' => function (\Webiik\Container\Container $c) {
         $log = new \Webiik\Log\Log();
 
@@ -24,7 +50,7 @@ return [
         if ($c->get('wsConfig')->get('services')['Error']['silent']) {
             $log->addLogger(function () use (&$c) {
                 $logger = new \Webiik\Log\Logger\MailLogger();
-                $logger->setTmpDir(__DIR__ . '/../tmp/logs/sent');
+                $logger->setTmpDir(WEBIIK_BASE_DIR . '/../tmp/logs/sent');
                 $logger->setDelay($c->get('wsConfig')->get('services')['Log']['MailLogger']['error']['delay']);
                 $logger->setSubject($c->get('wsConfig')->get('services')['Log']['MailLogger']['error']['subject']);
                 $logger->setFrom($c->get('wsConfig')->get('services')['Log']['MailLogger']['from']);
@@ -65,32 +91,6 @@ return [
         return $error;
     },
 
-    'Webiik\Mail\Mail' => function (\Webiik\Container\Container $c) {
-        $mail = new \Webiik\Mail\Mail();
-
-        // Add PHPMailer
-        $mail->setMailer(function () use (&$c) {
-            $phpMailerConfig = $c->get('wsConfig')->get('services')['Mail']['PHPMailer'];
-            $phpMailer = new \PHPMailer\PHPMailer\PHPMailer();
-            if ($phpMailerConfig['isSMTP']) {
-                $phpMailer->isSMTP();
-                $phpMailer->Host = $phpMailerConfig['SMTP']['host'];
-                $phpMailer->Port = $phpMailerConfig['SMTP']['port'];
-                $phpMailer->Timeout = $phpMailerConfig['SMTP']['timeout'];
-                $phpMailer->SMTPSecure = $phpMailerConfig['SMTP']['SMTPSecure'];
-                $phpMailer->SMTPOptions = $phpMailerConfig['SMTP']['SMTPOptions'];
-                if ($phpMailerConfig['SMTP']['SMTPAuth']) {
-                    $phpMailer->SMTPAuth = true;
-                    $phpMailer->Username = $phpMailerConfig['SMTP']['SMTPAuthUserName'];
-                    $phpMailer->Password = $phpMailerConfig['SMTP']['SMTPAuthPswd'];
-                }
-            }
-            return new \Webiik\Mail\Mailer\PHPMailer(new \PHPMailer\PHPMailer\PHPMailer());
-        });
-
-        return $mail;
-    },
-
     'Webiik\Arr\Arr' => function () {
         return new \Webiik\Arr\Arr();
     },
@@ -114,7 +114,7 @@ return [
         $view->setRenderer(function () use (&$c) {
 
             // Instantiate Twig template loader
-            $loader = new Twig_Loader_Filesystem();
+            $loader = new \Twig\Loader\FilesystemLoader();
 
             // Add app template dir to template loader
             // Is it an extension? Determine it by controller
@@ -125,14 +125,14 @@ return [
             }
 
             // Instantiate Twig
-            $environment = new Twig_Environment($loader, array(
+            $environment = new \Twig\Environment($loader, array(
                 'cache' => WEBIIK_BASE_DIR . '/../tmp/view',
                 'debug' => !$c->get('wsConfig')->get('services')['Error']['silent'],
             ));
 
             // Add Twig debug extension (when errors are not silent)
             if (!$c->get('wsConfig')->get('services')['Error']['silent']) {
-                $environment->addExtension(new \Twig_Extension_Debug());
+                $environment->addExtension(new \Twig\Extension\DebugExtension());
             }
 
             // Instantiate Webiik Twig renderer
