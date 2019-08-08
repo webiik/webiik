@@ -28,8 +28,8 @@
       "Webiik\\Controller\\": "app/code/controllers",
       "Webiik\\Middleware\\": "app/code/middleware",
       "Webiik\\Model\\": "app/code/models",
-      "Webiik\\Component\\": "app/code/components",
-      "Webiik\\Trait\\": "app/code/traits"
-    }
+      "Webiik\\Traits\\": "app/code/traits"
+    },
+    "classmap": ["app/code/components"]
   }
 }
