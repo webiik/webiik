@@ -51,7 +51,7 @@ return [
         ],
         'Cookie' => [
             'domain' => '',
-            'uri' => '',
+            'uri' => '/',
             'secure' => true,
             'httpOnly' => true,
         ],
