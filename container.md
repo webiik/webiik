@@ -90,7 +90,7 @@ If you [name your service with short name](#naming-services), you can access the
 2. Use service name as a type parameter in the constructor of your class and add PHPdoc:   
    ```php
 /**
-* @param wsFlash $array
+* @param wsFlash $flash
 */   
    public function __construct(wsFlash $flash)
    {
