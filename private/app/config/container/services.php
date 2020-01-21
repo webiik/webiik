@@ -100,6 +100,7 @@ return [
         $translation->setLang(WEBIIK_LANG);
 
         // Add Webiik constants
+        $translation->add('WEBIIK_DEBUG', WEBIIK_DEBUG);
         $translation->add('WEBIIK_LANG', WEBIIK_LANG);
         $translation->add('WEBIIK_BASE_URI', WEBIIK_BASE_URI);
         $translation->add('WEBIIK_BASE_URL', WEBIIK_BASE_URL);
@@ -126,7 +127,7 @@ return [
 
             // Instantiate Twig
             $environment = new \Twig\Environment($loader, array(
-                'cache' => WEBIIK_BASE_DIR . '/../tmp/view',
+                'cache' => $c->get('wsConfig')->get('services')['Error']['silent'] ? WEBIIK_BASE_DIR . '/../tmp/view' : false,
                 'debug' => !$c->get('wsConfig')->get('services')['Error']['silent'],
             ));
 

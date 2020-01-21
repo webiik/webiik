@@ -1,6 +1,9 @@
 <?php
 return [
     'app' => [
+        // Application mode 'development' or 'production'
+        'mode' => 'production',
+
         // Base URI of application, usually '/'
         'baseUri' => '/',
 

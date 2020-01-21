@@ -4,7 +4,7 @@ return [
     'models' => [],
     'services' => [
         'Error' => [
-            'silent' => true,
+            'silent' => !WEBIIK_DEBUG,
         ],
         'Database' => [
             'user' => [
