@@ -5,7 +5,7 @@ permalink: /frontend/
 ---
 # Frontend
 
-If you need, you can use advanced frontend environment shipped with Webiik. It uses three core technologies: Webpack, SASS and TypeScript. It compiles and minimizes TypeScript to ES5 and SCSS to CSS.  
+If you need, you can use advanced frontend environment shipped with Webiik. It uses three core technologies: [Webpack](https://webpack.js.org), [SASS](https://sass-lang.com) and [TypeScript](https://www.typescriptlang.org). It compiles and minimizes TypeScript to ES5 and SCSS to CSS.  
 
 ## Requirements
 * [Node & Npm](https://nodejs.org/en/) 
