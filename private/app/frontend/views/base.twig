@@ -13,7 +13,7 @@
         <meta name="robots" content="all,follow">
 
         {# CSS #}
-        {#<link rel="stylesheet" href="{{ WEBIIK_BASE_URL }}/assets/app/css/main.css" type="text/css">#}
+        <link rel="stylesheet" href="{{ WEBIIK_BASE_URL }}/assets/app/css/main.css" type="text/css">
 
         {# Favicons #}
         {#<link rel="icon" type="image/png" sizes="32x32" href="{{ WEBIIK_BASE_URL }}/assets/app/img/favicon/favicon-32x32.png">#}
@@ -22,5 +22,8 @@
     </head>
     <body>
         {% block content %}{% endblock %}
+        {#<script src="{{ WEBIIK_BASE_URL }}/assets/app/js/vendors~main.js"></script>#}
+        <script src="{{ WEBIIK_BASE_URL }}/assets/app/js/main.js"></script>
+        {% block js %}{% endblock %}
     </body>
 </html>

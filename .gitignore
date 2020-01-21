@@ -8,7 +8,8 @@ vendor
 package-lock.json
 node_modules
 extensions
-tmp/view/
+private/tmp
+private/tmp/*
 .sass-cache
 Gemfile.lock
 _site/

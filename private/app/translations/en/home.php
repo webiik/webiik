@@ -6,5 +6,5 @@ return [
         'kw' => 'webiik, framework, php',
     ],
     'h1' => 'Meow World!',
-    'msg' => 'route name: {routeName}'
+    'txt' => 'Welcome {routeName}.'
 ];

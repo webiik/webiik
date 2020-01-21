@@ -1,0 +1,23 @@
+{
+  "name": "webiik",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "webpack -d --colors --progress",
+    "watch": "webpack -d --watch --colors --progress",
+    "prod": "webpack -p --colors --progress"
+  },
+  "devDependencies": {
+    "@types/node": "^13.1.6",
+    "autoprefixer": "^9.7.3",
+    "css-loader": "^3.4.1",
+    "mini-css-extract-plugin": "^0.9.0",
+    "node-sass": "^4.13.1",
+    "postcss-loader": "^3.0.0",
+    "sass-loader": "^8.0.0",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
