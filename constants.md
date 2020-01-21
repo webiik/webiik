@@ -6,6 +6,11 @@ permalink: /constants/
 # Constants
 Webiik defines a few handy constants you could use.
 
+When application is in development mode this constant equals true. Value of this constant is set in [the main configuration file](/configuration):
+```php
+WEBIIK_DEBUG
+```
+
 Directory path of Webiik application (directory app). Value of this constant is filled automatically:
 ```php
 WEBIIK_BASE_DIR

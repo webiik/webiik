@@ -20,6 +20,8 @@
       link: /constants/
     - title: Extensions
       link: /extensions/
+    - title: Frontend
+      link: /frontend/
 - title: Built-in Services
   sub:
     - title: wsConfig

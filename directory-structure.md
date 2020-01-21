@@ -33,10 +33,16 @@ Fresh Webiik application has the following directory structure:
 |   |   |   ├── app.php (configuration of app)
 |   |   |   └── resources.php (configuration of services, models and middleware)
 |   |   ├── frontend
-|   |   |   ├── css (unprocessed scss files)
-|   |   |   |   └── main.scss
-|   |   |   ├── js (unprocessed js files)
-|   |   |   |   └── main.js
+|   |   |   ├── assets
+|   |   |   |   ├── scss (scss files)
+|   |   |   |   |   └── home.scss
+|   |   |   |   ├── js (js or ts files)
+|   |   |   |   ├── main.scss (SCSS file included in Webpack)
+|   |   |   |   ├── main.ts (TypeScript file included in Webpack)
+|   |   |   |   ├── package.json (NPM file)
+|   |   |   |   ├── postcss.config.js (Webpack's postcss-loader config)
+|   |   |   |   ├── tsconfig.json (Webpack's ts-loader config)
+|   |   |   |   └── webpack.config.js (Webpack config)
 |   |   |   └── views (unprocessed templates)
 |   |   ├── translation (files for middleware LoadTranslations)
 |   |   |   └── en
