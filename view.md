@@ -17,7 +17,7 @@ Not available.
 By default, View Service is defined to utilize Twig template engine. It reads templates from **app/private/frontend/views** and [Extensions](/extensions), writes cache to **app/tmp/view** and supports Twig debug mode.
 
 ## Extras
-Twig in Webiik comes with these additional functions and variables.
+Twig in Webiik comes with these additional functions and variables:
 
 ### getRoute
 ```
