@@ -19,39 +19,47 @@ By default, View Service is defined to utilize Twig template engine. It reads te
 ## Extras
 Twig in Webiik comes with these additional functions and variables.
 
-###getRoute
+### getRoute
 ```
 getRoute(): string
 ```
 getRoute() returns current route.
 ```
-\{\{ getRoute() \}\}
+{% raw %}
+{{ getRoute() }}
+{% endraw %}
 ```
 
-###getURL
+### getURL
 ```
 getURL(string $route, array $parameters = [], string $lang = WEBIIK_LANG): string
 ```
 getURL() returns URL by route.
 ```
-\{\{ getURL('home') \}\}
+{% raw %}
+{{ getURL('home') }}
+{% endraw %}
 ```
 
-###_t
+### _t
 ```
 _t(string $key, array|bool|null $context = null): string|array
 ```
 _t() returns route related translations by key.
 ```
-\{\{ _t('message', {'name': 'Tom'}) \}\}
+{% raw %}
+{{ _t('message', {'name': 'Tom'}) }}
+{% endraw %}
 ```
 
-###Variables
+### Variables
 ```
-\{\{ WEBIIK_DEBUG \}\}
-\{\{ WEBIIK_LANG \}\}
-\{\{ WEBIIK_BASE_URI \}\}
-\{\{ WEBIIK_BASE_URL \}\}
+{% raw %}
+{{ WEBIIK_DEBUG }}
+{{ WEBIIK_LANG }}
+{{ WEBIIK_BASE_URI }}
+{{ WEBIIK_BASE_URL }}
+{% endraw %}
 ```
 Read more about the meaning of these variables [here](/constants).
 
