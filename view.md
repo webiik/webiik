@@ -25,7 +25,7 @@ getRoute(): string
 ```
 getRoute() returns current route.
 ```
-{{ getRoute() }}
+\{\{ getRoute() \}\}
 ```
 
 ###getURL
@@ -34,7 +34,7 @@ getURL(string $route, array $parameters = [], string $lang = WEBIIK_LANG): strin
 ```
 getURL() returns URL by route.
 ```
-{{ getURL('home') }}
+\{\{ getURL('home') \}\}
 ```
 
 ###_t
@@ -43,15 +43,15 @@ _t(string $key, array|bool|null $context = null): string|array
 ```
 _t() returns route related translations by key.
 ```
-{{ _t('message', {'name': 'Tom'}) }}
+\{\{ _t('message', {'name': 'Tom'}) \}\}
 ```
 
 ###Variables
 ```
-{{ WEBIIK_DEBUG }}
-{{ WEBIIK_LANG }}
-{{ WEBIIK_BASE_URI }}
-{{ WEBIIK_BASE_URL }}
+\{\{ WEBIIK_DEBUG \}\}
+\{\{ WEBIIK_LANG \}\}
+\{\{ WEBIIK_BASE_URI \}\}
+\{\{ WEBIIK_BASE_URL \}\}
 ```
 Read more about the meaning of these variables [here](/constants).
 
