@@ -24,7 +24,7 @@ Twig in Webiik comes with these additional functions and variables.
 getRoute(): string
 ```
 getRoute() returns current route.
-```twig
+```
 {{ getRoute() }}
 ```
 
@@ -33,7 +33,7 @@ getRoute() returns current route.
 getURL(string $route, array $parameters = [], string $lang = WEBIIK_LANG): string
 ```
 getURL() returns URL by route.
-```twig
+```
 {{ getURL('home') }}
 ```
 
@@ -42,12 +42,12 @@ getURL() returns URL by route.
 _t(string $key, array|bool|null $context = null): string|array
 ```
 _t() returns route related translations by key.
-```twig
+```
 {{ _t('message', {'name': 'Tom'}) }}
 ```
 
 ###Variables
-```twig
+```
 {{ WEBIIK_DEBUG }}
 {{ WEBIIK_LANG }}
 {{ WEBIIK_BASE_URI }}
