@@ -29,6 +29,13 @@ html, body {
     text-align: center;
   }
 
+  a {
+    color: inherit;
+    &:hover {
+      color: #8900ff;
+    }
+  }
+
 }
 
 @media (min-width: 800px) {

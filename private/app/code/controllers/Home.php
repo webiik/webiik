@@ -40,7 +40,7 @@ class Home
         $translations = $this->translation->getAll();
 
         // Update translation(s)
-        $translations['txt'] = $this->translation->get('txt', ['routeName' => $this->route->getName()]);
+        $translations['txt'] = $this->translation->get('txt', true);
 
         // Render template
         echo $this->view->render('home.twig', $translations);

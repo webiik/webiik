@@ -99,6 +99,11 @@ return [
         $translation = new \Webiik\Translation\Translation($c['Webiik\Arr\Arr']);
         $translation->setLang(WEBIIK_LANG);
 
+        // Add injections for custom parsers
+        $translation->inject('Route', new \Webiik\Translation\TranslationInjector(function () use (&$c) {
+            return [$c->get('Webiik\Router\Router')];
+        }));
+
         // Add Webiik constants
         $translation->add('WEBIIK_DEBUG', WEBIIK_DEBUG);
         $translation->add('WEBIIK_LANG', WEBIIK_LANG);
@@ -127,14 +132,34 @@ return [
 
             // Instantiate Twig
             $environment = new \Twig\Environment($loader, array(
-                'cache' => $c->get('wsConfig')->get('services')['Error']['silent'] ? WEBIIK_BASE_DIR . '/../tmp/view' : false,
-                'debug' => !$c->get('wsConfig')->get('services')['Error']['silent'],
+                'cache' => WEBIIK_DEBUG ? false : WEBIIK_BASE_DIR . '/../tmp/view',
+                'debug' => WEBIIK_DEBUG,
             ));
 
             // Add Twig debug extension (when errors are not silent)
-            if (!$c->get('wsConfig')->get('services')['Error']['silent']) {
+            if (WEBIIK_DEBUG) {
                 $environment->addExtension(new \Twig\Extension\DebugExtension());
             }
+
+            // Custom Twig extensions...
+
+            // Get current route name
+            $function = new \Twig\TwigFunction('getRoute', function () use (&$c): string {
+                return $c->get('Webiik\Router\Route')->getName();
+            });
+            $environment->addFunction($function);
+
+            // Get URL by route name
+            $function = new \Twig\TwigFunction('getURL', function (string $route, array $parameters = [], string $lang = WEBIIK_LANG) use (&$c): string {
+                return $c->get('Webiik\Router\Router')->getURL($route, $parameters, $lang);
+            });
+            $environment->addFunction($function);
+
+            // Get related translation by key
+            $function = new \Twig\TwigFunction('_t', function (string $key, $context = null) use (&$c) {
+                return $c->get('Webiik\Translation\Translation')->get($key, $context);
+            });
+            $environment->addFunction($function);
 
             // Instantiate Webiik Twig renderer
             return new \Webiik\View\Renderer\Twig($environment);
