@@ -55,10 +55,6 @@
       link: /arr/
 - title: Optional Services
   sub:
-    - title: Flash
-      link: https://github.com/webiik/components/blob/master/src/Webiik/Flash/README.md
-      target: _blank
-    - title: separator
     - title: Login
       link: https://github.com/webiik/components/blob/master/src/Webiik/Login/README.md
       target: _blank
@@ -71,8 +67,14 @@
     - title: Attempts
       link: https://github.com/webiik/components/blob/master/src/Webiik/Attempts/README.md
       target: _blank
+    - title: Flash
+      link: https://github.com/webiik/components/blob/master/src/Webiik/Flash/README.md
+      target: _blank
     - title: Validator
       link: https://github.com/webiik/components/blob/master/src/Webiik/Validator/README.md
+      target: _blank
+    - title: StaticPage
+      link: https://github.com/webiik/components/blob/master/src/Webiik/StaticPage/README.md
       target: _blank
     - title: separator
     - title: OAuth1Client
