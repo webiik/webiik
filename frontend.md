@@ -10,13 +10,13 @@ If you need, you can use advanced frontend environment shipped with Webiik. It u
 ## Requirements
 * [Node & Npm](https://nodejs.org/en/) 
 
-## Installation Steps
+## How To Steps
 1. In terminal open your project folder `private/app/frontend/assets`.
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Run Webpack
+3. Build your files:
    ```bash
    npm run watch
    ```
