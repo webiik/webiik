@@ -35,10 +35,11 @@ Fresh Webiik application has the following directory structure:
 |   |   ├── frontend
 |   |   |   ├── assets
 |   |   |   |   ├── scss (scss files)
-|   |   |   |   |   └── home.scss
+|   |   |   |   |   └── home.scss (SCSS file included in Webpack entries)
 |   |   |   |   ├── js (js or ts files)
-|   |   |   |   ├── main.scss (SCSS file included in Webpack)
-|   |   |   |   ├── main.ts (TypeScript file included in Webpack)
+|   |   |   |   |   └── home.ts (TypeScript file included in Webpack entries)
+|   |   |   |   ├── main.scss (SCSS file included in Webpack entries)
+|   |   |   |   ├── main.ts (TypeScript file included in Webpack entries)
 |   |   |   |   ├── package.json (NPM file)
 |   |   |   |   ├── postcss.config.js (Webpack's postcss-loader config)
 |   |   |   |   ├── tsconfig.json (Webpack's ts-loader config)
