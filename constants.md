@@ -26,6 +26,11 @@ Base URL of Webiik application (usually http(s)://sub.domain.tld). Value of this
 WEBIIK_BASE_URL
 ```
 
+Base path is similar to WEBIIK_BASE_URL but always includes trailing slash.
+```php
+WEBIIK_BASE_PATH
+```
+
 Current language. Value of this constant is filled automatically. It depends on current URI and language settings in [the main configuration file](/configuration):
 ```php
 WEBIIK_LANG
