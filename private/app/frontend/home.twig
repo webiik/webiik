@@ -1,7 +1,7 @@
 {% extends "base.twig" %}
 {% block head %}
     {# Page related head tags (not for SEO - it should be in base template) #}
-    <link rel="stylesheet" href="{{ WEBIIK_BASE_URL }}/assets/app/css/home.css" type="text/css">
+    <link rel="stylesheet" href="{{ WEBIIK_BASE_PATH }}assets/app/css/home.css" type="text/css">
 {% endblock %}
 {% block content %}
     {# Page related content #}
@@ -12,5 +12,5 @@
 {% endblock %}
 {% block js %}
     {# Page related JS #}
-    <script src="{{ WEBIIK_BASE_URL }}/assets/app/js/home.js"></script>
+    <script src="{{ WEBIIK_BASE_PATH }}assets/app/js/home.js"></script>
 {% endblock %}

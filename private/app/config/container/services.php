@@ -109,6 +109,7 @@ return [
         $translation->add('WEBIIK_LANG', WEBIIK_LANG);
         $translation->add('WEBIIK_BASE_URI', WEBIIK_BASE_URI);
         $translation->add('WEBIIK_BASE_URL', WEBIIK_BASE_URL);
+        $translation->add('WEBIIK_BASE_PATH', WEBIIK_BASE_PATH);
 
         return $translation;
     },
@@ -125,9 +126,9 @@ return [
             // Add app template dir to template loader
             // Is it an extension? Determine it by controller
             if (preg_match('~^\\\WE\\\([\w_-]+)\\\~', $c->get('Webiik\Router\Route')->getController()[0], $extName)) {
-                $loader->addPath(WEBIIK_BASE_DIR . '/../extensions/' . $extName[1] . '/frontend/views');
+                $loader->addPath(WEBIIK_BASE_DIR . '/../extensions/' . $extName[1] . '/frontend');
             } else {
-                $loader->addPath(WEBIIK_BASE_DIR . '/frontend/views');
+                $loader->addPath(WEBIIK_BASE_DIR . '/frontend');
             }
 
             // Instantiate Twig
