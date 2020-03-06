@@ -32,19 +32,23 @@ Fresh Webiik application has the following directory structure:
 |   |   |   |   └── middleware.php (registration of middleware)
 |   |   |   ├── app.php (configuration of app)
 |   |   |   └── resources.php (configuration of services, models and middleware)
-|   |   ├── frontend
+|   |   ├── frontend (templates and assets)
 |   |   |   ├── assets
-|   |   |   |   ├── scss (scss files)
-|   |   |   |   |   └── home.scss (SCSS file included in Webpack entries)
-|   |   |   |   ├── js (js or ts files)
-|   |   |   |   |   └── home.ts (TypeScript file included in Webpack entries)
-|   |   |   |   ├── main.scss (SCSS file included in Webpack entries)
-|   |   |   |   ├── main.ts (TypeScript file included in Webpack entries)
-|   |   |   |   ├── package.json (NPM file)
-|   |   |   |   ├── postcss.config.js (Webpack's postcss-loader config)
-|   |   |   |   ├── tsconfig.json (Webpack's ts-loader config)
-|   |   |   |   └── webpack.config.js (Webpack config)
-|   |   |   └── views (unprocessed templates)
+|   |   |   |   └── app
+|   |   |   |       ├── font (css font files)
+|   |   |   |       ├── img (images)
+|   |   |   |       ├── scss (scss files)
+|   |   |   |       |   └── home.scss (SCSS file included in Webpack entries)
+|   |   |   |       ├── js (js or ts files)
+|   |   |   |       |   └── home.tsx (TypeScript file included in Webpack entries)
+|   |   |   |       ├── main.scss (SCSS file included in Webpack entries)
+|   |   |   |       ├── main.tsx (TypeScript file included in Webpack entries)
+|   |   |   |       ├── package.json (NPM file)
+|   |   |   |       ├── postcss.config.js (Webpack's postcss-loader config)
+|   |   |   |       ├── tsconfig.json (Webpack's ts-loader config)
+|   |   |   |       └── webpack.config.js (Webpack config)
+|   |   |   ├── base.twig (shared Twig template)
+|   |   |   └── home.twig (home page Twig template)
 |   |   ├── translation (files for middleware LoadTranslations)
 |   |   |   └── en
 |   |   |       ├── _shared.php (always loaded translations)
@@ -63,7 +67,6 @@ Fresh Webiik application has the following directory structure:
 |   |   |   ├── font
 |   |   |   ├── img
 |   |   |   └── js
-|   |   └── ext (static files related to Webiik extensions)
 |   └── index.php
 └── .gitignore
 ```

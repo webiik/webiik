@@ -14,7 +14,7 @@ Template engine incorporation. Template rendering.
 Not available.
 
 ## Definition
-By default, View Service is defined to utilize Twig template engine. It reads templates from **app/private/frontend/views** and [Extensions](/extensions), writes cache to **app/tmp/view** and supports Twig debug mode.
+By default, View Service is defined to utilize Twig template engine. It reads templates from **app/private/frontend** and [Extensions](/extensions), writes cache to **app/tmp/view** and supports Twig debug mode.
 
 ## Extras
 Twig in Webiik comes with these additional functions and variables:
@@ -68,7 +68,7 @@ Read more about the meaning of these variables [here](/constants).
 You can change the template engine by [updating the configuration](/container) in **private/app/config/container/services.php**.
 
 You should follow these rules: 
-* templates should be stored in **app/private/frontend/views**
+* templates should be stored in **app/private/frontend**
 * eventual cache files should be stored in **app/tmp/view**
 * you should support loading templates from [Extensions](/extensions)  
 
