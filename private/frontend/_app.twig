@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ WEBIIK_LANG }}">
+    <head>
+        <meta charset="utf-8">
+
+        {# Viewport #}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        {# Basic SEO #}
+        <title>{{ seo.title }}</title>
+        <meta name="description" content="{{ seo.desc }}">
+        <meta name="keywords" content="{{ seo.kw }}">
+        <meta name="robots" content="all,follow">
+
+        {# Load route related CSS #}
+        {{ getCSS(getRoute()) }}
+    </head>
+    <body>
+        {# Define webpackData variable which is imported by Webpack #}
+        <script>var webpackData = {};</script>
+
+        {# Route related webpackData #}
+        {% block webpackData %}{% endblock %}
+
+        {# Load route related JS #}
+        {{ getJS(getRoute()) }}
+
+        {# Route related content #}
+        {% block content %}{% endblock %}
+
+        {# Route related JS #}
+        {% block js %}{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,2 @@
+.meow{display:table-cell;position:relative;left:10px;top:10px;width:calc(100vw - 20px);height:calc(100vh - 20px);vertical-align:middle;background:#ffffb3}.meow h1{font-size:5em;line-height:1em;margin:0 0 .1em 0;text-align:center}.meow p{font-style:italic;font-size:1.5em;margin:0;text-align:center}.meow a{color:inherit}.meow a:hover{color:#8900ff}@media (min-width: 800px){.meow{left:15px;top:15px;width:calc(100vw - 30px);height:calc(100vh - 30px)}.meow h1{font-size:8em;margin:0 0 .1em 0;text-align:center}.meow p{font-size:2em;margin:0;text-align:center}}
+

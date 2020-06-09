@@ -1,0 +1,26 @@
+{
+  "_app": {
+    "css": [
+      "css/_app.css"
+    ],
+    "js": [
+      "js/runtime.js",
+      "js/_app.js"
+    ]
+  },
+  "home": {
+    "css": [],
+    "js": [
+      "js/home.js"
+    ]
+  },
+  "home-iso": {
+    "css": [
+      "css/home-iso.css"
+    ],
+    "js": [
+      "js/vendors~home-iso.js",
+      "js/home-iso.js"
+    ]
+  }
+}
