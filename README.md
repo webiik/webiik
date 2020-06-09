@@ -4,7 +4,7 @@ Minimalistic PHP framework for modern web development.
  
 * Tiny core with service based architecture
 * Server side rendering of JS UI components
-* Static site generation
+* Static sites generating
 * i18n everything
 
 16× less LLOC than Symfony, 3.5× faster than Laravel.
