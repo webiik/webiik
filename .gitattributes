@@ -1,5 +1,4 @@
 README.md         export-ignore
 .gitattributes    export-ignore
 upgrade-guides    export-ignore
-/composer.json     export-ignore
 grammar.md        export-ignore
