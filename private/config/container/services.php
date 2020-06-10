@@ -125,7 +125,9 @@ return [
     // https://www.webiik.com/ssr/
     'Webiik\Ssr\Ssr' => function(\Webiik\Container\Container $c) {
         $ssr = new \Webiik\Ssr\Ssr();
-        $ssr->useEngine(new \Webiik\Ssr\Engines\V8js());
+        $engine = new \Webiik\Ssr\Engines\NodeJs();
+        $engine->setTmpDir(WEBIIK_BASE_DIR . '/tmp/components');
+        $ssr->useEngine($engine);
         $ssr->setCacheDir(WEBIIK_BASE_DIR . '/tmp/components');
         return $ssr;
     },
