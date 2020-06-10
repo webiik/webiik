@@ -11,7 +11,7 @@ Webiik\View\View
 Template engine incorporation. Template rendering.  
 
 ## Definition
-It is defined in `private/config/container/services.php`. By default, the service View is defined to utilize [Twig template engine](https://github.com/twigphp/Twig). It reads templates from `/private/frontend` and writes cache to `/private/tmp/view`. Also, it extends Twig with the set of additional [template functions](/template-helpers) and variables: 
+It is defined in `private/config/container/services.php`. By default, the service View is defined to utilize [Twig template engine](https://github.com/twigphp/Twig). It reads templates from `private/frontend` and writes cache to `private/tmp/view`. Also, it extends Twig with the set of additional [template functions](/template-helpers) and variables: 
 
 ### getRoute
 ```
@@ -95,8 +95,8 @@ Read more about the meaning of these variables [here](/constants).
 [The View component](https://github.com/webiik/view) allows you to easily change the template engine. So if you don't want to use Twig, just change the definition of the service View.
 
 Please, follow these rules: 
-* template files MUST be stored in `/private/frontend`
-* cache files MUST be stored in `/private/tmp/view`
+* template files MUST be stored in `private/frontend`
+* cache files MUST be stored in `private/tmp/view`
 * in templates, you MUST provide Webiik`s [template functions](/template-helpers)
 * in templates, you MUST provide Webiik`s [constants](/constants)  
 

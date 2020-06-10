@@ -15,8 +15,8 @@ It is defined in `private/config/container/services.php`. By default, the servic
 
 Webiik uses application middleware that automatically fills the Translation with content from translation files according to the current route and language:
 
-* Translation files must be stored in `/private/translations`
-* Each language must have own folder eg. `/private/translations/en`
+* Translation files must be stored in `private/translations`
+* Each language must have own folder eg. `private/translations/en`
 * Translation filename must match the route name. For example, when route name is `home`, translation filename must be named `home.php`
 * Every translation file must return an associative array
 * The translation file `_app.php` is always loaded
