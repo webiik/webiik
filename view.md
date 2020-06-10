@@ -19,7 +19,9 @@ getRoute(): string
 ```
 getRoute() returns current route name.
 ```
+{% raw %}
 {{ getRoute() }}
+{% endraw %}
 ```
 
 ### getURL
@@ -28,7 +30,9 @@ getURL(string $route, array $parameters = [], string $lang = WEBIIK_LANG): strin
 ```
 getURL() returns URL by route name.
 ```
+{% raw %}
 {{ getURL('home') }}
+{% endraw %}
 ```
 
 ### _t
@@ -37,7 +41,9 @@ _t(string $key, array|bool|null $context = null): string|array
 ```
 _t() returns route and language related translations by key.
 ```
+{% raw %}
 {{ _t('message', {'name': 'Tom'}) }}
+{% endraw %}
 ```
 
 ### getCSS
@@ -46,7 +52,9 @@ getCSS(string $route): string
 ```
 getCSS() returns HTML tags with route related CSS.
 ```
+{% raw %}
 {{ getCSS(getRoute()) }}
+{% endraw %}
 ```
 
 ### getJS
@@ -55,7 +63,9 @@ getJS(string $route): string
 ```
 getJS() returns HTML tags with route related JS.
 ```
+{% raw %}
 {{ getJS(getRoute()) }}
+{% endraw %}
 ```
 
 ### reactComponent
@@ -64,7 +74,9 @@ reactComponent(string $name, array $props, array $options = []): string
 ```
 reactComponent() returns HTML tags with React component.
 ```
+{% raw %}
 {{ reactComponent("Meow", []) }}
+{% endraw %}
 ```
 
 ### Variables
