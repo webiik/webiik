@@ -10,9 +10,6 @@ wsConfig
 ## Purpose
 Stores Webiik configuration array from files `private/config/app.*` and `private/config/resources.*`.
 
-## Configuration
-Can't be configured.
-
 ## Usual Usage
 In `private/config/resources.*` when [adding new service](/container#adding-service).
 
