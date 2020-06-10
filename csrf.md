@@ -11,10 +11,10 @@ Webiik\Csrf\Csrf
 Allows you to easily incorporate CSRF protection.
 
 ## Configuration
-Available.
+Available in `private/config/resources.php`.
 
 ## Usual Usage
-In route controller or/and in route middleware. 
+In [route controller](/routing) or/and in [route middleware](/middleware). 
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Csrf/README.md) to learn more about Csrf component.
+[Read documentation](https://github.com/webiik/csrf) to learn more about Csrf component.

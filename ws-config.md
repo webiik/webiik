@@ -8,13 +8,13 @@ permalink: /ws-config/
 wsConfig
 
 ## Purpose
-Stores Webiik configuration array from files **app/private/config/app.*** and **app/private/config/resources.***.
+Stores Webiik configuration array from files `private/config/app.*` and `private/config/resources.*`.
 
 ## Configuration
 Can't be configured.
 
 ## Usual Usage
-In **app/private/config/resources.*** when [adding new service](/container#adding-service).
+In `private/config/resources.*` when [adding new service](/container#adding-service).
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Data/README.md) to learn more about Data component.
+[Read documentation](https://github.com/webiik/data) to learn more about Data component.

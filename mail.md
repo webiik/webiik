@@ -11,13 +11,13 @@ Webiik\Mail\Mail
 Sending emails.  
 
 ## Configuration
-Available.
+Available in `private/config/resources.php`.
 
 ## Definition
-By default, Mail Service is defined to utilize PHPMailer for sending emails.  
+It is defined in `private/config/container/services.php`. By default, Mail Service is defined to utilize [PHPMailer](https://github.com/PHPMailer/PHPMailer) for sending emails.  
 
 ## Usual Usage
-In route controller. Used by [Log Service](/log).
+In [route controller](/routing). Also, it is used by [Log Service](/log).
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Mail/README.md) to learn more about Mail component.
+[Read documentation](https://github.com/webiik/mail) to learn more about Mail component.

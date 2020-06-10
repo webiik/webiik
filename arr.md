@@ -10,11 +10,11 @@ Webiik\Arr\Arr
 ## Purpose
 Dot notation access for arrays. 
 
-## Configuration
-Can't be configured.
+## Definition
+Defined in `private/config/container/services.php`.
 
 ## Usual Usage
-In route controller. Used by [Translation Service](/translation).
+In [route controller](/routing). Also, it is used by [Translation Service](/translation).
 
 ## Documentation
 [Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Arr/README.md) to learn more about Token component.

@@ -7,66 +7,70 @@ permalink: /directory-structure/
 Fresh Webiik application has the following directory structure: 
 ```console
 .
-..
+.. (this folder must be not accessible from the web)
 ├── private (this folder must be not accessible from the web)
-|   ├── app
-|   |   ├── code (your code, PSR-4 autoloaded)
-|   |   |   ├── controllers (route controllers, namespace Webiik\Controller)
-|   |   |   |   ├── Home.php
-|   |   |   |   ├── P404.php
-|   |   |   |   └── P405.php
-|   |   |   ├── middleware (namespace Webiik\Middleware)
-|   |   |   |   └── Core
-|   |   |   |       ├── LoadTranslations.php (loads translations)
-|   |   |   |       └── SetSecurityHeaders.php (sets basic security headers)
-|   |   |   ├── models (namespace Webiik\Model)
-|   |   |   ├── components
-|   |   |   └── traits (namespace Webiik\Trait)
-|   |   ├── config
-|   |   |   ├── container (definition of services)
-|   |   |   |   ├── models.php
-|   |   |   |   └── services.php
-|   |   |   ├── routes
-|   |   |   |   └── routes.en.php (definition of routes)
-|   |   |   ├── middleware
-|   |   |   |   └── middleware.php (registration of middleware)
-|   |   |   ├── app.php (configuration of app)
-|   |   |   └── resources.php (configuration of services, models and middleware)
-|   |   ├── frontend (templates and assets)
-|   |   |   ├── assets
-|   |   |   |   └── app
-|   |   |   |       ├── font (css font files)
-|   |   |   |       ├── img (images)
-|   |   |   |       ├── scss (scss files)
-|   |   |   |       |   └── home.scss (SCSS file included in Webpack entries)
-|   |   |   |       ├── js (js or ts files)
-|   |   |   |       |   └── home.tsx (TypeScript file included in Webpack entries)
-|   |   |   |       ├── main.scss (SCSS file included in Webpack entries)
-|   |   |   |       ├── main.tsx (TypeScript file included in Webpack entries)
-|   |   |   |       ├── package.json (NPM file)
-|   |   |   |       ├── postcss.config.js (Webpack's postcss-loader config)
-|   |   |   |       ├── tsconfig.json (Webpack's ts-loader config)
-|   |   |   |       └── webpack.config.js (Webpack config)
-|   |   |   ├── base.twig (shared Twig template)
-|   |   |   └── home.twig (home page Twig template)
-|   |   ├── translation (files for middleware LoadTranslations)
-|   |   |   └── en
-|   |   |       ├── _shared.php (always loaded translations)
-|   |   |       └── home.php (route name related translations)
-|   |   └── app.php (initialization of the Webiik application)
-|   ├── extensions (Webiik extensions)
+|   ├── code (your code, autoloaded)
+|   |   ├── components (classes and libs that are not controllers)
+|   |   ├── controllers (route controllers, namespace Webiik\Controller)
+|   |   |   ├── Home.php
+|   |   |   ├── P404.php
+|   |   |   └── P405.php
+|   |   ├── middleware (namespace Webiik\Middleware)
+|   |   |   └── Core
+|   |   |       ├── LoadTranslations.php (loads translations)
+|   |   |       └── SetSecurityHeaders.php (sets basic security headers)
+|   |   ├── models (namespace Webiik\Model)
+|   |   └── traits (namespace Webiik\Trait)
+|   ├── config
+|   |   ├── container (definition of services)
+|   |   |   ├── models.php
+|   |   |   └── services.php
+|   |   ├── middleware
+|   |   |   └── middleware.php (registration of middleware)
+|   |   ├── routes
+|   |   |   └── routes.en.php (definition of routes)
+|   |   ├── app.php (configuration of app)
+|   |   └── resources.php (configuration of services, models and middleware)
+|   ├── frontend (templates and assets)
+|   |   ├── assets (read the frontend docs in the basics)
+|   |   |   ├── build (js build for client and server)
+|   |   |   ├── components (UI components)
+|   |   |   |   └── meow (React Meow World! component)
+|   |   |   |       ├── meow.scss
+|   |   |   |       └── meow.tsx
+|   |   |   ├── font (css font files)
+|   |   |   ├── img (images)
+|   |   |   ├── js (js or ts files)
+|   |   |   |   ├── _app.ts (app-wide TypeScript file included in webpack.config.js)
+|   |   |   |   ├── home.ts (route related TypeScript file included in webpack.config.js)
+|   |   |   |   ├── home-iso.ts (route related TypeScript file included in webpack.config.js)
+|   |   |   |   └── screensize.ts (helper for frontend development included in _app.ts)
+|   |   |   ├── scss (scss files)
+|   |   |   |   ├── _app.scss (app-wide scss file included in app.ts)
+|   |   |   |   └── home.scss (route related scss file included in home.ts)
+|   |   |   ├── global.d.ts (global helper variable definition)
+|   |   |   ├── package.json (NPM file)
+|   |   |   ├── postcss.config.js (Webpack's postcss-loader config)
+|   |   |   ├── tsconfig.json (TypeScript config)
+|   |   |   └── webpack.config.js (Webpack config)
+|   |   ├── _app.twig (base Twig template)
+|   |   └── home.twig (route related Twig template)
 |   ├── tmp (always store all temporary files here)
+|   |   ├── components (server-side rendered JS UI components)
 |   |   ├── logs (log files, error.log etc.)
-|   |   ├── session (PHP sessions)
-|   |   └── view (processed templates)
-|   └── composer.json
+|   |   └── session (PHP sessions)
+|   ├── translation (files for middleware LoadTranslations)
+|   |   └── en
+|   |       ├── _app.php (app-wide translations)
+|   |       └── home.php (route related translations)
+|   └── app.php (initialization of the Webiik application)
 ├── public (this folder must be accessible from the web)
-|   ├── assets (processed static files)
-|   |   ├── app (static files related to Webiik app)
-|   |   |   ├── css
-|   |   |   ├── font
-|   |   |   ├── img
-|   |   |   └── js
+|   ├── assets (static files processed by Webpack)
+|   |   ├── css
+|   |   ├── font
+|   |   ├── img
+|   |   └── js
 |   └── index.php
-└── .gitignore
+├── .gitignore
+└── composer.json
 ```

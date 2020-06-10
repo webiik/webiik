@@ -16,10 +16,10 @@
       link: /middleware/
     - title: Routing
       link: /routing/
+    - title: Model
+      link: /model/
     - title: Constants
       link: /constants/
-    - title: Extensions
-      link: /extensions/
     - title: Frontend
       link: /frontend/
 - title: Built-in Services
@@ -39,20 +39,26 @@
     - title: Introduction
       link: /predefined-services/
     - title: separator
-    - title: Log
-      link: /log/
-    - title: Error
-      link: /error/
-    - title: Database
-      link: /database/
-    - title: View
-      link: /view/
-    - title: Translation
-      link: /translation/
-    - title: Mail
-      link: /mail/
     - title: Arr
       link: /arr/
+    - title: Database
+      link: /database/
+    - title: Error
+      link: /error/
+    - title: Flash
+      link: /flash/
+    - title: Log
+      link: /log/
+    - title: Mail
+      link: /mail/
+    - title: Ssr
+      link: /ssr/
+    - title: TemplateHelpers
+      link: /template-helpers/
+    - title: Translation
+      link: /translation/
+    - title: View
+      link: /view/
 - title: Optional Services
   sub:
     - title: Login

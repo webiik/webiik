@@ -10,11 +10,8 @@ Webiik\Token\Token
 ## Purpose
 Allows you to securely generate and compare tokens. 
 
-## Configuration
-Can't be configured.
-
 ## Usual Usage
-In route controller.
+In [route controller](/routing).
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Token/README.md) to learn more about Token component.
+[Read documentation](https://github.com/webiik/token) to learn more about Token component.

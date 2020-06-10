@@ -11,13 +11,13 @@ Webiik\Database\Database
 Database connection.  
 
 ## Configuration
-Available.
+Available in `private/config/resources.php`.
 
 ## Definition
-By default, Database Service is defined to set database character set, names and time_zone according to current language.
+Defined in `private/config/container/services.php`. By default, Database Service is defined to set database character set, names and time_zone according to current language.
 
 ## Usual Usage
-In model.
+In [model](/models).
 
 ## Documentation
 [Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Database/README.md) to learn more about Database component.

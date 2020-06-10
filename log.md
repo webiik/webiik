@@ -11,13 +11,15 @@ Webiik\Log\Log
 Logging.
 
 ## Configuration
-Available.
+Available in `private/config/resources.php`. Also inherits configuration from `private/config/app.php`.
+
+> ⚠️ In production, always set app `mode` to `production`. In the `production` mode, failed loggers don't throw exceptions, but these exceptions are logged with other set loggers.
 
 ## Definition
-By default, Log Service is defined to store logs in **private/tmp/logs** and to inherit silent mode configuration from the [Error Service](/error) configuration.
+It is defined in `private/config/container/services.php`. By default, the Log service is defined to utilize two loggers. The first logger to store logs in `private/tmp/logs`. The second logger to optionally send error logs by email. 
 
 ## Usual Usage
-In route controller. Used by [Error Service](/error).
+In [route controller](/routing). Used by [Error Service](/error).
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Log/README.md) to learn more about Log component.
+[Read documentation](https://github.com/webiik/log) to learn more about Log component.

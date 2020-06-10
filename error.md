@@ -11,15 +11,15 @@ Webiik\Error\Error
 Error handling and logging.  
 
 ## Configuration
-Available.
+Inherits configuration from `private/config/app.php`.
 
-⚠️ In production, always set silent mode to true.
+> ⚠️ In production, always set app `mode` to `production`. In the `production` mode, PHP`s error messages are replaced by a custom error message. You can change this custom message within the Error service definition.
 
 ## Definition
-By default, Error Service is defined to use [Log Service](/log) for logging errors to **private/tmp/logs/error.log** and to send error logs by email.
+It is defined in `private/config/container/services.php`. By default, Error Service is defined to use [Log Service](/log) for logging errors.
 
 ## Usual Usage
-Automatic, when PHP error is thrown.
+When PHP error is thrown.
 
 ## Documentation
-[Read documentation](https://github.com/webiik/components/blob/master/src/Webiik/Error/README.md) to learn more about Error component.
+[Read documentation](https://github.com/webiik/error) to learn more about Error component.
