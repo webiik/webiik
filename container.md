@@ -6,7 +6,7 @@ permalink: /container/
 # Container
 The Container is storage of services. Any class can be added as a service. The concept of services is very useful because once you add a service, you can get the same instance of the service everywhere within the Webiik application.
 
-⚠️ Container makes the backbone of every Webiik application. Give it a time to understand it perfectly.  
+⚠️ **Container makes the backbone of every Webiik application. Give it a time to understand it perfectly.**  
 
 ## Defining Services
 You can define services in two files:
