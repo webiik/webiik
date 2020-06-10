@@ -45,7 +45,7 @@ return [
         $log = new \Webiik\Log\Log();
 
         // Configure silent mode
-        $log->setSilent($c->get('wsConfig')->get('services')['Error']['silent']);
+        $log->setSilent(!WEBIIK_DEBUG);
 
         // Add ErrorLogger for messages in group error
         $log->addLogger(function () {
@@ -88,8 +88,8 @@ return [
         $error = new \Webiik\Error\Error();
 
         // Configure silent mode
-        $error->setSilent($c->get('wsConfig')->get('services')['Error']['silent']);
-        $error->setSilentPageContent('Meow, something is wrong!');
+        $error->setSilent(!WEBIIK_DEBUG);
+        $error->setSilentPageContent('Meow, something went wrong!');
 
         // Write log messages using the \Webiik\Log\Log
         $error->setLogService(function ($level, $message, $data) use (&$c) {

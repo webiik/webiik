@@ -3,9 +3,6 @@ return [
     'middleware' => [],
     'models' => [],
     'services' => [
-        'Error' => [
-            'silent' => !WEBIIK_DEBUG,
-        ],
         'Database' => [
             'user' => [
                 'driver' => 'mysql',
