@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "outDir": "../../../../public/assets/app/js/",
-    "sourceMap": true,
-    "strict": true,
+    "outDir": "../../../../public/assets/js/",
     "module": "es6",
     "target": "es5",
     "jsx": "react",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "sourceMap": true,
     "allowJs": true
   }
 }
