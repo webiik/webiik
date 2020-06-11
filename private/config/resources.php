@@ -55,7 +55,7 @@ return [
         ],
         'Session' => [
             'name' => 'wSESSION',
-            'dir' => __DIR__ . '/../../tmp/session',
+            'dir' => __DIR__ . '/../tmp/session',
             // Delete sessions older than 1440s (24m) with probability 1/100
             'gcProbability' => 1,
             'gcDivisor' => 100,
