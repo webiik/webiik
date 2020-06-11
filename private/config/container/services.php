@@ -57,7 +57,7 @@ return [
 
         // Add MailLogger for messages in group error
         // Use MailLogger only in silent mode and when MailLogger is active
-        if ($c->get('wsConfig')->get('services')['Error']['silent'] && $c->get('wsConfig')->get('services')['Log']['MailLogger']['active']) {
+        if (!WEBIIK_DEBUG && $c->get('wsConfig')->get('services')['Log']['MailLogger']['active']) {
             $log->addLogger(function () use (&$c) {
                 $logger = new \Webiik\Log\Logger\MailLogger();
                 $logger->setTmpDir(WEBIIK_BASE_DIR . '/tmp/logs/sent');
