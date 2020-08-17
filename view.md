@@ -59,7 +59,7 @@ getCSS() returns HTML tags with route related CSS.
 
 ### getJS
 ```
-getJS(string $route): string
+getJS(string $route, bool $beforeDOM): string
 ```
 getJS() returns HTML tags with route related JS.
 ```
