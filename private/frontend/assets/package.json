@@ -8,12 +8,9 @@
     "prod": "webpack -p --colors --progress"
   },
   "devDependencies": {
-    "@types/animejs": "^3.1.0",
     "@types/node": "^13.1.6",
     "@types/react": "^16.9.23",
     "@types/react-dom": "^16.9.5",
-    "@types/superagent": "^4.1.7",
-    "@types/use-global-hook": "^0.1.2",
     "autoprefixer": "^9.7.3",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^5.1.1",
@@ -32,11 +29,7 @@
   },
   "dependencies": {
     "@webiik/render-js-components": "latest",
-    "animejs": "^3.1.0",
     "react": "^16.13.0",
-    "react-dom": "^16.13.0",
-    "react-on-rails": "^11.3.0",
-    "superagent": "^5.2.2",
-    "use-global-hook": "^0.1.12"
+    "react-dom": "^16.13.0"
   }
 }
