@@ -73,9 +73,6 @@
     - title: Attempts
       link: https://github.com/webiik/components/blob/master/src/Webiik/Attempts/README.md
       target: _blank
-    - title: Flash
-      link: https://github.com/webiik/components/blob/master/src/Webiik/Flash/README.md
-      target: _blank
     - title: Validator
       link: https://github.com/webiik/components/blob/master/src/Webiik/Validator/README.md
       target: _blank
