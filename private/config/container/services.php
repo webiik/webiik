@@ -34,7 +34,7 @@ return [
                     $phpMailer->Password = $phpMailerConfig['SMTP']['SMTPAuthPswd'];
                 }
             }
-            return new \Webiik\Mail\Mailer\PHPMailer(new \PHPMailer\PHPMailer\PHPMailer());
+            return new \Webiik\Mail\Mailer\PHPMailer($phpMailer);
         });
 
         return $mail;
@@ -183,6 +183,8 @@ return [
 
         // Get locales setting for current lang detected from URI
         $locales = $c->get('wsConfig')->get('app')['languages'][WEBIIK_LANG];
+        $time = new \DateTime('now', new DateTimeZone($locales[0]));
+        $timeZone = $time->format('P');
 
         // Get database settings
         $databaseConfArr = $c->get('wsConfig')->get('services')['Database'];
@@ -201,7 +203,7 @@ return [
                 [
                     'SET CHARACTER SET ?' => str_replace('-', '', $locales[1]),
                     'SET NAMES ?' => str_replace('-', '', $locales[1]),
-                    'SET time_zone = ?' => $locales[0],
+                    'SET time_zone = ?' => $timeZone,
                 ]
             );
         }
