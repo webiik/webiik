@@ -81,17 +81,26 @@ const client = (env, argv) => {
                     for (const entrypoint in data.entrypoints) {
                         let assetsJs = [];
                         let assetsCss = [];
+                        const baseEntryPoint = entrypoint.replace(new RegExp('-iso$'), '');
                         for (const index in data.entrypoints[entrypoint].assets) {
-                            if (!addedAssets[data.entrypoints[entrypoint].assets[index]]) {
+                            if (!addedAssets[baseEntryPoint]) {
+                                addedAssets[baseEntryPoint] = {};
+                            }
+                            if (!addedAssets[baseEntryPoint][data.entrypoints[entrypoint].assets[index]]) {
                                 let asset = data.entrypoints[entrypoint].assets[index];
                                 if (asset.match(/\.css$/)) {
                                     assetsCss.push(asset);
                                 } else {
-                                    assetsJs.push(asset);
+                                    if (data.entrypoints[entrypoint].assets[index] === 'js/runtime.js' && baseEntryPoint !== '_app') {
+                                        // Don't push runtime.js to different entry point than _app
+                                    } else {
+                                        assetsJs.push(asset);
+                                    }
                                 }
-                                addedAssets[asset] = true;
+                                addedAssets[baseEntryPoint][asset] = true;
                             }
                         }
+
                         resJson[entrypoint] = {};
                         resJson[entrypoint]['css'] = assetsCss;
                         resJson[entrypoint]['js'] = assetsJs;
