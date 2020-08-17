@@ -22,13 +22,13 @@
         {# Route related webpackData #}
         {% block webpackData %}{% endblock %}
 
-        {# Load route related JS #}
-        {{ getJS(getRoute()) }}
+        {# Load route related JS required before DOM elements in the block content are ready #}
+        {{ getJS(getRoute(), true) }}
 
         {# Route related content #}
         {% block content %}{% endblock %}
 
-        {# Route related JS #}
-        {% block js %}{% endblock %}
+        {# Load route related JS required after DOM elements in the block content are ready #}
+        {{ getJS(getRoute(), false) }}
     </body>
 </html>
