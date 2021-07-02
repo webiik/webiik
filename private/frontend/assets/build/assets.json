@@ -1,0 +1,26 @@
+{
+  "_app": {
+    "css": [
+      "css/_app.8c30ab9255a505a3dacc.css"
+    ],
+    "js": [
+      "js/runtime.86f1e0170a467b97005d.js",
+      "js/_app.e79d3631fab220f5b76b.js"
+    ]
+  },
+  "home": {
+    "css": [],
+    "js": [
+      "js/home.857a9bfcac3c9f4eeeaf.js"
+    ]
+  },
+  "home-iso": {
+    "css": [
+      "css/home-iso.1bd38610108801d3bc7b.css"
+    ],
+    "js": [
+      "js/vendors~172.26f9f9978030a7801281.js",
+      "js/home-iso.a9e25a7445ea7a81ac1d.js"
+    ]
+  }
+}
