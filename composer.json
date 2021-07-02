@@ -23,7 +23,7 @@
     "webiik/template-helpers": "^1",
     "webiik/twig-extension": "^1",
     "webiik/ssr": "^1",
-    "phpmailer/phpmailer": "~6.0",
+    "phpmailer/phpmailer": "^6.5",
     "twig/twig": "^2"
   },
   "require-dev": {
