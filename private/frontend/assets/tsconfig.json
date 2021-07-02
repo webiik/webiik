@@ -1,13 +1,20 @@
 {
   "compilerOptions": {
-    "outDir": "../../../../public/assets/js/",
-    "module": "es6",
-    "target": "es5",
+    /* https://www.typescriptlang.org/tsconfig */
+    /* Project Options */
+    "allowJs": true,
     "jsx": "react",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "module": "es6",
+    "outDir": "../../../../public/assets/js/",
+    "removeComments": true,
     "sourceMap": true,
-    "allowJs": true
+    "target": "es5",
+    /* Strict Checks */
+    "noImplicitAny": true,
+    "strict": true,
+    "strictNullChecks": true,
+    /* Module Resolution */
+    "esModuleInterop": true,
+    "moduleResolution": "node",
   }
 }

@@ -12,6 +12,18 @@
         <meta name="keywords" content="{{ seo.kw }}">
         <meta name="robots" content="all,follow">
 
+        {# Load polyfills for old browsers #}
+        {# https://webpack.js.org/guides/shimming/#loading-polyfills #}
+        <script>
+            var modernBrowser = 'fetch' in window && 'assign' in Object;
+            if (!modernBrowser) {
+                var scriptElement = document.createElement('script');
+                scriptElement.async = false;
+                scriptElement.src = '{{ WEBIIK_BASE_URL }}/assets/js/polyfills.js';
+                document.head.appendChild(scriptElement);
+            }
+        </script>
+
         {# Load route related CSS #}
         {{ getCSS(getRoute()) }}
     </head>
